@@ -5,31 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft,
   Trophy,
   Clock,
-  Calendar,
   Target,
   BookOpen,
-  TrendingUp,
-  TrendingDown,
-  BarChart3,
-  Filter,
-  Search,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle,
-  XCircle,
-  Pause,
-  CircleDot,
-  AlertCircle,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { QuizActionGroup } from "@/components/features/quiz-history/QuizActionGroup";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCurrentUser,
@@ -40,15 +25,17 @@ import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { toast } from "react-hot-toast";
 import {
   getScoreColors,
-  formatDate,
-  getStatusBadge,
-  getStatusIconConfig,
   calculateQuizStats,
   filterAndSortAttempts,
 } from "@/lib/utils/quiz-history";
 import type { QuizAttempt } from "@/types";
-
-
+import { StatCard } from "@/components/features/dashboard/StatCard";
+import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
+import { QuizAttemptCard } from "@/components/features/quiz-history/QuizAttemptCard";
+import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { DashboardSearchBar } from "@/components/ui/dashboard-search-bar";
+import { FilterDropdown, FilterOption } from "@/components/ui/filter-dropdown";
+import { SortDropdown, SortOption } from "@/components/ui/sort-dropdown";
 
 export default function QuizHistoryPage() {
   const { user, loading } = useBackendAuth();
@@ -57,6 +44,9 @@ export default function QuizHistoryPage() {
   const queryClient = useQueryClient();
   const router = useRouter();
 
+  // Scroll to top when navigating
+  useScrollToTop();
+
   // UI state
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"date" | "score" | "title">("date");
@@ -64,8 +54,24 @@ export default function QuizHistoryPage() {
   const [filterBy, setFilterBy] = useState<
     "all" | "completed" | "incomplete" | "not_attempted" | "passed" | "failed"
   >("all");
-  const [showFilters, setShowFilters] = useState(false);
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
+
+  // Filter dropdown options
+  const FILTER_OPTIONS: FilterOption[] = [
+    { id: "all", label: "All Quizzes" },
+    { id: "completed", label: "Completed" },
+    { id: "incomplete", label: "Incomplete" },
+    { id: "not_attempted", label: "Not Attempted" },
+    { id: "passed", label: "Passed (≥70%)" },
+    { id: "failed", label: "Failed (<70%)" },
+  ];
+
+  const SORT_OPTIONS: SortOption[] = [
+    { id: "date_desc", label: "Date (Newest)", icon: Calendar },
+    { id: "date_asc", label: "Date (Oldest)", icon: Calendar },
+    { id: "score_desc", label: "Score (High → Low)", icon: Trophy },
+    { id: "score_asc", label: "Score (Low → High)", icon: Trophy },
+  ];
 
   // Use the database user_id
   const userId = currentUser?.user_id || "";
@@ -164,9 +170,13 @@ export default function QuizHistoryPage() {
     [deleteQuizMutation, userId, queryClient]
   );
 
+  const handleSortSelect = (id: string) => {
+    if (id.startsWith("date")) setSortBy("date");
+    else if (id.startsWith("score")) setSortBy("score");
+    else setSortBy("title");
 
-
-
+    setSortOrder(id.endsWith("asc") ? "asc" : "desc");
+  };
 
   // Single loading screen for all loading states - matching dashboard pattern
   if (showLoadingScreen) {
@@ -194,253 +204,154 @@ export default function QuizHistoryPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-6">
-        <div className="space-y-6 sm:space-y-8">
+      <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex items-center space-x-3 sm:space-x-4">
-            <Link href="/dashboard">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-gray-400 hover:text-white hover:bg-gray-700/50 px-2 sm:px-3"
-              >
-                <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Back to Dashboard</span>
-                <span className="sm:hidden">Back</span>
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                Quiz History
-              </h1>
-              <p className="text-gray-400 mt-1 text-sm sm:text-base">
-                Track your quiz performance over time
-              </p>
-            </div>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-2"
+        >
+          <DashboardHeader
+            title="Quiz History"
+            subtitle="Track your quiz performance over time"
+            emoji="📚"
+          />
+        </motion.div>
 
         {/* Statistics Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-4 sm:p-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide">
-                  Total Quizzes
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-white">
-                  {stats.totalQuizzes}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats.completedQuizzes} completed
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-4 sm:p-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide">
-                  Average Score
-                </p>
-                <p
-                  className={`text-xl sm:text-2xl font-bold ${getScoreColors(stats.averageScore).text}`}
-                >
-                  {stats.completedQuizzes + stats.incompleteQuizzes > 0
-                    ? stats.averageScore.toFixed(1)
-                    : "--"}
-                  %
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-4 sm:p-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Target className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide">
-                  Pass Rate
-                </p>
-                <p
-                  className={`text-xl sm:text-2xl font-bold ${getScoreColors(stats.passRate).text}`}
-                >
-                  {stats.completedQuizzes > 0
-                    ? stats.passRate.toFixed(1)
-                    : "--"}
-                  %
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats.passedQuizzes}/{stats.completedQuizzes} passed
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-4 sm:p-6">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center">
-                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wide">
-                  Avg Time
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-white">
-                  {stats.completedQuizzes > 0
-                    ? stats.averageTime.toFixed(1)
-                    : "--"}
-                  <span className="text-sm sm:text-base font-normal text-gray-400 ml-1">
-                    min
-                  </span>
-                </p>
-                <p className="text-xs text-gray-500">Per completed quiz</p>
-              </div>
-            </div>
-          </Card>
+        <div className="mb-6 sm:mb-8">
+          <motion.div 
+            className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, staggerChildren: 0.1 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
+            >
+              <StatCard
+                value={stats.totalQuizzes}
+                label="Total Quizzes"
+                rightIcon={<BookOpen className="h-6 w-6 text-white" />}
+                cardClass="bg-gradient-to-br from-[#1967D2] to-[#174ea6] border-none"
+                textClass="text-white"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
+            >
+              <StatCard
+                value={stats.completedQuizzes + stats.incompleteQuizzes > 0 ? `${stats.averageScore.toFixed(1)}%` : "--%"}
+                label="Average Score"
+                rightIcon={<Trophy className="h-6 w-6 text-white" />}
+                cardClass="bg-gradient-to-br from-[#0F9D58] to-[#0b6b43] border-none"
+                textClass={getScoreColors(stats.averageScore).text + " font-bold"}
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
+            >
+              <StatCard
+                value={stats.completedQuizzes > 0 ? `${stats.passRate.toFixed(1)}%` : "--%"}
+                label="Pass Rate"
+                rightIcon={<Target className="h-6 w-6 text-white" />}
+                cardClass="bg-gradient-to-br from-[#9C27B0] to-[#6d1b7b] border-none"
+                textClass={getScoreColors(stats.passRate).text + " font-bold"}
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
+            >
+              <StatCard
+                value={stats.completedQuizzes > 0 ? stats.averageTime.toFixed(1) : "--"}
+                label="Avg Time"
+                rightIcon={<Clock className="h-6 w-6 text-white" />}
+                cardClass="bg-gradient-to-br from-[#F2A900] to-[#b97b16] border-none"
+                textClass="text-white"
+                sublabel="min"
+                sublabelClass="text-white/80 ml-1"
+                inlineSublabel
+              />
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* Filters and Search */}
-        <div className="bg-gray-800/70 backdrop-blur-sm rounded-xl border border-gray-700/50 p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex-1 w-full sm:max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search quizzes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 bg-gray-700/50 border-gray-600/50 text-white placeholder-gray-400"
-                />
-              </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, ease: "easeOut" }}
+          className="bg-gray-800/70 backdrop-blur-sm rounded-xl border border-gray-700/50 p-3 sm:p-4 md:p-6"
+        >
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
+            <div className="flex-1 w-full">
+              <DashboardSearchBar
+                placeholder="Search quizzes..."
+                value={searchTerm}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+              />
             </div>
-
-            <div className="flex items-center space-x-3 w-full sm:w-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="text-gray-300 hover:text-white hover:bg-gray-700/50 w-full sm:w-auto justify-center sm:justify-start"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-                {showFilters ? (
-                  <ChevronUp className="h-4 w-4 ml-2" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                )}
-              </Button>
+            {/* Dropdowns beside search bar */}
+            <div className="flex items-center space-x-2">
+              <FilterDropdown
+                options={FILTER_OPTIONS}
+                selectedId={filterBy}
+                onSelect={(id) =>
+                  setFilterBy(id as "all" | "completed" | "incomplete" | "not_attempted" | "passed" | "failed")
+                }
+              />
+              <SortDropdown
+                options={SORT_OPTIONS}
+                selectedId={`${sortBy}_${sortOrder}`}
+                onSelect={handleSortSelect}
+              />
             </div>
           </div>
-
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mt-4 pt-4 border-t border-gray-700/50"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Sort By
-                  </label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) =>
-                      setSortBy(e.target.value as "date" | "score" | "title")
-                    }
-                    className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm sm:text-base"
-                  >
-                    <option value="date">Date</option>
-                    <option value="score">Score</option>
-                    <option value="title">Title</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Order
-                  </label>
-                  <select
-                    value={sortOrder}
-                    onChange={(e) =>
-                      setSortOrder(e.target.value as "asc" | "desc")
-                    }
-                    className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm sm:text-base"
-                  >
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>
-                  </select>
-                </div>
-
-                <div className="sm:col-span-2 lg:col-span-1">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Filter
-                  </label>
-                  <select
-                    value={filterBy}
-                    onChange={(e) =>
-                      setFilterBy(
-                        e.target.value as
-                          | "all"
-                          | "completed"
-                          | "incomplete"
-                          | "not_attempted"
-                          | "passed"
-                          | "failed"
-                      )
-                    }
-                    className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm sm:text-base"
-                  >
-                    <option value="all">All Quizzes</option>
-                    <option value="completed">Completed</option>
-                    <option value="incomplete">Incomplete</option>
-                    <option value="not_attempted">Not Attempted</option>
-                    <option value="passed">Passed (≥70%)</option>
-                    <option value="failed">Failed (&lt;70%)</option>
-                  </select>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
+        </motion.div>
 
         {/* Quiz Attempts List */}
-        <div className="space-y-4">
+        <motion.div
+          className="space-y-3 sm:space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, staggerChildren: 0.05 }}
+        >
           {filteredAttempts?.length === 0 ? (
-            <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-8">
-              <div className="text-center space-y-4">
-                <div className="h-16 w-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto">
-                  <BookOpen className="h-8 w-8 text-gray-400" />
+            <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-6 sm:p-8">
+              <div className="text-center space-y-3 sm:space-y-4">
+                <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto">
+                  <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-gray-400" />
                 </div>
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-lg sm:text-xl font-semibold text-white">
                   {stats.totalQuizzes === 0
                     ? "No Quizzes Created Yet"
                     : searchTerm || filterBy !== "all"
                       ? "No Quizzes Match Your Filters"
                       : "No Quiz Activity Yet"}
                 </h3>
-                <p className="text-gray-400">
+                <p className="text-gray-400 text-sm sm:text-base">
                   {stats.totalQuizzes === 0
                     ? "Create your first quiz to start your learning journey!"
                     : searchTerm || filterBy !== "all"
                       ? "Try adjusting your search or filter criteria."
                       : "You have created quizzes but haven't taken any yet. Start with your first quiz!"}
                 </p>
-                <div className="flex gap-3 justify-center">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/quiz/create">
-                    <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                    <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 w-full sm:w-auto">
                       Create New Quiz
                     </Button>
                   </Link>
@@ -448,7 +359,7 @@ export default function QuizHistoryPage() {
                     <Link href="/dashboard">
                       <Button
                         variant="outline"
-                        className="border-gray-600 text-gray-300 hover:bg-gray-700/50"
+                        className="border-gray-600 text-gray-300 hover:bg-gray-700/50 w-full sm:w-auto"
                       >
                         View Dashboard
                       </Button>
@@ -458,146 +369,36 @@ export default function QuizHistoryPage() {
               </div>
             </Card>
           ) : (
-            <div className="grid gap-4">
+            <motion.div
+              className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 overflow-visible"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: { staggerChildren: 0.05 }
+                }
+              }}
+            >
               {filteredAttempts?.map((attempt: QuizAttempt) => (
-                <div
+                <motion.div
                   key={`${attempt.quiz_id}-${attempt.completed_at}`}
-                  className="w-full"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  whileHover={{ scale: 1.02, y: -4 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  layout
                 >
-                  <Card className="bg-gray-800/70 backdrop-blur-sm border-gray-700/50 p-4 sm:p-6 hover:shadow-lg hover:shadow-blue-500/10 transition-all duration-300">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 mb-2 sm:mb-0">
-                            <h3 className="text-lg sm:text-xl font-semibold text-white truncate">
-                              {attempt.title}
-                            </h3>
-
-                            {/* Status Badge */}
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusBadge(attempt.status)} w-fit`}
-                            >
-                              {(() => {
-                                const iconConfig = getStatusIconConfig(attempt.status);
-                                switch (iconConfig.icon) {
-                                  case "CheckCircle":
-                                    return <CheckCircle className={iconConfig.className} />;
-                                  case "Pause":
-                                    return <Pause className={iconConfig.className} />;
-                                  case "CircleDot":
-                                    return <CircleDot className={iconConfig.className} />;
-                                  case "AlertCircle":
-                                    return <AlertCircle className={iconConfig.className} />;
-                                  default:
-                                    return <CircleDot className={iconConfig.className} />;
-                                }
-                              })()}
-                              <span className="ml-1.5 capitalize">
-                                {attempt.status.replace("_", " ")}
-                              </span>
-                            </span>
-                          </div>
-
-                          {/* Score Badge (only for completed quizzes) - Mobile friendly */}
-                          {attempt.status === "completed" && (
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getScoreColors(attempt.score_percentage).badge} w-fit`}
-                            >
-                              {attempt.score_percentage >= 70 ? (
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                              ) : (
-                                <XCircle className="h-3 w-3 mr-1" />
-                              )}
-                              {attempt.score_percentage.toFixed(1)}%
-                            </span>
-                          )}
-                        </div>
-
-                        {attempt.topic_name && (
-                          <p className="text-sm text-blue-400 mb-2">
-                            📚 {attempt.topic_name}
-                          </p>
-                        )}
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div className="flex items-center space-x-2 text-gray-400">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {attempt.completed_at
-                                ? formatDate(attempt.completed_at)
-                                : `Created ${formatDate(attempt.created_at)}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-gray-400">
-                            <Target className="h-4 w-4" />
-                            <span>
-                              {attempt.status === "incomplete" &&
-                              attempt.answered_questions
-                                ? `${attempt.answered_questions}/${attempt.total_questions} answered`
-                                : `${attempt.correct_answers}/${attempt.total_questions} correct`}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-gray-400">
-                            <Clock className="h-4 w-4" />
-                            <span>
-                              {attempt.time_spent_minutes > 0
-                                ? `${attempt.time_spent_minutes.toFixed(1)} minutes`
-                                : "Not started"}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-gray-400">
-                            <BarChart3 className="h-4 w-4" />
-                            <span>{attempt.completion_status}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="ml-6 text-right space-y-2">
-                        {/* Score Display */}
-                        {attempt.status === "completed" ? (
-                          <>
-                            <div
-                              className={`text-3xl font-bold ${getScoreColors(attempt.score_percentage).text}`}
-                            >
-                              {attempt.score_percentage.toFixed(0)}%
-                            </div>
-                            {attempt.score_percentage >= 70 ? (
-                              <div className="flex items-center text-emerald-400 text-sm">
-                                <TrendingUp className="h-4 w-4 mr-1" />
-                                <span>Passed</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center text-red-400 text-sm">
-                                <TrendingDown className="h-4 w-4 mr-1" />
-                                <span>Failed</span>
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="text-2xl font-bold text-gray-400">
-                            {attempt.status === "incomplete"
-                              ? `${Math.round(((attempt.answered_questions || 0) / attempt.total_questions) * 100)}%`
-                              : "--"}
-                          </div>
-                        )}
-
-                        {/* Action Button */}
-                        <div className="mt-3">
-                  <QuizActionGroup
+                  <QuizAttemptCard
                     attempt={attempt}
                     onDelete={handleDeleteQuiz}
                     isDeleting={deletingQuizId === attempt.quiz_id}
                   />
-                </div>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
-        </div>
-        </div>
+        </motion.div>
       </div>
     </DashboardLayout>
   );

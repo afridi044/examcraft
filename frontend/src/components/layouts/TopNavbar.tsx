@@ -1,17 +1,61 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BarChart3, Search, Crown, User } from "lucide-react";
+import { motion } from "framer-motion";
+import { 
+  BarChart3, 
+  Search, 
+  Crown, 
+  Bell, 
+  Sparkles,
+  Menu
+} from "lucide-react";
+import { UserMenu } from "@/components/ui/user-menu";
 
-export function TopNavbar() {
+interface TopNavbarProps {
+  setIsSidebarOpen: (open: boolean) => void;
+  isSidebarOpen: boolean;
+}
+
+export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
   const router = useRouter();
-  const { user } = useBackendAuth();
+  const { user, signOut } = useBackendAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Handle scroll effect for premium blur/shadow
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Only close if the menu is open and the click is outside the menu
+      if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    // Add event listener to the document
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Clean up on unmount or when dependencies change
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isUserMenuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,69 +65,115 @@ export function TopNavbar() {
   };
 
   return (
-    <div className="h-[60px] fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-xl border-b border-gray-700/50">
-      <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/dashboard" className="flex items-center space-x-3">
-          <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-            <BarChart3 className="h-4 w-4 text-white" />
+    <>
+      <motion.div 
+        className={`h-[72px] fixed top-0 left-0 right-0 z-50 transition-all duration-300 premium-glass ${
+          isScrolled 
+            ? "bg-slate-950/95 backdrop-blur-2xl border-b border-slate-700/60 shadow-xl shadow-blue-900/10" 
+            : "bg-slate-950/95 backdrop-blur-xl border-b border-slate-700/40 animate-gradient"
+        }`}
+        initial={{ y: -72 }}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      >
+        <div className="h-full max-w-[1400px] mx-auto px-3 sm:px-6 flex items-center justify-between gap-x-2 sm:gap-x-6">
+          {/* Sidebar Toggle Button - only on mobile/tablet */}
+          <button
+            className="mr-2 p-2 rounded-md bg-white/10 hover:bg-white/20 transition-all duration-300"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            <Menu className="h-6 w-6 text-white" />
+          </button>
+          {/* Premium Logo - only on desktop */}
+          <Link href="/dashboard" className="hidden lg:flex items-center space-x-2 sm:space-x-3 group">
+            <div className="relative">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white drop-shadow-md" />
+              </div>
+              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent tracking-tight">
+                ExamCraft
+              </span>
+              <span className="text-xs bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent font-medium -mt-1 hidden sm:block">
+                AI-Powered Learning
+              </span>
+            </div>
+          </Link>
+
+          {/* Premium Search Bar */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden lg:flex flex-1 max-w-2xl mx-8"
+          >
+            <div className="relative w-full group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-600/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="relative">
+                <Input
+                  type="search"
+                  placeholder="Search quizzes, exams, flashcards, or ask AI..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-12 pl-12 pr-4 bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl font-medium transition-all duration-300 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
+                />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                  <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-slate-700/60 border border-slate-600/60 text-slate-400 text-xs rounded-md shadow-sm">
+                    ⌘K
+                  </kbd>
+                  <Sparkles className="h-3 w-3 text-blue-400/70 ml-1 hidden sm:block" />
+                </div>
+              </div>
+            </div>
+          </form>
+
+          {/* Premium Right Section */}
+          <div className="flex items-center gap-x-2 sm:gap-x-3">
+            {/* Search for mobile/tablet */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white transition-all duration-300 rounded-xl h-10 w-10 shadow-md"
+              onClick={() => {
+                /* Add mobile search modal logic */
+              }}
+            >
+              <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
+            </Button>
+
+            {/* Premium Upgrade Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:flex items-center gap-2 relative overflow-hidden bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 hover:from-amber-500/25 hover:via-orange-500/25 hover:to-rose-500/25 border border-amber-500/40 text-amber-300 hover:text-white transition-all duration-300 rounded-xl h-10 px-4 group shadow-lg shadow-amber-900/10"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <Crown className="h-4 w-4 group-hover:scale-110 transition-transform drop-shadow" />
+              <span className="font-medium hidden lg:inline relative z-10">Pro</span>
+              <Sparkles className="h-3 w-3 text-amber-400 animate-pulse" />
+            </Button>
+
+            {/* Notifications */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white transition-all duration-300 rounded-xl h-10 w-10 relative shadow-md hover:shadow-lg"
+            >
+              <Bell className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              <div className="absolute -top-1 -right-1 h-3 w-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-md animate-pulse">
+                <div className="h-1.5 w-1.5 bg-white rounded-full"></div>
+              </div>
+            </Button>
+
+            {/* Premium User Menu */}
+            <UserMenu user={user} signOut={async () => { await signOut(); }} router={router} />
           </div>
-          <span className="text-lg font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-            ExamCraft
-          </span>
-        </Link>
-
-        {/* Search Bar - Hidden on mobile */}
-        <form
-          onSubmit={handleSearch}
-          className="hidden md:flex flex-1 max-w-2xl mx-8"
-        >
-          <div className="relative">
-            <Input
-              type="search"
-              placeholder="Search quizzes, exams, or flashcards..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-10 pl-10 bg-gray-800/50 border-gray-700/50 text-gray-200 placeholder-gray-500 focus:border-blue-500/50 focus:ring-blue-500/20"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-          </div>
-        </form>
-
-        {/* Right Side Actions */}
-        <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Search icon for mobile */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="md:hidden text-gray-400 hover:text-white hover:bg-gray-800/50"
-            onClick={() => {
-              /* Add mobile search modal logic */
-            }}
-          >
-            <Search className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hidden sm:flex text-gray-400 hover:text-white hover:bg-gray-800/50"
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            <span className="hidden lg:inline">Upgrade</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-400 hover:text-white hover:bg-gray-800/50"
-          >
-            <User className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">
-              {user?.email?.split("@")[0]}
-            </span>
-          </Button>
         </div>
-      </div>
-    </div>
+      </motion.div>
+      {/* Spacer to push content below navbar */}
+      <div className="h-4" aria-hidden="true"></div>
+    </>
   );
 }

@@ -2,8 +2,8 @@
 // This file provides convenient access to backend shared types
 // Import types like: import { User, Quiz } from "@/types"
 
-// Re-export all types from backend shared types
-export * from "@backend/types/shared.types";
+// Re-export all types from backend shared types  
+// export * from "@backend/types/shared.types";
 
 // Additional frontend-specific type utilities can be added here if needed
 export type { ComponentProps } from "react";
@@ -63,4 +63,26 @@ export interface QuizReviewData {
     percentage: number;
     total_time: number;
   };
-} 
+}
+
+// =============================================
+// Dashboard-Specific Types
+// =============================================
+
+export interface RecentActivity {
+  id: string;
+  type: 'quiz' | 'exam' | 'flashcard';
+  title: string;
+  score?: number;
+  completed_at: string;
+  topic?: string;
+}
+
+export interface TopicProgress {
+  topic_id: string;
+  topic_name: string;
+  progress_percentage: number;
+  questions_attempted: number;
+  questions_correct: number;
+  last_activity: string;
+}

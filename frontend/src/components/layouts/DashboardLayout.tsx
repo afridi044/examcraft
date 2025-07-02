@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
@@ -15,10 +15,10 @@ import {
   FolderOpen,
   Settings,
   Menu,
-  ChevronLeft,
-  ChevronRight,
+  X,
+  LogOut,
+  User,
 } from "lucide-react";
-
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -28,212 +28,183 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, signOut } = useBackendAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Handle responsive behavior - memoized to prevent re-creating handler
-  const checkMobile = useCallback(() => {
-    setIsMobile(window.innerWidth < 768);
-    if (window.innerWidth < 768) {
-      setIsSidebarOpen(false);
-    } else {
-      setIsSidebarOpen(true);
-    }
-  }, []);
-
+  // Check if device is mobile/tablet
   useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // lg breakpoint
+    };
+    
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
-  }, [checkMobile]); // Now properly memoized
+  }, []);
 
   const handleSignOut = async () => {
-    // Immediately redirect to prevent showing loading screen
     router.push("/");
-    // Then sign out in the background
     await signOut();
   };
 
+  // Navigation items
+  const navigationItems = [
+    { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
+    { name: "Create Quiz", href: "/quiz/create", icon: BookOpen },
+    { name: "Create Exam", href: "/exam/create", icon: Target },
+    { name: "Create Flashcards", href: "/flashcards/create", icon: Brain },
+    { name: "Your Library", href: "/library", icon: FolderOpen },
+    { name: "Settings", href: "/settings", icon: Settings },
+  ];
 
+  // Close sidebar when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isSidebarOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
 
-  // OPTIMIZED: Memoize navigation items to prevent re-creation
-  const navigationItems = useMemo(
-    () => [
-      { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-      { name: "Create Quiz", href: "/quiz/create", icon: BookOpen },
-      { name: "Create Exam", href: "/exam/create", icon: Target },
-      { name: "Create Flashcards", href: "/flashcards/create", icon: Brain },
-      { name: "Your Library", href: "/library", icon: FolderOpen },
-      { name: "Settings", href: "/settings", icon: Settings },
-    ],
-    []
-  );
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSidebarOpen]);
 
-  // OPTIMIZED: Memoize SidebarContent to prevent re-creation
-  const SidebarContent = useCallback(
-    () => (
-      <div className="flex flex-col h-full">
-        {/* Logo and Toggle */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700/50">
-          <Link href="/dashboard" className="flex items-center space-x-3">
-            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <BarChart3 className="h-4 w-4 text-white" />
-            </div>
-            {isSidebarOpen && (
-              <span className="text-md font-semibold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                ExamCraft
-              </span>
-            )}
-          </Link>
-          {!isMobile && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-gray-400 hover:text-black hover:bg-gray-700/50 ml-2"
-            >
-              {isSidebarOpen ? (
-                <ChevronLeft className="h-5 w-5" />
-              ) : (
-                <ChevronRight className="h-5 w-5" />
-              )}
-            </Button>
-          )}
-        </div>
-
-        {/* Navigation Items */}
-        <nav className="flex-1 p-4 space-y-1">
-          {navigationItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-all duration-200 group ${
-                  isActive
-                    ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white"
-                    : "text-gray-400 hover:text-white hover:bg-gray-800/50"
-                }`}
-
-              >
-                <div
-                  className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                    isActive
-                      ? "bg-gradient-to-br from-blue-500 to-purple-600"
-                      : "bg-gray-800/50 group-hover:bg-gray-700/50"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                </div>
-                {isSidebarOpen && (
-                  <span className="font-medium">{item.name}</span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* User Profile Section */}
-        <div className="p-4 border-t border-gray-700/50">
-          <div className="flex items-center space-x-3 px-4 py-2.5">
-            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-semibold">
-                {user?.email?.[0].toUpperCase()}
-              </span>
-            </div>
-            {isSidebarOpen && (
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {user?.email}
-                </p>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="text-gray-400 hover:text-white hover:bg-gray-800/50"
-                >
-                  Sign Out
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    ),
-    [
-      user?.email,
-      isSidebarOpen,
-      isMobile,
-      navigationItems,
-      pathname,
-      handleSignOut,
-    ]
-  );
+  // Close sidebar on route change
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-black">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-900">
       {/* Top Navigation Bar */}
-      <TopNavbar />
+      <TopNavbar setIsSidebarOpen={setIsSidebarOpen} isSidebarOpen={isSidebarOpen} />
 
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-[60px] left-0 right-0 z-40 bg-gray-900/80 backdrop-blur-xl border-b border-gray-700/50">
-        <div className="flex items-center justify-between p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="text-gray-400 hover:text-white"
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          <div className="w-10" /> {/* Spacer for alignment */}
-        </div>
-      </div>
-
-      {/* Sidebar */}
-      <AnimatePresence mode="wait">
-        {(isSidebarOpen || !isMobile) && (
-          <>
-            {/* Backdrop for mobile */}
-            {isMobile && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setIsSidebarOpen(false)}
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
-              />
-            )}
-
-            {/* Sidebar */}
-            <motion.aside
-              initial={isMobile ? { x: -300 } : { x: 0 }}
-              animate={{ x: 0 }}
-              exit={isMobile ? { x: -300 } : { x: 0 }}
-              transition={{ type: "spring", damping: 20 }}
-              className={`fixed top-[60px] left-0 h-[calc(100vh-60px)] bg-gray-900/95 backdrop-blur-xl border-r border-gray-700/50 z-50 ${
-                isMobile
-                  ? "w-[280px]"
-                  : isSidebarOpen
-                    ? "w-[240px]"
-                    : "w-[100px]"
-              }`}
-            >
-              <SidebarContent />
-            </motion.aside>
-          </>
+      {/* Backdrop */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          />
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      <main
-        className={`min-h-screen transition-all duration-300 ${
-          isMobile
-            ? "pt-[120px]"
-            : `pt-[60px] ${isSidebarOpen ? "md:ml-[240px]" : "md:ml-[100px]"}`
-        }`}
-      >
-        {children}
+      {/* Sidebar */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            ref={sidebarRef}
+            initial={{ x: -320 }}
+            animate={{ x: 0 }}
+            exit={{ x: -320 }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className={`fixed top-0 left-0 h-full z-50 bg-white/5 backdrop-blur-xl border-r border-white/10 shadow-2xl ${
+              isMobile ? "w-72" : "w-80"
+            }`}
+          >
+            <div className="flex flex-col h-full p-4 sm:p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
+                <Link href="/dashboard" className="flex items-center space-x-3">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-base sm:text-lg font-bold text-white">ExamCraft</h1>
+                    <p className="text-xs text-gray-400 hidden sm:block">AI-Powered Learning</p>
+                  </div>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Navigation */}
+              <nav className="flex-1 space-y-2">
+                <div className="mb-4 sm:mb-6">
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">
+                    Navigation
+                  </p>
+                  {navigationItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className={`group flex items-center space-x-3 px-3 py-2.5 sm:py-3 rounded-xl transition-all duration-200 ${
+                          isActive
+                            ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg"
+                            : "text-gray-300 hover:text-white hover:bg-white/10"
+                        }`}
+                      >
+                        <div
+                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                            isActive
+                              ? "bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg"
+                              : "bg-white/10 group-hover:bg-white/20"
+                          }`}
+                        >
+                          <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                        </div>
+                        <span className="font-medium text-sm sm:text-base">{item.name}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </nav>
+
+              {/* Profile Section */}
+              <div className="border-t border-white/10 pt-4 sm:pt-6">
+                <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-white truncate">
+                        {user?.email || "User"}
+                      </p>
+                      <p className="text-xs text-gray-400">Premium Account</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handleSignOut}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10 rounded-lg text-xs sm:text-sm"
+                  >
+                    <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content - Properly spaced and responsive */}
+      <main className={`min-h-screen transition-all duration-300 ${
+        isMobile 
+          ? "pt-[72px] px-4 pb-4" 
+          : "pt-[88px] px-6 pb-6"
+      }`}>
+        <div className="max-w-7xl w-full mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
