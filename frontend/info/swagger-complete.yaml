@@ -1,0 +1,2106 @@
+openapi: 3.0.0
+info:
+  title: ExamCraft API
+  description: |
+    # ExamCraft API Documentation
+    
+    ExamCraft is an intelligent exam preparation platform with five high-impact features:
+    
+    1. **AI-Generated Practice Quizzes** - Transform user-uploaded notes or textbook excerpts into multiple-choice, true/false, and fill-in-the-blank questions using pre-trained Transformer models
+    
+    2. **Timed Mock Exams** - Simulate real exam conditions by presenting a randomized selection of questions under a countdown timer, automatically submitting when time expires
+    
+    3. **Flashcard Mode** - Convert incorrectly answered questions into digital flashcards for targeted review, utilizing a spaced-repetition algorithm
+    
+    4. **Performance Analytics Dashboard** - Visualize overall accuracy, average response time, and topic-wise breakdown using interactive charts
+    
+    5. **Question Explanations & Resources** - Provide AI-generated answer rationales and curated supplementary links tagged by topic
+    
+    This API documentation provides comprehensive details for all endpoints needed to implement these features.
+  version: 1.0.0
+  contact:
+    name: ExamCraft Support
+    email: support@examcraft.com
+    url: https://examcraft.com/support
+
+servers:
+  - url: https://api.examcraft.com/v1
+    description: Production server
+  - url: https://staging-api.examcraft.com/v1
+    description: Staging server
+
+tags:
+  - name: Users
+    description: User Management and Authentication
+  - name: Quizzes
+    description: AI-Generated Practice Quizzes
+  - name: Exams
+    description: Timed Mock Exams
+  - name: Flashcards
+    description: Flashcard-based learning with spaced repetition
+  - name: Analytics
+    description: Performance Analytics Dashboard
+  - name: Explanations
+    description: Question Explanations & Resources
+
+paths:
+  #
+  # User Management
+  #
+  /auth/register:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      description: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input or email already exists
+
+  /auth/login:
+    post:
+      tags:
+        - Users
+      summary: User login
+      description: Authenticate a user and receive an access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+        '404':
+          description: User not found
+
+  /users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      description: Retrieve user profile information
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+          
+    put:
+      tags:
+        - Users
+      summary: Update user profile
+      description: Update user profile information
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+          
+    delete:
+      tags:
+        - Users
+      summary: Delete user account
+      description: Delete a specific user account
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  #
+  # AI-Generated Practice Quizzes
+  #
+  /quizzes/generate:
+    post:
+      tags:
+        - Quizzes
+      summary: Generate a quiz from content
+      description: Create quiz questions from uploaded notes or textbook excerpts using AI
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  format: binary
+                  description: PDF, DOC, or TXT file with study material
+                contentText:
+                  type: string
+                  description: Text content if not uploading a file
+                topic:
+                  type: string
+                  description: Topic of the content
+                questionCount:
+                  type: integer
+                  description: Number of questions to generate
+                  default: 10
+                questionTypes:
+                  type: array
+                  items:
+                    type: string
+                    enum: [multiple-choice, true-false, fill-in-blank]
+                  description: Types of questions to generate
+              oneOf:
+                - required: [content, topic]
+                - required: [contentText, topic]
+      responses:
+        '201':
+          description: Quiz generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+  
+  /quizzes:
+    get:
+      tags:
+        - Quizzes
+      summary: Get all quizzes
+      description: Retrieve all quizzes created by the user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: topic
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QuizSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+  
+  /quizzes/{quizId}:
+    get:
+      tags:
+        - Quizzes
+      summary: Get quiz by ID
+      description: Retrieve a specific quiz by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Quiz not found
+    
+    put:
+      tags:
+        - Quizzes
+      summary: Update quiz
+      description: Update quiz details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuizUpdate'
+      responses:
+        '200':
+          description: Quiz updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quiz'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Quiz not found
+    
+    delete:
+      tags:
+        - Quizzes
+      summary: Delete quiz
+      description: Delete a specific quiz
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Quiz deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Quiz not found
+
+  /quizzes/{quizId}/questions:
+    get:
+      tags:
+        - Quizzes
+      summary: Get quiz questions
+      description: Retrieve all questions for a specific quiz
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Question'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Quiz not found
+          
+  #
+  # Timed Mock Exams
+  #
+  /exams:
+    post:
+      tags:
+        - Exams
+      summary: Create a timed mock exam
+      description: Create a new timed mock exam with customized settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamCreate'
+      responses:
+        '201':
+          description: Exam created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exam'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+    
+    get:
+      tags:
+        - Exams
+      summary: Get all exams
+      description: Retrieve all exams created by the user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: topic
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExamSummary'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /exams/{examId}:
+    get:
+      tags:
+        - Exams
+      summary: Get exam by ID
+      description: Retrieve a specific exam by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exam'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Exam not found
+    
+    put:
+      tags:
+        - Exams
+      summary: Update exam
+      description: Update exam settings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamUpdate'
+      responses:
+        '200':
+          description: Exam updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Exam'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Exam not found
+    
+    delete:
+      tags:
+        - Exams
+      summary: Delete exam
+      description: Delete a specific exam
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Exam deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Exam not found
+
+  /exams/{examId}/start:
+    post:
+      tags:
+        - Exams
+      summary: Start a timed exam
+      description: Begin a timed exam session with randomized questions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Exam session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamSession'
+        '400':
+          description: Invalid input or exam already in progress
+        '401':
+          description: Unauthorized
+        '404':
+          description: Exam not found
+
+  /exams/{examId}/submit:
+    post:
+      tags:
+        - Exams
+      summary: Submit exam answers
+      description: Submit answers for a timed exam, automatically submitted when time expires
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExamSubmission'
+      responses:
+        '200':
+          description: Exam submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamResult'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Exam not found
+
+  /exams/{examId}/results:
+    get:
+      tags:
+        - Exams
+      summary: Get exam results
+      description: Retrieve results of a completed exam
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamResult'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Exam or results not found
+
+  #
+  # Flashcard Mode
+  #
+  /users/{userId}/flashcards:
+    get:
+      tags:
+        - Flashcards
+      summary: Get all flashcards
+      description: Retrieve all flashcards for a user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: topic
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Flashcard'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+    
+    post:
+      tags:
+        - Flashcards
+      summary: Create a new flashcard
+      description: Create a custom flashcard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlashcardCreate'
+      responses:
+        '201':
+          description: Flashcard created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flashcard'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users/{userId}/flashcards/{flashcardId}:
+    get:
+      tags:
+        - Flashcards
+      summary: Get specific flashcard
+      description: Retrieve a specific flashcard by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: flashcardId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flashcard'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Flashcard not found
+    
+    put:
+      tags:
+        - Flashcards
+      summary: Update flashcard
+      description: Update flashcard content or spaced repetition data
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: flashcardId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlashcardUpdate'
+      responses:
+        '200':
+          description: Flashcard updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flashcard'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Flashcard not found
+    
+    delete:
+      tags:
+        - Flashcards
+      summary: Delete flashcard
+      description: Delete a specific flashcard
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: flashcardId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Flashcard deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Flashcard not found
+
+  /users/{userId}/flashcards/from-questions:
+    post:
+      tags:
+        - Flashcards
+      summary: Convert incorrect questions to flashcards
+      description: Create flashcards from incorrectly answered questions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quizId:
+                  type: string
+                  description: ID of the quiz to convert questions from
+                examId:
+                  type: string
+                  description: ID of the exam to convert questions from
+                questionIds:
+                  type: array
+                  items:
+                    type: string
+                  description: Specific question IDs to convert to flashcards
+              oneOf:
+                - required: [quizId]
+                - required: [examId]
+                - required: [questionIds]
+      responses:
+        '201':
+          description: Flashcards created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  flashcards:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Flashcard'
+                  count:
+                    type: integer
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users/{userId}/flashcards/due:
+    get:
+      tags:
+        - Flashcards
+      summary: Get due flashcards
+      description: Get flashcards that are due for review based on spaced repetition algorithm
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: topic
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Flashcard'
+                  count:
+                    type: integer
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+          
+  #
+  # Performance Analytics Dashboard
+  #
+  /users/{userId}/analytics/overview:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics overview
+      description: Retrieve overall performance statistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeFrame
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year, all]
+            default: month
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsOverview'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users/{userId}/analytics/topics:
+    get:
+      tags:
+        - Analytics
+      summary: Get topic analytics
+      description: Retrieve topic-wise performance breakdown
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeFrame
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year, all]
+            default: month
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopicAnalytics'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users/{userId}/analytics/time:
+    get:
+      tags:
+        - Analytics
+      summary: Get time analytics
+      description: Retrieve response time statistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeFrame
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year, all]
+            default: month
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeAnalytics'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users/{userId}/analytics/progress:
+    get:
+      tags:
+        - Analytics
+      summary: Get progress analytics
+      description: Retrieve progress over time
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeFrame
+          in: query
+          schema:
+            type: string
+            enum: [week, month, year, all]
+            default: month
+        - name: interval
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month]
+            default: day
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProgressPoint'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /users/{userId}/analytics/exams/{examId}:
+    get:
+      tags:
+        - Analytics
+      summary: Get exam analytics
+      description: Retrieve analytics for a specific exam
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: examId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExamAnalytics'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User or exam not found
+
+  #
+  # Question Explanations & Resources
+  #
+  /questions/{questionId}/explanation:
+    get:
+      tags:
+        - Explanations
+      summary: Get AI-generated explanation for a question
+      description: Retrieve detailed explanation and rationale for a specific question
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Explanation'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Question not found
+          
+  /questions/{questionId}/resources:
+    get:
+      tags:
+        - Explanations
+      summary: Get related resources for a question
+      description: Retrieve educational resources related to a specific question
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: questionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Question not found
+          
+  /resources:
+    post:
+      tags:
+        - Explanations
+      summary: Add a new resource
+      description: Create a new educational resource
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceCreate'
+      responses:
+        '201':
+          description: Resource created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+          
+  /resources/{resourceId}:
+    put:
+      tags:
+        - Explanations
+      summary: Update a resource
+      description: Update an existing educational resource
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceUpdate'
+      responses:
+        '200':
+          description: Resource updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          description: Invalid input
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+          
+    delete:
+      tags:
+        - Explanations
+      summary: Delete a resource
+      description: Delete a specific educational resource
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Resource deleted
+        '401':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    # User related schemas
+    UserRegister:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "secureP@ssw0rd"
+          minLength: 8
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        institution:
+          type: string
+          example: "University of Technology"
+        field:
+          type: string
+          example: "Computer Science"
+    
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          format: password
+          example: "secureP@ssw0rd"
+    
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        email:
+          type: string
+          example: "user@example.com"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        institution:
+          type: string
+          example: "University of Technology"
+        field:
+          type: string
+          example: "Computer Science"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastLogin:
+          type: string
+          format: date-time
+    
+    UserUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        institution:
+          type: string
+          example: "University of Technology"
+        field:
+          type: string
+          example: "Computer Science"
+        password:
+          type: string
+          format: password
+          example: "newSecureP@ssw0rd"
+          minLength: 8
+    
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ZjdjOGE5ZDNiNGMyYTFlMGY5ZzhoN2kiLCJpYXQiOjE3MTUyMzQ4MzQsImV4cCI6MTcxNTMyMTIzNH0.qMcKxUUjFZDF_5zbXzIQVvPLnVJfEXGo8Q5Js"
+        expiresIn:
+          type: integer
+          example: 86400
+          description: Token expiration time in seconds
+    # Flashcard related schemas
+    Flashcard:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "9d1e2f3g4h5i6j7k8l9m"
+        userId:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        question:
+          type: string
+          example: "What is the vanishing gradient problem?"
+        answer:
+          type: string
+          example: "The vanishing gradient problem is when gradients become extremely small during backpropagation in deep neural networks, making it difficult for earlier layers to learn."
+        topic:
+          type: string
+          example: "Neural Networks"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["deep learning", "backpropagation"]
+        nextReviewDate:
+          type: string
+          format: date-time
+        interval:
+          type: integer
+          example: 3
+          description: Days until next review
+        easeFactor:
+          type: number
+          example: 2.5
+          description: SM-2 ease factor
+        repetitions:
+          type: integer
+          example: 4
+          description: Number of times reviewed
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        sourceQuestionId:
+          type: string
+          example: "5f7d9c0e4d5e3b2a1c0d9e8f"
+          description: Original question ID if converted from quiz/exam
+    
+    FlashcardCreate:
+      type: object
+      required:
+        - question
+        - answer
+      properties:
+        question:
+          type: string
+          example: "What is the vanishing gradient problem?"
+        answer:
+          type: string
+          example: "The vanishing gradient problem is when gradients become extremely small during backpropagation in deep neural networks, making it difficult for earlier layers to learn."
+        topic:
+          type: string
+          example: "Neural Networks"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["deep learning", "backpropagation"]
+    
+    FlashcardUpdate:
+      type: object
+      properties:
+        question:
+          type: string
+          example: "Explain the vanishing gradient problem in deep learning"
+        answer:
+          type: string
+          example: "The vanishing gradient problem occurs when gradients become extremely small during backpropagation in deep neural networks, making it difficult for earlier layers to learn effectively."
+        easeFactor:
+          type: number
+          example: 2.2
+        interval:
+          type: integer
+          example: 5
+        repetitions:
+          type: integer
+          example: 5
+        nextReviewDate:
+          type: string
+          format: date-time
+        topic:
+          type: string
+          example: "Deep Learning"
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["neural networks", "backpropagation", "training"]
+          
+    # Analytics related schemas
+    AnalyticsOverview:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        totalQuizzes:
+          type: integer
+          example: 24
+        totalExams:
+          type: integer
+          example: 8
+        questionsAnswered:
+          type: integer
+          example: 560
+        correctAnswers:
+          type: integer
+          example: 462
+        accuracy:
+          type: number
+          example: 82.5
+          description: Percentage of correct answers
+        averageResponseTime:
+          type: number
+          example: 12.3
+          description: Average time in seconds to answer a question
+        studyTimeThisMonth:
+          type: integer
+          example: 1840
+          description: Study time in minutes
+        flashcardsReviewed:
+          type: integer
+          example: 320
+        flashcardsMastered:
+          type: integer
+          example: 142
+        timeFrame:
+          type: string
+          example: month
+          description: Time frame for the statistics
+    
+    TopicAnalytics:
+      type: object
+      properties:
+        topic:
+          type: string
+          example: "Neural Networks"
+        questionsAnswered:
+          type: integer
+          example: 120
+        correctAnswers:
+          type: integer
+          example: 96
+        accuracy:
+          type: number
+          example: 80.0
+          description: Percentage of correct answers
+        averageResponseTime:
+          type: number
+          example: 14.2
+          description: Average time in seconds to answer a question
+        difficulty:
+          type: number
+          example: 0.65
+          description: Calculated difficulty level (0-1)
+        improvement:
+          type: number
+          example: 8.5
+          description: Percentage improvement from previous period
+    
+    TimeAnalytics:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        averageResponseTime:
+          type: number
+          example: 12.3
+          description: Overall average time in seconds
+        fastestResponseTime:
+          type: number
+          example: 3.2
+          description: Fastest response time in seconds
+        slowestResponseTime:
+          type: number
+          example: 62.5
+          description: Slowest response time in seconds
+        responseTimeByTopic:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+                example: "Neural Networks"
+              averageTime:
+                type: number
+                example: 14.2
+        responseTimeImprovement:
+          type: number
+          example: -2.3
+          description: Change in average response time from previous period (negative is faster)
+        timeFrame:
+          type: string
+          example: month
+          description: Time frame for the statistics
+    
+    ProgressPoint:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2025-05-12"
+        accuracy:
+          type: number
+          example: 82.5
+        questionsAnswered:
+          type: integer
+          example: 40
+        studyTimeMinutes:
+          type: integer
+          example: 85
+    
+    ExamAnalytics:
+      type: object
+      properties:
+        examId:
+          type: string
+          example: "6a8d9c0e5f4g3h2i1j0k"
+        userId:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        score:
+          type: integer
+          example: 85
+        timeTaken:
+          type: integer
+          example: 58
+        completedAt:
+          type: string
+          format: date-time
+        topicPerformance:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+                example: "Neural Networks"
+              questions:
+                type: integer
+                example: 12
+              correctAnswers:
+                type: integer
+                example: 10
+              accuracy:
+                type: number
+                example: 83.3
+        questionTypePerformance:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: "multiple-choice"
+              questions:
+                type: integer
+                example: 30
+              correctAnswers:
+                type: integer
+                example: 26
+              accuracy:
+                type: number
+                example: 86.7
+        averageResponseTime:
+          type: number
+          example: 42.5
+          description: Average time in seconds
+    
+    # Explanation related schemas
+    Explanation:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "7f8e9d0c1b2a3f4e5d6c7b"
+        questionId:
+          type: string
+          example: "5f7d9c0e4d5e3b2a1c0d9e8f"
+        explanation:
+          type: string
+          example: "The Fourier Transform is not an activation function but a mathematical transform used in signal processing. The other options (ReLU, Sigmoid, and Binary Step) are all common neural network activation functions."
+        detailedReasoning:
+          type: string
+          example: "Activation functions determine the output of a neural network node. ReLU (Rectified Linear Unit) outputs the input if positive, otherwise zero. Sigmoid squashes values between 0-1, useful for output layers in binary classification. Binary Step outputs 1 if input exceeds threshold, otherwise 0. The Fourier Transform is unrelated - it decomposes signals into frequency components."
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "8g9h0i1j2k3l4m5n6o"
+        title:
+          type: string
+          example: "Understanding Neural Network Activation Functions"
+        type:
+          type: string
+          enum: [article, video, tutorial, documentation, research-paper]
+          example: "article"
+        url:
+          type: string
+          example: "https://machinelearningmastery.com/activation-functions-in-neural-networks/"
+        description:
+          type: string
+          example: "A comprehensive guide explaining different activation functions and their use cases in neural networks."
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["neural networks", "activation functions", "deep learning"]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          example: "intermediate"
+        rating:
+          type: number
+          example: 4.8
+          description: Community rating from 1-5
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        
+    ResourceCreate:
+      type: object
+      required:
+        - title
+        - url
+        - type
+      properties:
+        title:
+          type: string
+          example: "Understanding Neural Network Activation Functions"
+        type:
+          type: string
+          enum: [article, video, tutorial, documentation, research-paper]
+          example: "article"
+        url:
+          type: string
+          example: "https://machinelearningmastery.com/activation-functions-in-neural-networks/"
+        description:
+          type: string
+          example: "A comprehensive guide explaining different activation functions and their use cases in neural networks."
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["neural networks", "activation functions", "deep learning"]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          example: "intermediate"
+          
+    ResourceUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Complete Guide to Neural Network Activation Functions"
+        type:
+          type: string
+          enum: [article, video, tutorial, documentation, research-paper]
+          example: "article"
+        url:
+          type: string
+          example: "https://machinelearningmastery.com/activation-functions-in-neural-networks/"
+        description:
+          type: string
+          example: "An updated comprehensive guide explaining different activation functions and their use cases in neural networks."
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["neural networks", "activation functions", "deep learning", "machine learning"]
+        difficulty:
+          type: string
+          enum: [beginner, intermediate, advanced]
+          example: "intermediate"
+    
+    # Exam related schemas
+    Exam:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "6a8d9c0e5f4g3h2i1j0k"
+        title:
+          type: string
+          example: "Machine Learning Final Mock Exam"
+        description:
+          type: string
+          example: "Comprehensive mock exam covering all course topics"
+        timeLimit:
+          type: integer
+          example: 60
+          description: Time limit in minutes
+        questionCount:
+          type: integer
+          example: 50
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["Neural Networks", "Decision Trees", "Clustering"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    
+    ExamSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "6a8d9c0e5f4g3h2i1j0k"
+        title:
+          type: string
+          example: "Machine Learning Final Mock Exam"
+        timeLimit:
+          type: integer
+          example: 60
+        questionCount:
+          type: integer
+          example: 50
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["Neural Networks", "Decision Trees", "Clustering"]
+        createdAt:
+          type: string
+          format: date-time
+    
+    ExamCreate:
+      type: object
+      required:
+        - title
+        - timeLimit
+        - questionCount
+      properties:
+        title:
+          type: string
+          example: "Machine Learning Final Mock Exam"
+        description:
+          type: string
+          example: "Comprehensive mock exam covering all course topics"
+        timeLimit:
+          type: integer
+          example: 60
+          description: Time limit in minutes
+        questionCount:
+          type: integer
+          example: 50
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["Neural Networks", "Decision Trees", "Clustering"]
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, mixed]
+          example: mixed
+        quizIds:
+          type: array
+          items:
+            type: string
+          example: ["5f7c8b9e3c4d2a1e0f9g8h7j", "5g8d9c0e5f4g3h2i1j0k"]
+          description: Optional - source quizzes to draw questions from
+    
+    ExamUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Advanced Machine Learning Final Mock Exam"
+        description:
+          type: string
+          example: "Updated comprehensive mock exam covering all course topics"
+        timeLimit:
+          type: integer
+          example: 90
+          description: Time limit in minutes
+        questionCount:
+          type: integer
+          example: 60
+        topics:
+          type: array
+          items:
+            type: string
+          example: ["Neural Networks", "Decision Trees", "Clustering", "Deep Learning"]
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, mixed]
+          example: hard
+    
+    ExamSession:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "7b9e0f1g2h3i4j5k6l"
+        examId:
+          type: string
+          example: "6a8d9c0e5f4g3h2i1j0k"
+        userId:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        timeLimit:
+          type: integer
+          example: 60
+          description: Time limit in minutes
+        questions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                example: "5f7d9c0e4d5e3b2a1c0d9e8f"
+              type:
+                type: string
+                enum: [multiple-choice, true-false, fill-in-blank]
+                example: multiple-choice
+              text:
+                type: string
+                example: "Which of the following is NOT a type of neural network activation function?"
+              options:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: opt1
+                    text:
+                      type: string
+                      example: "ReLU"
+    
+    ExamSubmission:
+      type: object
+      required:
+        - answers
+      properties:
+        answers:
+          type: array
+          items:
+            type: object
+            required:
+              - questionId
+              - answer
+            properties:
+              questionId:
+                type: string
+                example: "5f7d9c0e4d5e3b2a1c0d9e8f"
+              answer:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                example: opt4
+              timeSpent:
+                type: integer
+                example: 45
+                description: Time spent on this question in seconds
+    
+    ExamResult:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "8c0f1g2h3i4j5k6l7m"
+        examId:
+          type: string
+          example: "6a8d9c0e5f4g3h2i1j0k"
+        userId:
+          type: string
+          example: "5f7c8a9d3b4c2a1e0f9g8h7i"
+        score:
+          type: integer
+          example: 85
+          description: Score as a percentage
+        totalQuestions:
+          type: integer
+          example: 50
+        correctAnswers:
+          type: integer
+          example: 42
+        timeTaken:
+          type: integer
+          example: 58
+          description: Time taken in minutes
+        completedAt:
+          type: string
+          format: date-time
+        questionResults:
+          type: array
+          items:
+            type: object
+            properties:
+              questionId:
+                type: string
+                example: "5f7d9c0e4d5e3b2a1c0d9e8f"
+              correct:
+                type: boolean
+                example: true
+              userAnswer:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                example: opt4
+              correctAnswer:
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+                example: opt4
+              timeSpent:
+                type: integer
+                example: 45
+                description: Time spent in seconds
+    
+    # Quiz related schemas
+    Quiz:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "5f7c8b9e3c4d2a1e0f9g8h7j"
+        title:
+          type: string
+          example: "Chapter 5: Neural Networks"
+        description:
+          type: string
+          example: "Quiz on neural networks and deep learning concepts"
+        topic:
+          type: string
+          example: "Neural Networks"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        questionCount:
+          type: integer
+          example: 10
+        questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Question'
+    
+    QuizSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "5f7c8b9e3c4d2a1e0f9g8h7j"
+        title:
+          type: string
+          example: "Chapter 5: Neural Networks"
+        topic:
+          type: string
+          example: "Neural Networks"
+        createdAt:
+          type: string
+          format: date-time
+        questionCount:
+          type: integer
+          example: 10
+    
+    QuizUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Chapter 5: Advanced Neural Networks"
+        description:
+          type: string
+          example: "Updated quiz on neural networks and deep learning concepts"
+        topic:
+          type: string
+          example: "Neural Networks"
+    
+    Question:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "5f7d9c0e4d5e3b2a1c0d9e8f"
+        quizId:
+          type: string
+          example: "5f7c8b9e3c4d2a1e0f9g8h7j"
+        type:
+          type: string
+          enum: [multiple-choice, true-false, fill-in-blank]
+          example: multiple-choice
+        text:
+          type: string
+          example: "Which of the following is NOT a type of neural network activation function?"
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                example: opt1
+              text:
+                type: string
+                example: "ReLU"
+          example:
+            - id: opt1
+              text: "ReLU"
+            - id: opt2
+              text: "Sigmoid"
+            - id: opt3
+              text: "Binary Step"
+            - id: opt4
+              text: "Fourier Transform"
+        correctAnswer:
+          type: string
+          example: opt4
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+          example: medium
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["neural networks", "activation functions"]
+    
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        totalPages:
+          type: integer
+          example: 5
+        totalItems:
+          type: integer
+          example: 42
