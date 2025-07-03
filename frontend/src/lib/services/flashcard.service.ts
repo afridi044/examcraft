@@ -68,7 +68,7 @@ export const flashcardService = {
       user_id: input.userId,
       topic_id: input.topicId,
     };
-    return apiClient.post<Flashcard>('/flashcards/from-question', backendPayload);
+    return apiClient.post<Flashcard>('/flashcards/generate-from-question', backendPayload);
   },
 
   /**

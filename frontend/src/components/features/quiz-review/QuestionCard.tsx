@@ -8,21 +8,21 @@ import type { QuizReviewData } from "@/types";
 interface QuestionCardProps {
   question: QuizReviewData["questions"][0];
   index: number;
-  flashcardState: "idle" | "creating" | "created" | "exists";
-  onGenerateFlashcard: (questionId: string) => void;
+  onCreateFlashcard: (questionId: string) => Promise<void>;
   formatTime: (seconds: number) => string;
   getDifficultyColor: (difficulty?: number) => string;
   getDifficultyLabel: (difficulty?: number) => string;
+  isProcessing?: boolean;
 }
 
 export function QuestionCard({
   question,
   index,
-  flashcardState,
-  onGenerateFlashcard,
+  onCreateFlashcard,
   formatTime,
   getDifficultyColor,
   getDifficultyLabel,
+  isProcessing = false,
 }: QuestionCardProps) {
   const isCorrect = question.user_answer?.is_correct ?? false;
 
@@ -35,22 +35,22 @@ export function QuestionCard({
         duration: 0.3,
       }}
     >
-      <Card className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 border-gray-700/50 p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="premium-glass bg-gradient-to-br from-slate-800/70 to-slate-900/80 border border-slate-600/60 shadow-xl rounded-xl px-5 sm:px-8 py-5 sm:py-5 transition-all duration-200">
         {/* Question Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3 min-w-0 flex-1">
-            <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+        <div className="flex flex-row flex-wrap items-center justify-between mb-1 gap-2 sm:gap-3 mr-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="h-7 w-6 sm:h-7 sm:w-7 bg-gradient-to-br  from-slate-700 to-slate-900 rounded-lg border border-slate-500 flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">
                 {index + 1}
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-base sm:text-lg font-semibold text-white">
+              <h3 className="text-sm sm:text-lg font-semibold text-white mb-0.5 sm:mb-0.5">
                 Question {index + 1}
               </h3>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-xs sm:text-sm space-y-1 sm:space-y-0">
+              <div className="flex flex-row flex-wrap items-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-0.5 text-[0.7rem] sm:text-xs text-gray-400">
                 <span className={getDifficultyColor(question.difficulty)}>
-                  <Target className="h-3 w-3 inline mr-1" />
+                  <Target className="h-3 w-3 inline mr-0.5" />
                   {getDifficultyLabel(question.difficulty)}
                 </span>
                 {question.user_answer?.time_taken_seconds && (
@@ -62,38 +62,34 @@ export function QuestionCard({
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Flashcard Generation Button */}
+          <div className="flex flex-row items-center justify-end gap-2 sm:gap-3 w-auto">
+            {/* Flashcard Status Button */}
             <FlashcardButton
-              state={flashcardState}
-              onClick={() => onGenerateFlashcard(question.question_id)}
+              questionId={question.question_id}
+              exists={question.flashcard_exists}
+              onCreateFlashcard={onCreateFlashcard}
+              isProcessing={isProcessing}
             />
-
             {/* Correct/Incorrect Status */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-end">
               {isCorrect ? (
-                <CheckCircle className="h-6 w-6 text-green-500" />
+                <CheckCircle className="h-10 w-10 text-green-500" />
               ) : (
-                <XCircle className="h-6 w-6 text-red-500" />
+                <XCircle className="h-10 w-10 text-red-500" />
               )}
-              <span
-                className={`font-medium ${isCorrect ? "text-green-400" : "text-red-400"}`}
-              >
-                {isCorrect ? "Correct" : "Incorrect"}
-              </span>
             </div>
           </div>
         </div>
 
         {/* Question Content */}
-        <div className="mb-6">
-          <p className="text-gray-200 text-lg leading-relaxed">
+        <div className="mb-1">
+          <p className="text-gray-200 text-lg sm:text-xl leading-snug font-medium">
             {question.content}
           </p>
         </div>
 
         {/* Answer Options */}
-        <div className="space-y-3 mb-6">
+        <div className="space-y-2 sm:space-y-2 mb-2 mt-1">
           {question.question_options.map((option, optionIndex) => (
             <AnswerOption
               key={option.option_id}
@@ -106,8 +102,8 @@ export function QuestionCard({
 
         {/* Explanation */}
         {question.explanation && (
-          <div className="border-t border-gray-700/50 pt-4">
-            <div className="flex items-center space-x-2 mb-3">
+          <div className="border-t border-gray-700/50 pt-3">
+            <div className="flex items-center space-x-2 mb-2">
               <Lightbulb className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
               <h4 className="text-base sm:text-lg font-semibold text-white">
                 Explanation
@@ -119,7 +115,7 @@ export function QuestionCard({
                 </span>
               )}
             </div>
-            <p className="text-gray-300 leading-relaxed bg-gray-700/30 p-3 sm:p-4 rounded-lg text-sm sm:text-base">
+            <p className="text-gray-300 leading-relaxed bg-gray-700/30 p-2 sm:p-3 rounded-lg text-sm sm:text-base">
               {question.explanation.content}
             </p>
           </div>

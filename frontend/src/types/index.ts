@@ -41,6 +41,7 @@ export interface QuizReviewData {
     content: string;
     question_type: string;
     difficulty?: number;
+    flashcard_exists: boolean;
     question_options: Array<{
       option_id: string;
       content: string;

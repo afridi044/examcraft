@@ -281,3 +281,24 @@ html {
     0 0 0 2px rgba(59, 130, 246, 0.4),
     0 0 20px rgba(59, 130, 246, 0.2);
 }
+
+/* Global custom scrollbar styles for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  background: #1e293b; /* Match dark card background */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;  /* Slightly lighter than background */
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #1e293b;
+}

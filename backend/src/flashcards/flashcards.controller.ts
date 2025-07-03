@@ -34,20 +34,7 @@ export class FlashcardsController {
     return result;
   }
 
-  @Post('from-question')
-  async createFromQuestion(@Body() dto: CreateFlashcardFromQuestionDto) {
-    const result = await this.flashcardsService.createFromQuestion(dto);
-    if (!result.success) {
-      if (
-        result.error &&
-        result.error.toLowerCase().includes('already exists')
-      ) {
-        throw new ConflictException(result.error);
-      }
-      throw new BadRequestException(result.error || 'Failed to create');
-    }
-    return result;
-  }
+
 
   @Get('exists/:userId/:questionId')
   async checkExists(

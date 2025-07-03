@@ -72,50 +72,7 @@ export class FlashcardsService {
     }
   }
 
-  async createFromQuestion(
-    dto: CreateFlashcardFromQuestionDto,
-  ): Promise<ApiResponse<any>> {
-    try {
-      // Check for duplicate flashcard
-      const duplicateCheck =
-        await this.databaseService.getFlashcardByUserAndSourceQuestion(
-          dto.user_id,
-          dto.question_id,
-        );
-      if (duplicateCheck.success && duplicateCheck.data) {
-        return {
-          success: false,
-          data: null,
-          error: 'Flashcard already exists',
-        };
-      } else if (!duplicateCheck.success) {
-        return duplicateCheck;
-      }
 
-      const qaRes = await this.databaseService.getQuestionWithCorrectAnswer(
-        dto.question_id,
-      );
-      if (!qaRes.success || !qaRes.data) return qaRes;
-
-      const flashInput: CreateFlashcardInput = {
-        user_id: dto.user_id,
-        question: qaRes.data.question.content,
-        answer: qaRes.data.answer,
-        topic_id: qaRes.data.question.topic_id ?? undefined,
-        source_question_id: dto.question_id,
-        tags: ['from-question'],
-      };
-
-      return await this.databaseService.createFlashcard(flashInput);
-    } catch (error) {
-      this.logger.error('createFromQuestion failed', error);
-      return {
-        success: false,
-        data: null,
-        error: error instanceof Error ? error.message : 'Failed',
-      };
-    }
-  }
 
   async hasFlashcard(userId: string, questionId: string): Promise<boolean> {
     const result =

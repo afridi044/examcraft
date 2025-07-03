@@ -1,57 +1,70 @@
 import { Button } from "@/components/ui/button";
-import { Check, CreditCard } from "lucide-react";
+import { BookOpen, Plus, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface FlashcardButtonProps {
-  state: "idle" | "creating" | "created" | "exists";
-  onClick: () => void;
+  questionId: string;
+  exists: boolean;
+  isProcessing?: boolean;
+  onCreateFlashcard: (questionId: string) => Promise<void>;
 }
 
-const STATE_CONFIG = {
-  idle: {
-    className: "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg hover:shadow-indigo-500/25 border-0",
-    icon: CreditCard,
-    text: "Flashcard",
-    title: "Create flashcard from this question",
-  },
-  creating: {
-    className: "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/25 border-0 cursor-not-allowed",
-    icon: null,
-    text: "Creating...",
-    title: "Creating flashcard...",
-  },
-  created: {
-    className: "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25 border-0",
-    icon: Check,
-    text: "Created!",
-    title: "Flashcard created successfully!",
-  },
-  exists: {
-    className: "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 border-0",
-    icon: Check,
-    text: "Exists",
-    title: "Flashcard already exists for this question",
-  },
-};
+export function FlashcardButton({ questionId, exists, isProcessing = false, onCreateFlashcard }: FlashcardButtonProps) {
+  const [isCreating, setIsCreating] = useState(false);
 
-export function FlashcardButton({ state, onClick }: FlashcardButtonProps) {
-  const config = STATE_CONFIG[state];
-  const IconComponent = config.icon;
+  const handleClick = async () => {
+    if (exists || isCreating || isProcessing) return;
+    
+    setIsCreating(true);
+    try {
+      await onCreateFlashcard(questionId);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  if (exists) {
+    return (
+      <Button
+        size="sm"
+        onClick={() => {}}
+        className="relative overflow-hidden rounded-full font-medium text-[0.7rem] sm:text-sm h-5 w-5 sm:h-10 sm:w-auto p-0 sm:px-5 bg-gradient-to-r from-green-600 to-emerald-600 text-white border border-green-400/30 cursor-not-allowed"
+        title="Flashcard exists for this question"
+      >
+        <div className="flex items-center justify-center sm:justify-start gap-0 sm:gap-2">
+          <BookOpen className="h-6.5 w-6.5 sm:h-5 sm:w-5" />
+          <span className="hidden sm:inline font-semibold ml-2">Created</span>
+        </div>
+      </Button>
+    );
+  }
+
+  if (isCreating || isProcessing) {
+    return (
+      <Button
+        size="sm"
+        disabled
+        className="relative overflow-hidden rounded-full font-medium text-[0.7rem] sm:text-sm h-5 w-5 sm:h-10 sm:w-auto p-0 sm:px-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg backdrop-blur-sm border border-blue-400/30 cursor-not-allowed opacity-80"
+        title="Creating flashcard..."
+      >
+        <div className="flex items-center justify-center sm:justify-start gap-0 sm:gap-2">
+          <Loader2 className="h-6.5 w-6.5 sm:h-5 sm:w-5 animate-spin" />
+          <span className="hidden sm:inline font-semibold ml-2">Creating...</span>
+        </div>
+      </Button>
+    );
+  }
 
   return (
     <Button
       size="sm"
-      onClick={onClick}
-      disabled={state === "creating"}
-      className={`relative overflow-hidden transition-all duration-300 font-medium text-xs sm:text-sm px-2 sm:px-3 ${config.className}`}
-      title={config.title}
+      onClick={handleClick}
+      className="relative overflow-hidden rounded-full font-medium text-[0.7rem] sm:text-sm h-5 w-5 sm:h-10 sm:w-auto p-0 sm:px-5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl backdrop-blur-sm border border-indigo-400/30 hover:scale-105 transition-all duration-200"
+      title="Create flashcard from this question"
     >
-      <div className="flex items-center space-x-1 sm:space-x-2">
-        {state === "creating" ? (
-          <div className="animate-spin h-3 w-3 sm:h-4 sm:w-4 border-2 border-white/30 border-t-white rounded-full" />
-        ) : IconComponent ? (
-          <IconComponent className="h-3 w-3 sm:h-4 sm:w-4" />
-        ) : null}
-        <span className="hidden sm:inline">{config.text}</span>
+      <div className="flex items-center justify-center sm:justify-start gap-0 sm:gap-2">
+        <Plus className="h-6.5 w-6.5 sm:h-5 sm:w-5" />
+        <span className="hidden sm:inline font-semibold ml-2">Flashcard</span>
       </div>
     </Button>
   );

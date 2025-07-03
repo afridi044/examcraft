@@ -9,38 +9,39 @@ interface PerformanceSummaryProps {
 
 export function PerformanceSummary({ stats, formatTime }: PerformanceSummaryProps) {
   return (
-    <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 border-gray-700/50 p-4 sm:p-6 lg:p-8 shadow-xl">
-      <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-        <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500" />
-        <h2 className="text-lg sm:text-xl font-bold text-white">
+    <Card className="premium-glass bg-gradient-to-br from-slate-800/70 to-slate-900/80 border border-slate-600/60 shadow-2xl p-3 sm:p-4 rounded-2xl">
+      {/* Heading Container */}
+      <div className="flex flex-row items-center gap-4 ml-4 text-left">
+        <Trophy className="h-5 w-5 text-yellow-400 drop-shadow" />
+        <h2 className="text-base sm:text-lg font-semibold text-white tracking-tight">
           Performance Summary
         </h2>
       </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* Stats Container */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 justify-items-center">
         <div className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">
+          <div className="text-xl sm:text-2xl font-bold text-green-400 mb-1">
             {stats.percentage}%
           </div>
-          <div className="text-gray-400 text-sm">Overall Score</div>
+          <div className="text-gray-400 text-xs sm:text-sm">Overall Score</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2">
+          <div className="text-xl sm:text-2xl font-bold text-blue-400 mb-1">
             {stats.correct_answers}/{stats.total_questions}
           </div>
-          <div className="text-gray-400 text-sm">Correct Answers</div>
+          <div className="text-gray-400 text-xs sm:text-sm">Correct Answers</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-2">
+          <div className="text-xl sm:text-2xl font-bold text-purple-400 mb-1">
             {stats.total_questions}
           </div>
-          <div className="text-gray-400 text-sm">Total Questions</div>
+          <div className="text-gray-400 text-xs sm:text-sm">Total Questions</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl sm:text-3xl font-bold text-orange-400 mb-2">
+          <div className="text-xl sm:text-2xl font-bold text-orange-400 mb-1">
             {formatTime(stats.total_time)}
           </div>
-          <div className="text-gray-400 text-sm">Total Time</div>
+          <div className="text-gray-400 text-xs sm:text-sm">Total Time</div>
         </div>
       </div>
     </Card>

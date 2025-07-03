@@ -382,11 +382,28 @@ export class DatabaseService implements OnModuleInit {
       });
 
       // ------------------------------------------------
-      // 3. Get explanations for questions
+      // 3. Get question IDs for batch operations
       // ------------------------------------------------
       const questionIds = (quizData?.quiz_questions || []).map(
         (q) => q.question_id,
       );
+
+      // ------------------------------------------------
+      // 4. Get flashcard status for questions
+      // ------------------------------------------------
+      const flashcardMap = new Map<string, boolean>();
+      if (questionIds.length) {
+        const flashcardResponse = await this.getFlashcardsByUserAndQuestionIds(userId, questionIds);
+        if (flashcardResponse.success && flashcardResponse.data) {
+          flashcardResponse.data.forEach((questionId) => {
+            flashcardMap.set(questionId, true);
+          });
+        }
+      }
+
+      // ------------------------------------------------
+      // 5. Get explanations for questions
+      // ------------------------------------------------
 
       const explanationMap = new Map<string, ExplanationRow>();
       if (questionIds.length) {
@@ -411,7 +428,7 @@ export class DatabaseService implements OnModuleInit {
       }
 
       // ------------------------------------------------
-      // 4. Assemble questions array
+      // 6. Assemble questions array
       // ------------------------------------------------
       const questions = (quizData?.quiz_questions || [])
         .sort((a, b) => a.question_order - b.question_order)
@@ -419,6 +436,7 @@ export class DatabaseService implements OnModuleInit {
           const q = qq.questions;
           const userAnswer = answerMap.get(q.question_id) || null;
           const explanation = explanationMap.get(q.question_id) || null;
+          const flashcardExists = flashcardMap.get(q.question_id) || false;
 
           return {
             question_id: q.question_id,
@@ -426,6 +444,7 @@ export class DatabaseService implements OnModuleInit {
             question_type: q.question_type,
             difficulty: q.difficulty,
             question_options: q.question_options || [],
+            flashcard_exists: flashcardExists,
             explanation: explanation
               ? {
                   content: explanation.content,
@@ -444,7 +463,7 @@ export class DatabaseService implements OnModuleInit {
         });
 
       // ------------------------------------------------
-      // 5. Compute stats
+      // 7. Compute stats
       // ------------------------------------------------
       const totalQuestions = questions.length;
       const correctAnswers = questions.filter(
@@ -460,7 +479,7 @@ export class DatabaseService implements OnModuleInit {
       );
 
       // ------------------------------------------------
-      // 6. Build response
+      // 8. Build response
       // ------------------------------------------------
       const reviewPayload = {
         quiz: {

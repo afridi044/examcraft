@@ -1,36 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   BookOpen,
   RotateCcw,
+  XCircle,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PremiumButton } from "@/components/ui/PremiumButton";
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { QuestionCard } from "@/components/features/quiz-review/QuestionCard";
 import { PerformanceSummary } from "@/components/features/quiz-review/PerformanceSummary";
-import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useCurrentUser } from "@/hooks/useDatabase";
-import { useBackendQuizReview } from "@/hooks/useBackendQuiz";
-import { flashcardService } from "@/lib/services";
+import { useBackendQuizReview, useInvalidateBackendQuiz } from "@/hooks/useBackendQuiz";
 import { formatTime, getDifficultyColor, getDifficultyLabel } from "@/lib/utils/quiz-review";
-import toast from "react-hot-toast";
+import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import type { QuizReviewData } from "@/types";
-
-
+import { flashcardService } from "@/lib/services";
+import toast from "react-hot-toast";
+import { useSimpleAuth } from "@/hooks/useSimpleAuth";
 
 export default function QuizReviewPage() {
-  const params = useParams();
+  const { user, loading: authLoading } = useSimpleAuth();
   const router = useRouter();
-  const { user, loading: authLoading } = useBackendAuth();
+  const params = useParams();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-  const [flashcardStates, setFlashcardStates] = useState<
-    Record<string, "idle" | "creating" | "created" | "exists">
-  >({});
-
+  // Flashcard status is displayed from backend data with creation functionality
+  const [processingQuestionId, setProcessingQuestionId] = useState<string | null>(null);
+  const invalidateQuiz = useInvalidateBackendQuiz();
 
   const quizId = params.quizId as string;
 
@@ -43,6 +43,13 @@ export default function QuizReviewPage() {
 
   const error = reviewError?.message || null;
 
+  // Clear processing state when new data is loaded
+  useEffect(() => {
+    if (reviewData?.questions) {
+      setProcessingQuestionId(null);
+    }
+  }, [reviewData?.questions]);
+
   // FIXED: Redirect to landing page if not authenticated and not loading
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,18 +57,20 @@ export default function QuizReviewPage() {
     }
   }, [authLoading, user]); // Removed router from dependencies to prevent unnecessary re-runs
 
+  // Improved loading logic - wait for all required data
+  const showFullLoadingScreen = authLoading || userLoading || loading || !currentUser?.user_id || !reviewData;
 
-
-  const generateFlashcard = async (questionId: string) => {
+  // Flashcard creation function
+  const createFlashcard = async (questionId: string): Promise<void> => {
     if (!currentUser) {
       toast.error("Please log in to create flashcards");
       return;
     }
 
-    setFlashcardStates((prev) => ({ ...prev, [questionId]: "creating" }));
+    // Set processing state
+    setProcessingQuestionId(questionId);
 
     try {
-      // MIGRATED: Use backend flashcard service instead of frontend API route
       const response = await flashcardService.createFromQuestion({
         questionId: questionId,
         userId: currentUser.user_id,
@@ -69,32 +78,21 @@ export default function QuizReviewPage() {
       });
 
       if (response.success) {
-        setFlashcardStates((prev) => ({ ...prev, [questionId]: "created" }));
         toast.success("Flashcard created successfully!");
-
-        // Reset to idle after 3 seconds to show the success state briefly
-        setTimeout(() => {
-          setFlashcardStates((prev) => ({ ...prev, [questionId]: "idle" }));
-        }, 3000);
+        // Invalidate the quiz review cache to get updated flashcard status from backend
+        invalidateQuiz(currentUser.user_id, quizId);
+        // Keep processing state until new data is loaded (handled in useEffect above)
       } else {
-        // Check if it's a conflict (flashcard already exists)
-        if (response.error?.includes("already exists") || response.error?.includes("duplicate")) {
-          setFlashcardStates((prev) => ({ ...prev, [questionId]: "exists" }));
-          toast("Flashcard already exists for this question");
-        } else {
-          throw new Error(response.error || "Failed to create flashcard");
-        }
+        throw new Error(response.error || "Failed to create flashcard");
       }
     } catch (error) {
-      setFlashcardStates((prev) => ({ ...prev, [questionId]: "idle" }));
       toast.error(
         error instanceof Error ? error.message : "Failed to create flashcard"
       );
+      // Clear processing state on error
+      setProcessingQuestionId(null);
     }
   };
-
-  // Simplified loading logic
-  const showFullLoadingScreen = authLoading || userLoading || loading;
 
   if (showFullLoadingScreen) {
     return (
@@ -117,7 +115,7 @@ export default function QuizReviewPage() {
     );
   }
 
-  if (error || !reviewData) {
+  if (error || (!loading && !reviewData)) {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
@@ -143,94 +141,49 @@ export default function QuizReviewPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto p-4 sm:p-8 lg:p-20 space-y-6 sm:space-y-8">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex items-start space-x-3 sm:space-x-4">
-            <Button
-              onClick={() => router.push("/dashboard")}
-              variant="outline"
-              size="icon"
-              className="border-gray-600/50 text-gray-400 hover:border-purple-400 hover:text-purple-400 hover:bg-purple-500/10 transition-all duration-200 flex-shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
-                Quiz Review: {reviewData.quiz.title}
-              </h1>
-              <p className="text-gray-400 text-sm sm:text-base lg:text-lg">
-                {reviewData.quiz.description || "Review your quiz performance"}
-              </p>
-              {reviewData.quiz.topic && (
-                <p className="text-xs sm:text-sm text-purple-400 mt-1 font-medium">
-                  Topic: {reviewData.quiz.topic.name}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="flex space-x-3">
-            <Button
-              onClick={() => router.push(`/quiz/take/${quizId}`)}
-
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-medium px-4 sm:px-6 py-2 shadow-lg hover:shadow-purple-500/25 transition-all duration-200 text-sm sm:text-base min-h-[44px]"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Retake</span> Quiz
-            </Button>
-          </div>
-        </div>
+        <DashboardHeader
+          title={`Quiz Review: ${reviewData.quiz.title}`}
+          subtitle={reviewData.quiz.topic?.name || reviewData.quiz.description || "Review your quiz performance"}
+          iconLeft={<span role="img" aria-label="Memo">📝</span>}
+          iconAfterSubtitle={<Star className="h-5 w-5 text-yellow-300 ml-1" />}
+        />
 
         {/* Performance Summary */}
         <PerformanceSummary stats={reviewData.quiz_stats} formatTime={formatTime} />
 
+        {/* Centered Retake Button */}
+        <div className="flex justify-center pt-4">
+          <PremiumButton
+            onClick={() => router.push(`/quiz/take/${quizId}`)}
+            className="text-sm sm:text-base min-h-[40px]"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Retake</span> Quiz
+          </PremiumButton>
+        </div>
+
         {/* Questions Review */}
         <div className="space-y-4 sm:space-y-6">
-          <div className="flex items-center space-x-3">
-            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
-            <h2 className="text-lg sm:text-xl font-bold text-white">
-              Question Review
-            </h2>
-          </div>
+          <DashboardHeader
+            title="Question Review"
+            subtitle=""
+            iconLeft={<BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />}
+          />
 
-          {reviewData.questions.map((question, index) => (
+          {reviewData.questions.map((question: QuizReviewData['questions'][number], index: number) => (
             <QuestionCard
               key={question.question_id}
               question={question}
               index={index}
-              flashcardState={flashcardStates[question.question_id] || "idle"}
-              onGenerateFlashcard={generateFlashcard}
+              onCreateFlashcard={createFlashcard}
               formatTime={formatTime}
               getDifficultyColor={getDifficultyColor}
               getDifficultyLabel={getDifficultyLabel}
+              isProcessing={processingQuestionId === question.question_id}
             />
           ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 pt-8 sm:pt-12">
-          <Button
-            onClick={() => router.push("/dashboard")}
-            className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium px-6 sm:px-8 py-3 shadow-lg hover:shadow-purple-500/25 transition-all duration-200 w-full sm:w-auto min-h-[48px]"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Return to Dashboard
-          </Button>
-          <Button
-            onClick={() => router.push("/quiz/create")}
-            variant="outline"
-            className="border-gray-600/50 text-gray-300 hover:border-blue-400 hover:text-blue-400 hover:bg-blue-500/10 font-medium px-6 sm:px-8 py-3 transition-all duration-200 w-full sm:w-auto min-h-[48px]"
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            Create New Quiz
-          </Button>
-          <Button
-            onClick={() => router.push(`/quiz/take/${quizId}`)}
-            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-medium px-6 sm:px-8 py-3 shadow-lg hover:shadow-blue-500/25 transition-all duration-200 w-full sm:w-auto min-h-[48px]"
-          >
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Retake Quiz
-          </Button>
         </div>
       </div>
     </DashboardLayout>

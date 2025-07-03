@@ -30,15 +30,15 @@ export function AnswerOption({ option, optionIndex, isUserSelected }: AnswerOpti
       : "border-gray-500";
 
   return (
-    <div className={`p-4 rounded-lg border ${optionStyle}`}>
-      <div className="flex items-center space-x-3">
-        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${borderColor}`}>
+    <div className={`p-2.5 rounded-lg border ${optionStyle}`}>
+      <div className="flex items-center space-x-2.5">
+        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${borderColor}`}>
           {isCorrectOption ? (
-            <CheckCircle className="h-4 w-4 text-green-500" />
+            <CheckCircle className="h-3.5 w-3.5 text-green-500" />
           ) : isUserSelected ? (
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-3.5 w-3.5 text-red-500" />
           ) : (
-            <span className="text-gray-400 text-sm font-medium">
+            <span className="text-gray-400 text-xs font-medium">
               {String.fromCharCode(65 + optionIndex)}
             </span>
           )}
