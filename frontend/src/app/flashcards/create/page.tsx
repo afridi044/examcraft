@@ -110,7 +110,7 @@ export default function CreateFlashcardPage() {
   // Set initial topic if preselected
   useEffect(() => {
     if (preselectedTopicId && topics.length > 0) {
-      const selectedTopic = topics.find(t => t.topic_id === preselectedTopicId);
+      const selectedTopic = topics.find((t: any) => t.topic_id === preselectedTopicId);
       if (selectedTopic && !form.topic_id) {
         setForm(prev => ({ ...prev, topic_id: preselectedTopicId }));
       }
@@ -128,7 +128,7 @@ export default function CreateFlashcardPage() {
 
   const getTopicName = () => {
     if (form.topic_id) {
-      return topics?.find(t => t.topic_id === form.topic_id)?.name || "";
+      return topics?.find((t: any) => t.topic_id === form.topic_id)?.name || "";
     }
     return form.custom_topic.trim();
   };
@@ -198,7 +198,7 @@ export default function CreateFlashcardPage() {
   };
 
   // React Select options and styling
-  const topicOptions = topics.map(topic => ({
+  const topicOptions = topics.map((topic: any) => ({
     value: topic.topic_id,
     label: topic.name,
     icon: <BookOpen className="w-4 h-4" />
@@ -272,8 +272,8 @@ export default function CreateFlashcardPage() {
   if (generatedFlashcards) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto p-4 sm:p-8 lg:p-20 space-y-6 sm:space-y-8">
-          <div className="text-center space-y-6 sm:space-y-8">
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
+          <div className="text-center space-y-4 sm:space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-center space-x-3">
                 <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
@@ -288,7 +288,7 @@ export default function CreateFlashcardPage() {
               </p>
             </div>
 
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
+            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 max-w-2xl mx-auto">
               <div className="space-y-4 sm:space-y-6">
                 <div className="text-center space-y-3">
                   <h2 className="text-xl sm:text-2xl font-bold text-white">
@@ -356,14 +356,14 @@ export default function CreateFlashcardPage() {
           colors={['#3b82f6', '#06b6d4', '#10b981', '#8b5cf6', '#f59e0b']}
         />
       )}
-      <div className="max-w-5xl mx-auto p-4 sm:p-8 lg:p-20 space-y-6 sm:space-y-8">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
         {/* Header */}
         <motion.div
           ref={headerRef}
           initial={{ opacity: 0, y: 30 }}
           animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="text-center space-y-4"
+          className="text-center space-y-2"
         >
           <motion.div 
             className="flex items-center justify-center space-x-3"
@@ -385,10 +385,10 @@ export default function CreateFlashcardPage() {
             </h1>
           </motion.div>
           <motion.p 
-            className="text-gray-400 max-w-2xl mx-auto px-4 text-sm sm:text-base"
+            className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
             initial={{ opacity: 0 }}
             animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
             Create personalized flashcards with AI. Provide your topic and content, and our AI will generate effective study materials optimized for active recall.
           </motion.p>
@@ -399,16 +399,13 @@ export default function CreateFlashcardPage() {
         {/* Main Form */}
         <motion.div
           ref={formRef}
-          initial={{ opacity: 0, y: 50 }}
-          animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          initial={{ opacity: 0, y: 30 }}
+          animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <motion.div
-            whileHover={{ y: -5, boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-6 lg:p-8 backdrop-blur-sm">
-              <div className="space-y-6 sm:space-y-8">
+          <div>
+            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
+              <div className="space-y-4 sm:space-y-6">
               {/* Topic Information */}
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex items-center space-x-3 mb-4 sm:mb-6">
@@ -431,7 +428,7 @@ export default function CreateFlashcardPage() {
                       <Select
                         id="topic"
                         options={topicOptions}
-                        value={topicOptions.find(option => option.value === form.topic_id) || null}
+                        value={topicOptions.find((option: any) => option.value === form.topic_id) || null}
                         onChange={(selectedOption) => {
                           handleTopicSelection(selectedOption?.value || "");
                         }}
@@ -446,10 +443,7 @@ export default function CreateFlashcardPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
-                      <motion.div
-                        whileFocus={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                      >
+                      <div>
                         <Input
                           id="custom_topic"
                           value={form.custom_topic}
@@ -458,7 +452,7 @@ export default function CreateFlashcardPage() {
                           className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200"
                           disabled={!!form.topic_id}
                         />
-                      </motion.div>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -522,14 +516,10 @@ export default function CreateFlashcardPage() {
                     transition={{ delay: 0.6, duration: 0.6 }}
                   >
                     <Label htmlFor="num_flashcards" className="text-gray-300 flex items-center space-x-2">
-                      <Layers className="w-4 h-4" />
+                      <Layers className="w-4 h-4 " />
                       <span>Number of Flashcards (1-50)</span>
                     </Label>
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileFocus={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
+                    <div className="py-2">
                       <NumericFormat
                         id="num_flashcards"
                         value={form.num_flashcards}
@@ -551,7 +541,7 @@ export default function CreateFlashcardPage() {
                         className="bg-gray-700/50 border-gray-600 text-white min-h-[44px] text-center font-medium text-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500/50"
                         placeholder="10"
                       />
-                    </motion.div>
+                    </div>
                   </motion.div>
                 </motion.div>
               </div>
@@ -599,11 +589,7 @@ export default function CreateFlashcardPage() {
                 animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ delay: 0.8, duration: 0.6 }}
               >
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
+                <div>
                   <Button
                     onClick={handleGenerateFlashcards}
                     disabled={isGenerating || !currentUser}
@@ -634,22 +620,19 @@ export default function CreateFlashcardPage() {
                           exit={{ opacity: 0, scale: 0.8 }}
                           className="flex items-center space-x-2"
                         >
-                          <motion.div
-                            whileHover={{ rotate: [0, -10, 10, 0] }}
-                            transition={{ duration: 0.5 }}
-                          >
+                          <div>
                             <Sparkles className="h-5 w-5" />
-                          </motion.div>
+                          </div>
                           <span>Generate AI Flashcards</span>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </Button>
-                </motion.div>
+                </div>
               </motion.div>
             </div>
           </Card>
-        </motion.div>
+        </div>
       </motion.div>
 
         {/* Tips Card */}
@@ -659,22 +642,14 @@ export default function CreateFlashcardPage() {
           animate={tipsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8, delay: 0.4 }}
         >
-          <motion.div
-            whileHover={{ scale: 1.02, y: -5 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
+          <div>
             <Card className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-teal-500/20 p-4 sm:p-6 backdrop-blur-sm">
               <div className="flex items-start space-x-4">
-                <motion.div 
+                <div 
                   className="h-8 w-8 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1"
-                  whileHover={{ 
-                    rotate: [0, -10, 10, 0],
-                    boxShadow: "0 10px 25px -5px rgba(20, 184, 166, 0.4)"
-                  }}
-                  transition={{ duration: 0.6 }}
                 >
                   <Lightbulb className="h-4 w-4 text-white" />
-                </motion.div>
+                </div>
                 <div className="space-y-2">
                   <motion.h3 
                     className="text-base sm:text-lg font-bold text-teal-300 flex items-center space-x-2"
@@ -712,7 +687,7 @@ export default function CreateFlashcardPage() {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </div>
         </motion.div>
       </div>
     </DashboardLayout>

@@ -16,7 +16,14 @@ import {
 import type { Tables } from '../types/supabase.generated';
 import { UpdateFlashcardDto } from './dto/update-flashcard.dto';
 
-type FlashcardRow = Tables<'flashcards'>;
+type FlashcardRow = Tables<'flashcards'> & {
+  topic?: {
+    topic_id: string;
+    name: string;
+    description: string | null;
+    parent_topic_id: string | null;
+  };
+};
 
 @Injectable()
 export class FlashcardsService {
@@ -343,8 +350,10 @@ export class FlashcardsService {
       // Shuffle the cards
       const shuffledCards = flashcards.sort(() => Math.random() - 0.5);
 
-      // Get topic name (simplified - we could make this more robust)
-      const topicName = shuffledCards[0]?.topic_id ? 'Study Topic' : 'General';
+      // Get topic name from the first card's topic relation
+      this.logger.log(`🔍 First card topic data:`, JSON.stringify(shuffledCards[0]?.topic, null, 2));
+      const topicName = shuffledCards[0]?.topic?.name || 'General';
+      this.logger.log(`📝 Extracted topic name: ${topicName}`);
 
       const sessionId = `session_${Date.now()}_${dto.user_id}`;
 

@@ -15,6 +15,8 @@ import {
 } from "@/hooks/useDatabase";
 import { quizService } from "@/lib/services";
 import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
+import { FormButton } from "@/components/ui/form-components";
 import {
   Brain,
   Loader2,
@@ -25,8 +27,10 @@ import {
   Users,
   FileText,
   Zap,
+  Star,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import Confetti from "react-confetti";
 
 interface QuizForm {
   title: string;
@@ -62,8 +66,13 @@ export default function CreateQuizPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useBackendAuth();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-  const { data: topics = [], isLoading: topicsLoading } = useTopics();
+  const { data: topics = [], isLoading: topicsLoading } = useTopics() as { data: Array<{ topic_id: string; name: string }>, isLoading: boolean };
   const invalidateUserData = useInvalidateUserData();
+
+  // Intersection observer for scroll animations
+  const [headerRef, headerInView] = useInView({ threshold: 0.1, triggerOnce: true });
+  const [formRef, formInView] = useInView({ threshold: 0.1, triggerOnce: true });
+  const [tipsRef, tipsInView] = useInView({ threshold: 0.1, triggerOnce: true });
 
   const [form, setForm] = useState<QuizForm>(DEFAULT_FORM);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -72,6 +81,18 @@ export default function CreateQuizPage() {
     title: string;
     num_questions: number;
   } | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+
+  // Window size for confetti
+  useEffect(() => {
+    const updateWindowSize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateWindowSize();
+    window.addEventListener('resize', updateWindowSize);
+    return () => window.removeEventListener('resize', updateWindowSize);
+  }, []);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -109,7 +130,7 @@ export default function CreateQuizPage() {
     setIsGenerating(true);
     try {
       const topic = form.topic_id
-        ? topics?.find(t => t.topic_id === form.topic_id)?.name || form.custom_topic
+        ? topics?.find((t: { topic_id: string; name: string }) => t.topic_id === form.topic_id)?.name || form.custom_topic
         : form.custom_topic;
 
       const response = await quizService.generateQuiz({
@@ -124,7 +145,8 @@ export default function CreateQuizPage() {
       }
 
       toast.success("Quiz generated successfully!");
-      
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
       // Invalidate cache for real-time updates
       invalidateUserData(currentUser.user_id);
 
@@ -179,74 +201,100 @@ export default function CreateQuizPage() {
   if (generatedQuiz) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-20 space-y-6 sm:space-y-8">
+        {showConfetti && (
+          <Confetti
+            width={windowSize.width}
+            height={windowSize.height}
+            recycle={false}
+            numberOfPieces={200}
+            colors={['#a21caf', '#f472b6', '#6366f1', '#f59e42', '#10b981']}
+          />
+        )}
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-6 sm:space-y-8"
+            ref={headerRef}
+            initial={{ opacity: 0, y: 30 }}
+            animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-center space-y-2"
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-center space-x-3">
-                <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
-                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-                </div>
-              </div>
+            <motion.div 
+              className="flex items-center justify-center space-x-3"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <motion.div 
+                className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30"
+                whileHover={{ 
+                  boxShadow: "0 20px 25px -5px rgba(16, 185, 129, 0.4)",
+                  rotate: [0, -10, 10, 0]
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </motion.div>
               <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
                 Quiz Generated Successfully!
               </h1>
-              <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base px-4">
-                Your AI-powered quiz has been created and is ready to take.
-              </p>
-            </div>
+            </motion.div>
+            <motion.p 
+              className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
+              initial={{ opacity: 0 }}
+              animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              Your AI-powered quiz has been created and is ready to take.
+            </motion.p>
+          </motion.div>
 
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
-              <div className="space-y-4 sm:space-y-6">
-                <div className="text-center space-y-3">
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">
-                    {generatedQuiz.title}
-                  </h2>
-                  <div className="flex items-center justify-center space-x-4 sm:space-x-6 text-gray-400 text-sm sm:text-base">
-                    <div className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4" />
-                      <span>{generatedQuiz.num_questions} Questions</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4" />
-                      <span>~{Math.ceil(generatedQuiz.num_questions * 1.5)} min</span>
-                    </div>
+          <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 max-w-2xl mx-auto">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="text-center space-y-3">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">
+                  {generatedQuiz.title}
+                </h2>
+                <div className="flex items-center justify-center space-x-4 sm:space-x-6 text-gray-400 text-sm sm:text-base">
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4" />
+                    <span>{generatedQuiz.num_questions} Questions</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4" />
+                    <span>~{Math.ceil(generatedQuiz.num_questions * 1.5)} min</span>
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-                    <Button
-                      onClick={() => router.push(`/quiz/take/${generatedQuiz.quiz_id}`)}
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 font-medium shadow-lg hover:shadow-green-500/25 transition-all duration-200"
-                    >
-                      Take Quiz Now
-                    </Button>
-                    <Button
-                      onClick={navigateToDashboard}
-                      variant="outline"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700/50 px-6 py-3"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Return to Dashboard
-                    </Button>
-                  </div>
-
+              <div className="space-y-4">
+                <Button
+                  onClick={() => router.push(`/quiz/take/${generatedQuiz.quiz_id}`)}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-medium py-3 text-base sm:text-lg min-h-[44px] shadow-lg hover:shadow-green-500/25 transition-all duration-200"
+                >
+                  <Zap className="h-5 w-5 mr-2" />
+                  Take Quiz Now
+                </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Button
+                    onClick={navigateToDashboard}
+                    variant="outline"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[44px]"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Return to</span> Dashboard
+                  </Button>
                   <Button
                     onClick={resetForm}
                     variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700/50"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[44px]"
                   >
                     <Brain className="h-4 w-4 mr-2" />
-                    Create Another Quiz
+                    <span className="hidden sm:inline">Create</span> More
+                    <span className="hidden sm:inline"> Quizzes</span>
                   </Button>
                 </div>
               </div>
-            </Card>
-          </motion.div>
+            </div>
+          </Card>
         </div>
       </DashboardLayout>
     );
@@ -255,137 +303,186 @@ export default function CreateQuizPage() {
   // Main form
   return (
     <DashboardLayout>
-      <div className="container mx-auto px-6 py-6">
-        <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-4"
+      {showConfetti && (
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={200}
+          colors={['#a21caf', '#f472b6', '#6366f1', '#f59e42', '#10b981']}
+        />
+      )}
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
+        {/* Header */}
+        <motion.div
+          ref={headerRef}
+          initial={{ opacity: 0, y: 30 }}
+          animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="text-center space-y-2"
+        >
+          <motion.div 
+            className="flex items-center justify-center space-x-3"
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: "spring", stiffness: 300 }}
           >
-            <div className="flex items-center justify-center space-x-3">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30">
-                <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                AI Quiz Generator
-              </h1>
-            </div>
-            <p className="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base px-4">
-              Create personalized multiple-choice quizzes with AI. Provide your topic and content, and our AI will generate engaging MCQ questions tailored to your needs.
-            </p>
+            <motion.div 
+              className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/30"
+              whileHover={{ 
+                boxShadow: "0 20px 25px -5px rgba(168, 85, 247, 0.4)",
+                rotate: [0, -10, 10, 0]
+              }}
+              transition={{ duration: 0.6 }}
+            >
+              <Brain className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            </motion.div>
+            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              AI Quiz Generator
+            </h1>
           </motion.div>
-
-          {/* Main Form */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+          <motion.p 
+            className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
+            initial={{ opacity: 0 }}
+            animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-6 lg:p-8">
-              <div className="space-y-6 sm:space-y-8">
-                {/* Basic Information */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-                    <div className="h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                      <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                    </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white">Basic Information</h2>
-                  </div>
+            Create personalized multiple-choice quizzes with AI. Provide your topic and content, and our AI will generate engaging MCQ questions tailored to your needs.
+          </motion.p>
+        </motion.div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Main Form */}
+        <motion.div
+          ref={formRef}
+          initial={{ opacity: 0, y: 30 }}
+          animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+        >
+          <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
+            <div className="space-y-6 sm:space-y-8">
+              {/* Basic Information */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+              >
+                <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                  <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <BookOpen className="h-4 w-4 text-white" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">Basic Information</h2>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-gray-300">Quiz Title</Label>
+                    <Input
+                      id="title"
+                      value={form.title}
+                      onChange={(e) => updateForm("title", e.target.value)}
+                      placeholder="e.g., JavaScript Fundamentals"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="text-gray-300">Description (Optional)</Label>
+                    <Input
+                      id="description"
+                      value={form.description}
+                      onChange={(e) => updateForm("description", e.target.value)}
+                      placeholder="Brief description of the quiz"
+                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                    />
+                  </div>
+                </div>
+                {/* Topic Selection */}
+                <div className="space-y-4 mt-4">
+                  <Label className="text-gray-300">Topic</Label>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="title" className="text-gray-300">Quiz Title</Label>
+                      <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
+                      <select
+                        id="topic"
+                        value={form.topic_id}
+                        onChange={(e) => updateForm("topic_id", e.target.value)}
+                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white text-sm sm:text-base"
+                      >
+                        <option value="">Choose a topic...</option>
+                        {topics?.map((topic) => (
+                          <option key={topic.topic_id} value={topic.topic_id}>
+                            {topic.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
                       <Input
-                        id="title"
-                        value={form.title}
-                        onChange={(e) => updateForm("title", e.target.value)}
-                        placeholder="e.g., JavaScript Fundamentals"
+                        id="custom_topic"
+                        value={form.custom_topic}
+                        onChange={(e) => updateForm("custom_topic", e.target.value)}
+                        placeholder="e.g., React Hooks"
                         className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
                       />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="text-gray-300">Description (Optional)</Label>
-                      <Input
-                        id="description"
-                        value={form.description}
-                        onChange={(e) => updateForm("description", e.target.value)}
-                        placeholder="Brief description of the quiz"
-                        className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Topic Selection */}
-                  <div className="space-y-4">
-                    <Label className="text-gray-300">Topic</Label>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
-                        <select
-                          id="topic"
-                          value={form.topic_id}
-                          onChange={(e) => updateForm("topic_id", e.target.value)}
-                          className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white text-sm sm:text-base"
-                        >
-                          <option value="">Choose a topic...</option>
-                          {topics?.map((topic) => (
-                            <option key={topic.topic_id} value={topic.topic_id}>
-                              {topic.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
-                        <Input
-                          id="custom_topic"
-                          value={form.custom_topic}
-                          onChange={(e) => updateForm("custom_topic", e.target.value)}
-                          placeholder="e.g., React Hooks"
-                          className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
-                        />
-                      </div>
                     </div>
                   </div>
                 </div>
+              </motion.div>
 
-                {/* Quiz Configuration */}
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="h-8 w-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                      <Target className="h-4 w-4 text-white" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white">Quiz Configuration</h2>
+              {/* Quiz Configuration */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                  <div className="h-8 w-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                    <Target className="h-4 w-4 text-white" />
                   </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Difficulty Level */}
-                    <div className="space-y-4">
-                      <Label className="text-gray-300">Difficulty Level</Label>
-                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                        {DIFFICULTY_LEVELS.map((level) => (
-                          <button
-                            key={level.value}
-                            onClick={() => updateForm("difficulty", level.value)}
-                            className={`p-2 sm:p-3 rounded-lg border text-center transition-all ${
-                              form.difficulty === level.value
-                                ? "border-purple-500 bg-purple-500/20 text-purple-300"
-                                : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
-                            }`}
-                          >
-                            <div className="text-sm font-medium">{level.value}</div>
-                            <div className={`text-xs ${level.color}`}>{level.label}</div>
-                          </button>
-                        ))}
-                      </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">Quiz Configuration</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Difficulty Level */}
+                  <div className="space-y-4">
+                    <Label className="text-gray-300 flex items-center space-x-2">
+                      <Star className="w-4 h-4" />
+                      <span>Difficulty Level</span>
+                    </Label>
+                    <div className="grid grid-cols-5 gap-1 sm:gap-2">
+                      {DIFFICULTY_LEVELS.map((level, index) => (
+                        <motion.button
+                          key={level.value}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={formInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                          transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+                          whileHover={{ 
+                            scale: 1.05, 
+                            y: -2,
+                            boxShadow: form.difficulty === level.value 
+                              ? "0 10px 25px -5px rgba(147, 51, 234, 0.4)" 
+                              : "0 10px 25px -5px rgba(0, 0, 0, 0.2)"
+                          }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => updateForm("difficulty", level.value)}
+                          className={`p-2 sm:p-3 rounded-lg border text-center transition-all min-h-[44px] ${
+                            form.difficulty === level.value
+                              ? "border-purple-500 bg-purple-500/20 text-purple-300 shadow-lg shadow-purple-500/25"
+                              : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
+                          }`}
+                        >
+                          <div className="text-sm font-medium">{level.value}</div>
+                          <div className={`text-xs ${level.color}`}>{level.label}</div>
+                        </motion.button>
+                      ))}
                     </div>
-
-                    {/* Number of Questions */}
-                    <div className="space-y-2">
-                      <Label htmlFor="num_questions" className="text-gray-300">Number of Questions (5-50)</Label>
+                  </div>
+                  {/* Number of Questions */}
+                  <motion.div 
+                    className="space-y-2"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                    transition={{ delay: 0.6, duration: 0.6 }}
+                  >
+                    <Label htmlFor="num_questions" className="text-gray-300">Number of Questions (5-50)</Label>
+                    <div className="mt-2">
                       <Input
                         id="num_questions"
                         type="number"
@@ -396,93 +493,125 @@ export default function CreateQuizPage() {
                         className="bg-gray-700/50 border-gray-600 text-white text-sm sm:text-base"
                       />
                     </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Content & Instructions */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                  <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <FileText className="h-4 w-4 text-white" />
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-white">Content & Instructions</h2>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="content_source" className="text-gray-300">Content Source (Optional)</Label>
+                    <textarea
+                      id="content_source"
+                      value={form.content_source}
+                      onChange={(e) => updateForm("content_source", e.target.value)}
+                      placeholder="Paste your study material, notes, or content that you want the quiz to be based on..."
+                      rows={6}
+                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical text-sm sm:text-base"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="additional_instructions" className="text-gray-300">Additional Instructions (Optional)</Label>
+                    <textarea
+                      id="additional_instructions"
+                      value={form.additional_instructions}
+                      onChange={(e) => updateForm("additional_instructions", e.target.value)}
+                      placeholder="Any specific instructions for the AI (e.g., 'Focus on practical examples', 'Include code snippets', etc.)"
+                      rows={3}
+                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical"
+                    />
                   </div>
                 </div>
+              </motion.div>
 
-                {/* Content Source */}
-                <div className="space-y-4 sm:space-y-6">
-                  <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-                    <div className="h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                      <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                    </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white">Content & Instructions</h2>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="content_source" className="text-gray-300">Content Source (Optional)</Label>
-                      <textarea
-                        id="content_source"
-                        value={form.content_source}
-                        onChange={(e) => updateForm("content_source", e.target.value)}
-                        placeholder="Paste your study material, notes, or content that you want the quiz to be based on..."
-                        rows={6}
-                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical text-sm sm:text-base"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="additional_instructions" className="text-gray-300">Additional Instructions (Optional)</Label>
-                      <textarea
-                        id="additional_instructions"
-                        value={form.additional_instructions}
-                        onChange={(e) => updateForm("additional_instructions", e.target.value)}
-                        placeholder="Any specific instructions for the AI (e.g., 'Focus on practical examples', 'Include code snippets', etc.)"
-                        rows={3}
-                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Generate Button */}
-                <div className="pt-4 sm:pt-6 border-t border-gray-700">
-                  <Button
+              {/* Generate Button */}
+              <motion.div
+                className="pt-4 sm:pt-6 border-t border-gray-700"
+                initial={{ opacity: 0, y: 20 }}
+                animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+              >
+                <div>
+                  <FormButton
                     onClick={handleGenerateQuiz}
                     disabled={isGenerating || !user}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium py-3 sm:py-4 px-4 sm:px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-                  >
-                    {isGenerating ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
-                        <span>Generating Quiz...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center space-x-2">
-                        <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
-                        <span>Generate AI Quiz</span>
-                      </div>
-                    )}
-                  </Button>
+                    isLoading={isGenerating}
+                    loadingIcon={<Loader2 className="h-5 w-5 animate-spin" />}
+                    loadingText="Generating Quiz..."
+                    icon={<Sparkles className="h-5 w-5" />}
+                    text="Generate AI Quiz"
+                    gradientFrom="purple"
+                    gradientTo="pink"
+                  />
                 </div>
-              </div>
-            </Card>
-          </motion.div>
-
-          {/* Tips Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 p-4 sm:p-6">
-              <div className="flex items-start space-x-3 sm:space-x-4">
-                <div className="h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-                  <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+              </motion.div>
+            </div>
+          </Card>
+        </motion.div>
+        {/* Tips Card */}
+        <motion.div
+          ref={tipsRef}
+          initial={{ opacity: 0, y: 30 }}
+          animate={tipsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
+          <div>
+            <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 p-4 sm:p-6 backdrop-blur-sm">
+              <div className="flex items-start space-x-4">
+                <div 
+                  className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1"
+                >
+                  <Zap className="h-4 w-4 text-white" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-base sm:text-lg font-bold text-blue-300">Pro Tips</h3>
-                  <ul className="text-xs sm:text-sm text-gray-300 space-y-1">
-                    <li>• Provide detailed content for more accurate questions</li>
-                    <li>• Mix question types for better learning experience</li>
-                    <li>• Use specific additional instructions for targeted results</li>
-                    <li>• Start with 10-15 questions for optimal quiz length</li>
-                  </ul>
+                  <motion.h3 
+                    className="text-base sm:text-lg font-bold text-blue-300 flex items-center space-x-2"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={tipsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                  >
+                    <span>Pro Tips</span>
+                  </motion.h3>
+                  <motion.ul 
+                    className="text-sm text-gray-300 space-y-1"
+                    initial={{ opacity: 0 }}
+                    animate={tipsInView ? { opacity: 1 } : { opacity: 0 }}
+                    transition={{ delay: 0.8, duration: 0.6 }}
+                  >
+                    {[
+                      "Provide detailed content for more accurate questions",
+                      "Mix question types for better learning experience",
+                      "Use specific additional instructions for targeted results",
+                      "Start with 10-15 questions for optimal quiz length"
+                    ].map((tip, index) => (
+                      <motion.li
+                        key={index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={tipsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                        transition={{ delay: 0.9 + index * 0.1, duration: 0.4 }}
+                        whileHover={{ x: 5, color: "#6366f1" }}
+                        className="transition-colors duration-200"
+                      >
+                        • {tip}
+                      </motion.li>
+                    ))}
+                  </motion.ul>
                 </div>
               </div>
             </Card>
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
       </div>
     </DashboardLayout>
   );

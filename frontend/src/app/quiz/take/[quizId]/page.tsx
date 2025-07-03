@@ -10,12 +10,12 @@ import {
   useCurrentUser,
   useQuizWithQuestions,
 } from "@/hooks/useDatabase";
+import { QuizTakingQuestionCard } from "@/components/features/quiz/QuizTakingQuestionCard";
+import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 
 import { quizService } from "@/lib/services";
-import { motion } from "framer-motion";
 import {
   Clock,
-  CheckCircle,
   XCircle,
   ArrowLeft,
   ArrowRight,
@@ -146,7 +146,7 @@ export default function TakeQuizPage() {
         (Date.now() - questionStartTime.getTime()) / 1000
       );
       const correctOption = currentQuestion.question_options?.find(
-        (opt) => opt.is_correct
+        (opt: any) => opt.is_correct
       );
       const isCorrect = Boolean(
         correctOption?.option_id === optionId ||
@@ -303,11 +303,7 @@ export default function TakeQuizPage() {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-4 sm:space-y-6"
-          >
+          <div className="text-center space-y-4 sm:space-y-6">
             <div className="flex items-center justify-center space-x-3">
               <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-yellow-500" />
               <h1 className="text-2xl sm:text-3xl font-bold text-white">
@@ -344,21 +340,13 @@ export default function TakeQuizPage() {
               </div>
 
               <div className="space-y-3 sm:space-y-4">
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="flex justify-center">
                   <Button
                     onClick={() => router.push(`/quiz/review/${quizId}`)}
-
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 font-medium"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 font-medium shadow-lg shadow-blue-500/20"
                   >
                     <BookOpen className="h-4 w-4 mr-2" />
                     View Detailed Review
-                  </Button>
-                  <Button
-                    onClick={() => router.push("/dashboard")}
-                    variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700/50 px-6 py-3"
-                  >
-                    Back to Dashboard
                   </Button>
                 </div>
                 <Button
@@ -370,7 +358,7 @@ export default function TakeQuizPage() {
                 </Button>
               </div>
             </Card>
-          </motion.div>
+          </div>
         </div>
       </DashboardLayout>
     );
@@ -381,37 +369,27 @@ export default function TakeQuizPage() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Quiz Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-          <div className="flex items-center space-x-3">
-            <Button
-              onClick={() => router.push("/dashboard")}
-              variant="outline"
-              size="icon"
-              className="border-gray-600 text-gray-400 hover:bg-gray-700/50 flex-shrink-0"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
-                {quiz.title}
-              </h1>
-              <p className="text-gray-400 text-sm sm:text-base truncate">
-                {quiz.description}
-              </p>
+        <DashboardHeader 
+          title={quiz.title}
+          subtitle={quiz.description || "Answer the questions below"}
+          iconLeft={<div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <BookOpen className="h-4 w-4 text-white" />
+          </div>}
+          rightContent={
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-gray-300">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm sm:text-base">
+                  {formatTime(timeElapsed)}
+                </span>
+              </div>
+              <div className="text-gray-300 text-sm sm:text-base">
+                {currentQuestionIndex + 1} / {questions.length}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center justify-between sm:justify-end space-x-4">
-            <div className="flex items-center space-x-2 text-gray-300">
-              <Clock className="h-4 w-4" />
-              <span className="text-sm sm:text-base">
-                {formatTime(timeElapsed)}
-              </span>
-            </div>
-            <div className="text-gray-300 text-sm sm:text-base">
-              {currentQuestionIndex + 1} / {questions.length}
-            </div>
-          </div>
-        </div>
+          }
+        />
+        {/* Timer section removed as it's now in DashboardHeader */}
 
         {/* Progress Bar */}
         <div className="w-full bg-gray-700 rounded-full h-2">
@@ -421,95 +399,22 @@ export default function TakeQuizPage() {
           />
         </div>
 
-        {/* Question Card - OPTIMIZED: Simplified animation */}
-        <motion.div
-          key={currentQuestionIndex}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-6 lg:p-8">
-            <div className="space-y-4 sm:space-y-6">
-              {/* Question */}
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-white" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">
-                    Question {currentQuestionIndex + 1}
-                  </h2>
-                </div>
-                <p className="text-base sm:text-lg text-gray-200 leading-relaxed">
-                  {currentQuestion?.content}
-                </p>
-              </div>
-
-              {/* Answer Options */}
-              <div className="space-y-3">
-                {currentQuestion?.question_type === "fill-in-blank" ? (
-                  <div className="space-y-2">
-                    <label className="text-gray-300 text-sm sm:text-base">
-                      Your Answer:
-                    </label>
-                    <input
-                      type="text"
-                      value={
-                        userAnswers.get(currentQuestion.question_id)
-                          ?.text_answer || ""
-                      }
-                      onChange={(e) => handleAnswerSelect("", e.target.value)}
-                      placeholder="Type your answer here..."
-                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 min-h-[48px]"
-                    />
-                  </div>
-                ) : (
-                  currentQuestion?.question_options?.map((option) => {
-                    const isSelected =
-                      userAnswers.get(currentQuestion.question_id)
-                        ?.selected_option_id === option.option_id;
-                    return (
-                      <button
-                        key={option.option_id}
-                        onClick={() => handleAnswerSelect(option.option_id)}
-                        className={`w-full p-3 sm:p-4 text-left rounded-lg border transition-all min-h-[56px] ${
-                          isSelected
-                            ? "border-purple-500 bg-purple-500/20 text-purple-300"
-                            : "border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700/70"
-                        }`}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div
-                            className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                              isSelected
-                                ? "border-purple-500 bg-purple-500"
-                                : "border-gray-500"
-                            }`}
-                          >
-                            {isSelected && (
-                              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-                            )}
-                          </div>
-                          <span className="text-sm sm:text-base">
-                            {option.content}
-                          </span>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </Card>
-        </motion.div>
+        {/* Question Card */}
+        {currentQuestion && (
+          <QuizTakingQuestionCard
+            question={currentQuestion}
+            questionIndex={currentQuestionIndex}
+            userAnswer={userAnswers.get(currentQuestion.question_id)}
+            onAnswerSelect={handleAnswerSelect}
+          />
+        )}
 
         {/* Navigation */}
         <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
           <Button
             onClick={handlePreviousQuestion}
             disabled={currentQuestionIndex === 0}
-            variant="outline"
-            className="border-gray-600 text-gray-300 hover:bg-gray-700/50 disabled:opacity-50 w-full sm:w-auto min-h-[48px]"
+            className="bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-600 hover:to-slate-700 text-white border-0 shadow-lg shadow-slate-900/30 disabled:opacity-50 disabled:shadow-none w-full sm:w-auto min-h-[48px] px-5"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Previous
@@ -535,12 +440,12 @@ export default function TakeQuizPage() {
                 return (
                   <div
                     key={index}
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full text-sm flex items-center justify-center flex-shrink-0 ${
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full text-sm flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
                       isCurrent
-                        ? "bg-purple-500 text-white"
+                        ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md shadow-purple-500/30 border border-purple-400/30"
                         : isAnswered
-                          ? "bg-green-500 text-white"
-                          : "bg-gray-700 text-gray-400"
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm shadow-green-500/20 border border-green-400/30"
+                          : "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-400 border border-gray-600/30"
                     }`}
                   >
                     {index + 1}
@@ -554,7 +459,7 @@ export default function TakeQuizPage() {
             <Button
               onClick={handleSubmitQuiz}
               disabled={isSubmitting || !hasAnsweredCurrent}
-              className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 w-full sm:w-auto min-h-[48px]"
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg shadow-green-500/20 disabled:opacity-50 disabled:shadow-none w-full sm:w-auto min-h-[48px] px-5"
             >
               {isSubmitting ? (
                 <>
@@ -572,7 +477,7 @@ export default function TakeQuizPage() {
             <Button
               onClick={handleNextQuestion}
               disabled={!hasAnsweredCurrent}
-              className="bg-purple-500 hover:bg-purple-600 disabled:opacity-50 w-full sm:w-auto min-h-[48px]"
+              className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white shadow-lg shadow-purple-500/20 disabled:opacity-50 disabled:shadow-none w-full sm:w-auto min-h-[48px] px-5"
             >
               Next
               <ArrowRight className="h-4 w-4 ml-2" />
