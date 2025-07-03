@@ -6,34 +6,38 @@ import { useCurrentUser } from "@/hooks/useDatabase";
 import {
   Loader2,
   Plus,
-  ArrowLeft,
   Play,
+  BookOpen,
 } from "lucide-react";
 import { useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { TopicCard } from "@/components/features/flashcards/TopicCard";
 import { FlashCard } from "@/components/features/flashcards/FlashCard";
 import { OverallProgress } from "@/components/features/flashcards/OverallProgress";
 import { EmptyState } from "@/components/features/flashcards/EmptyState";
 import { useFlashcardData } from "@/hooks/useFlashcardData";
+import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
+import { CustomHeader } from "@/components/features/dashboard/CustomHeader";
 
 function FlashcardsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useBackendAuth();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
 
   // Scroll to top when navigating
   useScrollToTop();
   
+  // Get topicId from URL
+  const selectedTopicId = searchParams.get("topic");
+
   // Use custom hook for flashcard data management
   const {
     isLoadingFlashcards,
-    selectedTopicId,
-    setSelectedTopicId,
     stats,
-  } = useFlashcardData(currentUser?.user_id);
+  } = useFlashcardData(currentUser?.user_id, selectedTopicId);
 
   // Redirect to landing page if not authenticated and not loading
   useEffect(() => {
@@ -48,6 +52,16 @@ function FlashcardsPageContent() {
     } else {
       router.push("/flashcards/create");
     }
+  };
+
+  // When a topic is selected, update the URL
+  const handleSelectTopic = (topicId: string) => {
+    router.push(`/flashcards?topic=${topicId}`);
+  };
+
+  // When going back to topics list, remove topic from URL
+  const handleBackToTopics = () => {
+    router.push(`/flashcards`);
   };
 
   // Simplified loading logic
@@ -72,18 +86,28 @@ function FlashcardsPageContent() {
       <DashboardLayout>
         <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
-                Flashcards
-              </h1>
-              <p className="text-gray-400 text-sm">
-                Organize and study your flashcards by topic
-              </p>
-            </div>
+          <DashboardHeader
+            title="Flashcards"
+            subtitle="Organize and study your flashcards by topic"
+            iconLeft={<BookOpen className="h-6 w-6 text-blue-400" />}
+            rightContent={
+              <motion.button
+                onClick={() => handleCreateFlashcard()}
+                className="hidden sm:flex px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg items-center gap-2 hover:opacity-90 transition-opacity text-sm"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Plus size={16} />
+                <span>Create Flashcard</span>
+              </motion.button>
+            }
+          />
+
+          {/* Centered Create Flashcard button for mobile only */}
+          <div className="flex justify-center my-4 sm:hidden">
             <motion.button
               onClick={() => handleCreateFlashcard()}
-              className="mt-3 sm:mt-0 px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity text-sm"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity text-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -106,7 +130,7 @@ function FlashcardsPageContent() {
                   count={topic.count}
                   progress={topic.progress}
                   isSelected={false}
-                  onClick={() => setSelectedTopicId(topic.topicId)}
+                  onClick={() => handleSelectTopic(topic.topicId)}
                   onStudy={() => router.push(`/flashcards/study/${topic.topicId}`)}
                   index={index}
                 />
@@ -129,51 +153,20 @@ function FlashcardsPageContent() {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
-          <div className="flex items-center gap-3">
-              <motion.button
-                onClick={() => setSelectedTopicId(null)}
-              className="p-1.5 rounded-lg bg-gray-700/50 hover:bg-gray-600/50 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <ArrowLeft size={16} />
-              </motion.button>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">
-                {stats.selectedTopicName}
-              </h1>
-              <p className="text-gray-400 text-sm">
-                {stats.selectedTopicFlashcards.length} flashcard{stats.selectedTopicFlashcards.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2 mt-3 sm:mt-0">
-          <motion.button
-              onClick={() => handleCreateFlashcard(selectedTopicId)}
-              className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity text-sm"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Plus size={16} />
-              <span>Add to Topic</span>
-          </motion.button>
-            <motion.button
-              onClick={() => router.push(`/flashcards/study/${selectedTopicId}`)}
-              className="px-3 sm:px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity text-sm"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Play size={16} />
-              <span>Study Now</span>
-            </motion.button>
-          </div>
-        </div>
+        {/* Custom Header with Study Now Button */}
+        <CustomHeader
+          title="Your Flashcards"
+          subtitle={`You have ${stats.selectedTopicFlashcards.length} flashcard${stats.selectedTopicFlashcards.length !== 1 ? "s" : ""} on ${stats.selectedTopicName}`}
+          iconLeft={<BookOpen className="h-5 w-5 text-blue-400" />}
+          buttonText="Study Now"
+          buttonIcon={<Play size={16} />}
+          onButtonClick={() => router.push(`/flashcards/study/${selectedTopicId}`)}
+          buttonClassName="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg flex items-center gap-2 sm:gap-3 hover:from-blue-800 hover:to-blue-900 transition-all text-sm sm:text-base font-semibold text-white shadow-lg whitespace-nowrap"
+        />
 
         {/* Flashcards Grid */}
         {stats.selectedTopicFlashcards.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 mt-4">
             {stats.selectedTopicFlashcards.map((flashcard, index) => (
               <FlashCard
                 key={flashcard.flashcard_id}
@@ -189,7 +182,7 @@ function FlashcardsPageContent() {
             actionText="Create Flashcard"
             onAction={() => handleCreateFlashcard(selectedTopicId)}
             showBackButton
-            onBack={() => setSelectedTopicId(null)}
+            onBack={handleBackToTopics}
           />
         )}
       </div>

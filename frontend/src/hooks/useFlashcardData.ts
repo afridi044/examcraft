@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useUserFlashcards } from "@/hooks/useBackendFlashcards";
 import { calculateFlashcardStats, FLASHCARD_3D_STYLES } from "@/lib/utils/flashcards";
 
-export function useFlashcardData(userId: string | undefined) {
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+export function useFlashcardData(userId: string | undefined, selectedTopicId: string | null = null) {
   
   const {
     data: flashcards,
@@ -98,8 +97,6 @@ export function useFlashcardData(userId: string | undefined) {
     flashcards,
     isLoadingFlashcards,
     refetchFlashcards,
-    selectedTopicId,
-    setSelectedTopicId,
     stats,
   };
 } 

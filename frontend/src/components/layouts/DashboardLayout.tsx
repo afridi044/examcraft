@@ -197,14 +197,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       </AnimatePresence>
 
       {/* Main Content - Properly spaced and responsive */}
-      <main className={`min-h-screen transition-all duration-300 ${
+      <main className={`transition-all duration-300 ${
         isMobile 
-          ? "pt-[72px] px-4 pb-4" 
-          : "pt-[88px] px-6 pb-6"
+          ? "pt-[72px] px-7 pb-7 max-w-2xl mx-auto w-full" 
+          : "pt-[88px] px-6 pb-6 max-w-7xl mx-auto w-full"
       }`}>
-        <div className="max-w-7xl w-full mx-auto">
-          {children}
-        </div>
+        {children}
       </main>
     </div>
   );

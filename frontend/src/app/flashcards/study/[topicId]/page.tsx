@@ -61,6 +61,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   const [session, setSession] = useState<StudySession | null>(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showButtons, setShowButtons] = useState(false);
   
   // Loading and error states
   const [isInitializing, setIsInitializing] = useState(true);
@@ -182,6 +183,17 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
       mounted = false;
     };
   }, [currentUser?.user_id, topicId, session]);
+
+  // Show buttons with delay after flipping to answer
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (isFlipped) {
+      timeout = setTimeout(() => setShowButtons(true), 500);
+    } else {
+      setShowButtons(false);
+    }
+    return () => clearTimeout(timeout);
+  }, [isFlipped, currentCardIndex]);
 
   // Handle performance feedback
   const handlePerformance = async (performance: PerformanceType) => {
@@ -319,7 +331,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   if (showMainLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="h-screen flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="relative">
               <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -342,7 +354,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   if (initError) {
     return (
       <DashboardLayout>
-        <div className="h-screen flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md mx-auto p-6">
             <div className="h-12 w-12 bg-red-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
               <XCircle className="h-6 w-6 text-red-400" />
@@ -384,7 +396,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   if (!session || !session.cards || session.cards.length === 0) {
     return (
       <DashboardLayout>
-        <div className="h-screen flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md mx-auto p-6">
             <div className="h-12 w-12 bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4">
               <BookOpen className="h-6 w-6 text-gray-400" />
@@ -417,7 +429,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   if (!currentCard) {
     return (
       <DashboardLayout>
-        <div className="h-screen flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen">
           <div className="text-center max-w-md mx-auto p-6">
             <div className="h-12 w-12 bg-gray-700 rounded-xl flex items-center justify-center mx-auto mb-4">
               <BookOpen className="h-6 w-6 text-gray-400 animate-pulse" />
@@ -436,16 +448,17 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
 
   return (
     <DashboardLayout>
-      {/* Premium Header - Edge-to-edge, no container */}
-      <div className="pt-4 px-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+      {/* Grouped Header, Progress, and Stats in a Card */}
+      <div className="max-w-2xl mx-auto mt-3 mb-4 flex flex-col gap-2">
+        {/* Premium Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           {/* Topic Name and Mode */}
-          <div className="flex flex-col gap-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <Target className="h-6 w-6 text-purple-400 flex-shrink-0" />
-              <span className="text-2xl font-bold text-white truncate">{session.topic_name}</span>
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <Target className="h-5 w-5 text-purple-400 flex-shrink-0" />
+              <span className="text-lg sm:text-xl font-bold text-white truncate">{session.topic_name}</span>
             </div>
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-[11px] text-gray-400 font-medium">
               {session.mastery_status === "learning" && "🎯 Learning Mode"}
               {session.mastery_status === "under_review" && "📝 Review Mode"}
               {session.mastery_status === "mastered" && "⭐ Mastered Mode"}
@@ -453,199 +466,186 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
             </span>
           </div>
           {/* Stat Chips */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-800 text-[11px] text-gray-200 font-medium min-h-0 h-6">
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-800 text-[10px] text-gray-200 font-medium min-h-0 h-5">
               <span className="text-white font-semibold">{currentCardIndex + 1} / {session.cards.length}</span> Cards
             </span>
           </div>
         </div>
-        {/* Sleek Progress Bar */}
-        
-          <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mt-3">
-            <motion.div
-              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPercentage}%` }}
-              transition={{ duration: 0.5, ease: 'easeOut' }}
-            />
-          </div>
-        
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full px-4 py-4 ">
-        {/* Compact Stats Row */}
-        <div className="grid grid-cols-4 gap-2 mb-4 mt-0">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 text-center min-w-0">
+        {/* Progress Bar */}
+        <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden mt-2">
+          <motion.div
+            className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercentage}%` }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+          />
+        </div>
+        {/* Stats Row */}
+        <div className="grid grid-cols-4 gap-1">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
             <div className="flex items-center justify-center mb-0.5">
               <Brain className="h-3 w-3 text-blue-400 mr-0.5" />
-              <span className="text-base font-bold text-white">{sessionStats.totalSeen}</span>
+              <span className="text-sm font-bold text-white">{sessionStats.totalSeen}</span>
             </div>
-            <p className="text-[10px] text-gray-400">Studied</p>
+            <p className="text-[9px] text-gray-400">Studied</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 text-center min-w-0">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
             <div className="flex items-center justify-center mb-0.5">
               <CheckCircle className="h-3 w-3 text-green-400 mr-0.5" />
-              <span className="text-base font-bold text-green-400">{sessionStats.correctAnswers}</span>
+              <span className="text-sm font-bold text-green-400">{sessionStats.correctAnswers}</span>
             </div>
-            <p className="text-[10px] text-gray-400">Known</p>
+            <p className="text-[9px] text-gray-400">Known</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 text-center min-w-0">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
             <div className="flex items-center justify-center mb-0.5">
               <XCircle className="h-3 w-3 text-red-400 mr-0.5" />
-              <span className="text-base font-bold text-red-400">{sessionStats.incorrectAnswers}</span>
+              <span className="text-sm font-bold text-red-400">{sessionStats.incorrectAnswers}</span>
             </div>
-            <p className="text-[10px] text-gray-400">Learning</p>
+            <p className="text-[9px] text-gray-400">Learning</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-2 text-center min-w-0">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
             <div className="flex items-center justify-center mb-0.5">
               <TrendingUp className="h-3 w-3 text-yellow-400 mr-0.5" />
-              <span className="text-base font-bold text-yellow-400">{sessionStats.accuracy}%</span>
+              <span className="text-sm font-bold text-yellow-400">{sessionStats.accuracy}%</span>
             </div>
-            <p className="text-[10px] text-gray-400">Accuracy</p>
+            <p className="text-[9px] text-gray-400">Accuracy</p>
           </div>
         </div>
+      </div>
 
-        {/* Compact Flashcard */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-2xl">
-            <motion.div
-              className="relative w-full h-80 cursor-pointer mb-6"
-              onClick={() => setIsFlipped(!isFlipped)}
-              whileHover={{ scale: 1.01 }}
-              style={{ perspective: "1000px" }}
-            >
-              <motion.div
-                className="absolute w-full h-full"
-                animate={{ rotateY: isFlipped ? 180 : 0 }}
-                transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                {/* Question Side */}
-                <div
-                  className="absolute w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-6 flex flex-col justify-center items-center shadow-xl"
-                  style={{ backfaceVisibility: "hidden" }}
+      {/* Flashcard and Actions Container */}
+      <div className="w-full flex flex-col items-center">
+        {/* Flashcard */}
+        <div className="w-full max-w-2xl mx-auto px-2 my-4">
+          <motion.div
+            className="relative w-full cursor-pointer"
+            onClick={() => setIsFlipped(!isFlipped)}
+            whileHover={{ scale: 1.01 }}
+          >
+            <AnimatePresence mode="wait">
+              {!isFlipped ? (
+                <motion.div
+                  key="question"
+                  initial={{ rotateY: 0 }}
+                  exit={{ rotateY: 90 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-4 sm:p-6 shadow-xl"
                 >
-                  <div className="text-center w-full">
-                    <div className="mb-4">
-                      <div className="inline-flex items-center justify-center w-10 h-10 bg-purple-500/20 rounded-full mb-3">
-                        <BookOpen className="h-5 w-5 text-purple-400" />
+                  <div className="text-center">
+                    <div className="mb-4 sm:mb-6">
+                      <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-purple-500/20 rounded-full mb-3 sm:mb-4">
+                        <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400" />
                       </div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                      <p className="text-xs sm:text-sm text-gray-400 uppercase tracking-wider font-medium">
                         Question
                       </p>
                     </div>
-                    <h2 className="text-xl text-white font-medium leading-relaxed mb-4 max-w-xl mx-auto">
+                    
+                    <h2 className="text-lg sm:text-xl lg:text-2xl text-white font-medium leading-relaxed mb-6 sm:mb-8 break-words px-2">
                       {currentCard.question}
                     </h2>
 
-                    {/* Mastery Status */}
-                    <div className="mb-4">
-                      {currentCard.mastery_status === "learning" && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 rounded-full text-xs">
-                          <Brain className="h-3 w-3" />
-                          Learning
-                        </div>
-                      )}
-                      {currentCard.mastery_status === "under_review" && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/20 border border-blue-400/30 text-blue-300 rounded-full text-xs">
-                          <Target className="h-3 w-3" />
-                          Under Review
-                        </div>
-                      )}
-                      {currentCard.mastery_status === "mastered" && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-400/30 text-green-300 rounded-full text-xs">
-                          <Star className="h-3 w-3" />
-                          Mastered
-                        </div>
-                      )}
-                    </div>
-                    <div className="inline-flex items-center gap-2 px-3 py-2 bg-gray-700/50 rounded-full">
-                      <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                      <span className="text-xs text-gray-300">
-                        Tap to reveal answer
-                      </span>
+                    <div className="space-y-3 sm:space-y-4">
+                      {/* Mastery Status */}
+                      <div>
+                        {currentCard.mastery_status === "learning" && (
+                          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-yellow-500/20 border border-yellow-400/30 text-yellow-300 rounded-full text-xs sm:text-sm">
+                            <Brain className="h-3 w-3 sm:h-4 sm:w-4" />
+                            Learning
+                          </div>
+                        )}
+                        {currentCard.mastery_status === "under_review" && (
+                          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500/20 border border-blue-400/30 text-blue-300 rounded-full text-xs sm:text-sm">
+                            <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+                            Under Review
+                          </div>
+                        )}
+                        {currentCard.mastery_status === "mastered" && (
+                          <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-500/20 border border-green-400/30 text-green-300 rounded-full text-xs sm:text-sm">
+                            <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+                            Mastered
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-gray-700/50 rounded-full">
+                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                        <span className="text-xs sm:text-sm text-gray-300">
+                          Tap to reveal answer
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Answer Side */}
-                <div
-                  className="absolute w-full h-full bg-gradient-to-br from-purple-800 to-pink-800 border border-purple-600/50 rounded-xl p-6 flex flex-col justify-center items-center shadow-xl"
-                  style={{
-                    backfaceVisibility: "hidden",
-                    transform: "rotateY(180deg)",
-                  }}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="answer"
+                  initial={{ rotateY: -90 }}
+                  animate={{ rotateY: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-full bg-gradient-to-br from-purple-800 to-pink-800 border border-purple-600/50 rounded-xl p-4 sm:p-6 shadow-xl"
                 >
-                  <div className="text-center w-full">
-                    <div className="mb-4">
-                      <div className="inline-flex items-center justify-center w-10 h-10 bg-white/20 rounded-full mb-3">
-                        <Star className="h-5 w-5 text-white" />
+                  <div className="text-center">
+                    <div className="mb-4 sm:mb-6">
+                      <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-full mb-3 sm:mb-4">
+                        <Star className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                       </div>
-                      <p className="text-xs text-purple-100 uppercase tracking-wider font-medium">
+                      <p className="text-xs sm:text-sm text-purple-100 uppercase tracking-wider font-medium">
                         Answer
                       </p>
                     </div>
-                    <h2 className="text-xl text-white font-medium leading-relaxed max-w-xl mx-auto">
+                    
+                    <h2 className="text-lg sm:text-xl lg:text-2xl text-white font-medium leading-relaxed break-words px-2">
                       {currentCard.answer}
                     </h2>
                   </div>
-                </div>
-              </motion.div>
-            </motion.div>
-
-            {/* Action Buttons */}
-            <AnimatePresence>
-              {isFlipped && (
-                <motion.div
-                  className="flex justify-center gap-4 max-w-lg mx-auto"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <motion.button
-                    onClick={() => handlePerformance("dont_know")}
-                    disabled={isUpdating}
-                    className="flex-1 p-4 bg-gradient-to-r from-red-500/20 to-red-600/20 border border-red-400/30 text-red-300 rounded-xl transition-all duration-200 hover:from-red-500/30 hover:to-red-600/30 hover:border-red-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: isUpdating ? 1 : 1.02 }}
-                    whileTap={{ scale: isUpdating ? 1 : 0.98 }}
-                  >
-                    <div className="text-center">
-                      <XCircle className="h-6 w-6 mx-auto mb-2 text-red-400" />
-                      <span className="text-sm font-semibold block mb-1">
-                        Don&apos;t Know
-                      </span>
-                      <p className="text-xs opacity-80">
-                        Need more practice
-                      </p>
-                    </div>
-                  </motion.button>
-
-                  <motion.button
-                    onClick={() => handlePerformance("know")}
-                    disabled={isUpdating}
-                    className="flex-1 p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 text-green-300 rounded-xl transition-all duration-200 hover:from-green-500/30 hover:to-emerald-500/30 hover:border-green-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    whileHover={{ scale: isUpdating ? 1 : 1.02 }}
-                    whileTap={{ scale: isUpdating ? 1 : 0.98 }}
-                  >
-                    <div className="text-center">
-                      <CheckCircle className="h-6 w-6 mx-auto mb-2 text-green-400" />
-                      <span className="text-sm font-semibold block mb-1">
-                        I Know This
-                      </span>
-                      <p className="text-xs opacity-80">
-                        Got it right
-                      </p>
-                    </div>
-                  </motion.button>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </motion.div>
         </div>
 
+        {/* Action Buttons - Improved Layout */}
+        {isFlipped && showButtons && (
+          <div className="w-full flex justify-center">
+            <div className="max-w-md w-full bg-gray-900/80 rounded-xl shadow-lg px-3 py-3 mb-4 flex flex-col items-center">
+              <div className="flex gap-2 sm:gap-3 w-full">
+                <button
+                  onClick={() => handlePerformance("dont_know")}
+                  disabled={isUpdating}
+                  className="flex-1 p-3 sm:p-4 bg-gradient-to-r from-red-500/20 to-red-600/20 border border-red-400/30 text-red-300 rounded-xl transition-all duration-200 hover:from-red-500/30 hover:to-red-600/30 hover:border-red-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="text-center">
+                    <XCircle className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-red-400" />
+                    <span className="text-xs sm:text-sm font-semibold block mb-0.5 sm:mb-1">
+                      Don&apos;t Know
+                    </span>
+                    <p className="text-[10px] sm:text-xs opacity-80">
+                      Need more practice
+                    </p>
+                  </div>
+                </button>
 
+                <button
+                  onClick={() => handlePerformance("know")}
+                  disabled={isUpdating}
+                  className="flex-1 p-3 sm:p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/30 text-green-300 rounded-xl transition-all duration-200 hover:from-green-500/30 hover:to-emerald-500/30 hover:border-green-400/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="text-center">
+                    <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-green-400" />
+                    <span className="text-xs sm:text-sm font-semibold block mb-0.5 sm:mb-1">
+                      I Know This
+                    </span>
+                    <p className="text-[10px] sm:text-xs opacity-80">
+                      Got it right
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

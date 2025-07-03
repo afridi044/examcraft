@@ -1,10 +1,11 @@
-import { useState, useCallback } from "react";
-import { motion } from "framer-motion";
-import { Pencil, Trash2, RotateCcw, Loader2 } from "lucide-react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Pencil, Trash2, RotateCcw, Loader2, MoreVertical } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useDatabase";
 import { useDeleteFlashcard } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
 import type { FlashcardWithTopic } from "@/types";
+import { Button } from "@/components/ui/button";
 
 interface FlashCardProps {
   flashcard: FlashcardWithTopic;
@@ -13,7 +14,6 @@ interface FlashCardProps {
 
 export function FlashCard({ flashcard, index }: FlashCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const { data: currentUser } = useCurrentUser();
   const deleteFlashcard = useDeleteFlashcard();
 
@@ -23,6 +23,30 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
       typeof window !== "undefined" &&
       ("ontouchstart" in window || navigator.maxTouchPoints > 0)
   );
+
+  // Dropdown state
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownButtonRef = useRef<HTMLButtonElement>(null);
+  const dropdownMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownOpen &&
+        dropdownMenuRef.current &&
+        !dropdownMenuRef.current.contains(event.target as Node) &&
+        dropdownButtonRef.current &&
+        !dropdownButtonRef.current.contains(event.target as Node)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen]);
 
   const handleFlip = useCallback(() => {
     setIsFlipped((prev) => !prev);
@@ -52,25 +76,111 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
     }
   }, [flashcard.flashcard_id, currentUser?.user_id, deleteFlashcard]);
 
+  // Calculate dynamic height based on current content (question or answer)
+  const getContentLength = (text: string) => text.length;
+  const currentContent = isFlipped ? flashcard.answer : flashcard.question;
+  const currentContentLength = getContentLength(currentContent);
+  
+  // Default size (minimum size that card will never shrink below)
+  const defaultHeight = "h-40 sm:h-44 md:h-48";
+  
+  // Dynamic height calculation - only grows larger, never shrinks below default
+  const getDynamicHeight = () => {
+    // If content is short (≤50 chars), use default size
+    if (currentContentLength <= 50) return defaultHeight;
+    
+    // Only grow larger for longer content
+    if (currentContentLength <= 100) return "h-48 sm:h-52 md:h-56"; // Medium content
+    if (currentContentLength <= 200) return "h-56 sm:h-60 md:h-64"; // Long content
+    if (currentContentLength <= 300) return "h-64 sm:h-68 md:h-72"; // Very long content
+    return "h-72 sm:h-76 md:h-80"; // Extremely long content
+  };
+
+  // Dropdown menu
+  const dropdownMenu = (
+    <AnimatePresence>
+      {dropdownOpen && (
+        <motion.div
+          ref={dropdownMenuRef}
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+          transition={{ type: "spring", damping: 20, stiffness: 300 }}
+          style={{
+            position: "absolute",
+            top: 40,
+            right: 8,
+            width: 160,
+            zIndex: 9999,
+          }}
+          className="bg-slate-900/95 backdrop-blur-xl border border-slate-700/60 rounded-xl shadow-2xl shadow-blue-900/20 overflow-hidden ring-1 ring-blue-400/10"
+        >
+          <div className="p-1">
+            <button
+              onClick={() => {
+                setDropdownOpen(false);
+                // TODO: Implement edit modal
+                alert("Edit flashcard");
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 group text-blue-400 hover:text-white hover:bg-gradient-to-r hover:from-blue-600/80 hover:to-blue-700/80 hover:shadow-lg hover:shadow-blue-700/20 focus-visible:ring-2 focus-visible:ring-blue-400/40"
+            >
+              <Pencil className="h-4 w-4 transition-colors duration-200 group-hover:text-white" />
+              <span>Edit</span>
+            </button>
+            <button
+              onClick={() => {
+                setDropdownOpen(false);
+                // TODO: Implement delete handler
+                alert("Delete flashcard");
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 group text-red-400 hover:text-white hover:bg-gradient-to-r hover:from-red-600/80 hover:to-red-700/80 hover:shadow-lg hover:shadow-red-700/20 focus-visible:ring-2 focus-visible:ring-blue-400/40"
+            >
+              <Trash2 className="h-4 w-4 transition-colors duration-200 group-hover:text-white" />
+              <span>Delete</span>
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   return (
     <motion.div
-      className="relative group w-full h-40 sm:h-44 md:h-48"
+      className={`relative group w-full ${getDynamicHeight()}`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        type: "spring",
-        stiffness: 260,
-        damping: 20,
-        delay: index * 0.1,
+        duration: 0.35,
+        ease: [0.22, 1, 0.36, 1],
       }}
-      onHoverStart={() => !isTouchDevice && setIsHovered(true)}
-      onHoverEnd={() => !isTouchDevice && setIsHovered(false)}
-      onTouchStart={() => isTouchDevice && setIsHovered(true)}
-      onTouchEnd={() =>
-        isTouchDevice && setTimeout(() => setIsHovered(false), 1000)
-      }
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.05, boxShadow: "0 8px 32px 0 rgba(80, 80, 200, 0.18)" }}
     >
+      {/* Status marker dot */}
+      {flashcard.mastery_status && (
+        <span
+          className={`absolute top-2 left-2 w-3 h-3 rounded-full z-10
+            ${flashcard.mastery_status === 'learning' ? 'bg-yellow-400' : ''}
+            ${flashcard.mastery_status === 'under_review' ? 'bg-blue-400' : ''}
+            ${flashcard.mastery_status === 'mastered' ? 'bg-green-400' : ''}
+          `}
+        />
+      )}
+      {/* Three-dot dropdown trigger */}
+      <div className="absolute top-2 right-2 z-20">
+        <Button
+          ref={dropdownButtonRef}
+          variant="ghost"
+          size="icon"
+          onClick={e => {
+            e.stopPropagation();
+            setDropdownOpen(v => !v);
+          }}
+          className={`h-8 w-8 p-0 flex items-center justify-center text-slate-400 hover:text-slate-300 hover:bg-slate-700/80 transition-all duration-200 ${dropdownOpen ? "bg-slate-700/90" : "bg-slate-800/60"}`}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+        {dropdownMenu}
+      </div>
       <div
         className="relative w-full h-full cursor-pointer perspective-1000"
         onClick={handleFlip}
@@ -88,148 +198,43 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
           }}
         >
           {/* Front side of the card */}
-          <div
-            className={`absolute w-full h-full bg-gray-800/70 border border-gray-700 rounded-lg p-3 sm:p-4 flex flex-col justify-center items-center transition-all shadow-lg ${
-              isHovered && !isFlipped ? "shadow-blue-500/30" : "shadow-black/20"
-            }`}
-            style={{
-              backfaceVisibility: "hidden",
-            }}
+          <motion.div
+            className="absolute w-full h-full bg-gray-800/70 border border-gray-700 rounded-lg p-3 sm:p-4 transition-all shadow-lg overflow-hidden flex flex-col justify-center items-center"
+            style={{ backfaceVisibility: "hidden" }}
           >
-            <motion.p
-              className="text-sm sm:text-base md:text-lg font-medium text-white text-center"
-              animate={{ scale: isHovered && !isFlipped ? 1.03 : 1 }}
-              transition={{ type: "spring", stiffness: 300 }}
+            <p
+              className="text-sm sm:text-base md:text-lg font-medium text-white text-center break-words px-2"
+              style={{ lineHeight: '1.4' }}
             >
               {flashcard.question}
-            </motion.p>
-
-            {/* Hint for desktop */}
-            <motion.div
-              className="absolute bottom-2 sm:bottom-3 text-xs text-gray-400 hidden md:block"
-              animate={{ opacity: isHovered && !isFlipped ? 1 : 0 }}
-              initial={{ opacity: 0 }}
-            >
-              Click to flip
-            </motion.div>
-
-            {/* Hint for mobile */}
-            <motion.div
-              className="absolute bottom-2 text-xs text-gray-400 block md:hidden"
-              initial={{ opacity: 0.7 }}
-              animate={{ opacity: [0.7, 0.3, 0.7] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-            >
-              Tap to flip
-            </motion.div>
-          </div>
+            </p>
+            <AnimatePresence>
+              <motion.div
+                className="text-xs text-gray-400 mt-2"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                {isTouchDevice ? "Tap to flip" : "Click to flip"}
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
 
           {/* Back side of the card */}
-          <div
-            className={`absolute w-full h-full bg-gray-800/70 border border-gray-700 rounded-lg p-3 sm:p-4 flex flex-col justify-center items-center transition-all shadow-lg ${
-              isHovered && isFlipped
-                ? "shadow-purple-500/30"
-                : "shadow-black/20"
-            }`}
-            style={{
-              backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-            }}
+          <motion.div
+            className="absolute w-full h-full bg-gray-800/70 border border-gray-700 rounded-lg p-3 sm:p-4 transition-all shadow-lg overflow-hidden flex flex-col justify-center items-center"
+            style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
           >
-            <motion.p
-              className="text-sm sm:text-base text-gray-200 text-center"
-              animate={{ scale: isHovered && isFlipped ? 1.03 : 1 }}
-              transition={{ type: "spring", stiffness: 300 }}
+            <p
+              className="text-sm sm:text-base text-gray-200 text-center break-words px-2"
+              style={{ lineHeight: '1.4' }}
             >
               {flashcard.answer}
-            </motion.p>
-
-            {/* Hint for desktop */}
-            <motion.div
-              className="absolute bottom-2 sm:bottom-3 text-xs text-gray-400 hidden md:block"
-              animate={{ opacity: isHovered && isFlipped ? 1 : 0 }}
-              initial={{ opacity: 0 }}
-            >
-              Click to flip back
-            </motion.div>
-
-            {/* Hint for mobile */}
-            <motion.div
-              className="absolute bottom-2 text-xs text-gray-400 block md:hidden"
-              initial={{ opacity: 0.7 }}
-              animate={{ opacity: [0.7, 0.3, 0.7] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-            >
-              Tap to flip back
-            </motion.div>
-          </div>
+            </p>
+          </motion.div>
         </motion.div>
       </div>
-
-      {/* Topic info */}
-      <div
-        className="absolute bottom-0 left-0 right-0 mt-3 px-2 sm:px-3 py-1.5 sm:py-2 border-t border-gray-700 flex justify-between items-center bg-gray-800/90 rounded-b-lg z-10"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <span className="text-xs text-gray-400 truncate max-w-[70%]">
-          {flashcard.topic?.name || "General"}
-        </span>
-        <motion.div
-          whileHover={{ rotate: 180 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ duration: 0.3 }}
-        >
-          <RotateCcw
-            size={14}
-            className="text-blue-400 opacity-60 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsFlipped(false);
-            }}
-          />
-        </motion.div>
-      </div>
-
-      {/* Action buttons (visible on hover/touch) */}
-      <motion.div
-        className="absolute top-1.5 right-1.5 flex gap-1 z-10"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isHovered ? 1 : 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Edit button */}
-        <motion.button
-          className="p-1.5 rounded-lg bg-blue-500/20 border border-blue-400/30 text-blue-300 hover:bg-blue-500/30 hover:border-blue-400/50 transition-all"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            // TODO: Implement edit functionality
-            toast.info("Edit functionality coming soon!");
-          }}
-        >
-          <Pencil size={12} />
-        </motion.button>
-
-        {/* Delete button */}
-        <motion.button
-          className="p-1.5 rounded-lg bg-red-500/20 border border-red-400/30 text-red-300 hover:bg-red-500/30 hover:border-red-400/50 transition-all"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete();
-          }}
-          disabled={deleteFlashcard.isPending}
-        >
-          {deleteFlashcard.isPending ? (
-            <Loader2 size={12} className="animate-spin" />
-          ) : (
-            <Trash2 size={12} />
-          )}
-        </motion.button>
-      </motion.div>
     </motion.div>
   );
 } 

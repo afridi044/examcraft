@@ -40,7 +40,7 @@ export default function StudyCompletePage({ params }: StudyCompletePageProps) {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <div className="min-h-screen flex items-start justify-center  p-4">
         <div className="text-center max-w-md mx-auto px-4 sm:px-6 w-full">
           {/* Success Animation */}
           <motion.div
