@@ -111,14 +111,6 @@ export class DatabaseService implements OnModuleInit {
     return this.quizService.addQuestionsToQuiz(quizId, questionIds);
   }
 
-  async updateQuiz(quizId: string, input: any) {
-    return this.quizService.updateQuiz(quizId, input);
-  }
-
-  async getUserAnswers(userId: string, filters?: any) {
-    return this.quizService.getUserAnswers(userId, filters);
-  }
-
   // =============================================
   // Quiz Review - Delegate to QuizReviewDatabaseService
   // =============================================

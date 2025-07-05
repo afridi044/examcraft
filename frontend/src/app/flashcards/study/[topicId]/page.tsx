@@ -3,7 +3,8 @@
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useCurrentUser } from "@/hooks/useDatabase";
-import { useUpdateProgress, useUserFlashcards } from "@/hooks/useBackendFlashcards";
+import { useUpdateProgress, useUserFlashcards, useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
+import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
 import { flashcardService } from "@/lib/services/flashcard.service";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +53,8 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   const { user, loading } = useBackendAuth();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const updateProgress = useUpdateProgress();
+  const invalidateFlashcards = useInvalidateFlashcards();
+  const invalidateBackendDashboard = useInvalidateBackendDashboard();
   
   // Flashcard data hook for cache invalidation
   const { refetch: refetchFlashcards } = useUserFlashcards(currentUser?.user_id || "");
@@ -244,8 +247,11 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
 
       // Navigate to completion if last card
       if (isLastCard) {
-        // Invalidate flashcard cache before navigation
-        refetchFlashcards();
+        // Comprehensive cache invalidation for real-time updates
+        if (currentUser?.user_id) {
+          invalidateFlashcards(currentUser.user_id, { includeExistence: true });
+          invalidateBackendDashboard(currentUser.user_id);
+        }
         router.push(`/flashcards/study/${topicId}/complete`);
       }
     } catch (error) {

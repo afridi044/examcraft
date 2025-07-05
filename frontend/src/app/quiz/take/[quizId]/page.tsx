@@ -6,6 +6,9 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
+import { useInvalidateBackendQuiz } from "@/hooks/useBackendQuiz";
+import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
+import { useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
 import {
   useCurrentUser,
   useQuizWithQuestions,
@@ -49,6 +52,9 @@ export default function TakeQuizPage() {
   const quizId = params.quizId as string;
   const { user, loading } = useBackendAuth();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const invalidateBackendQuiz = useInvalidateBackendQuiz();
+  const invalidateBackendDashboard = useInvalidateBackendDashboard();
+  const invalidateFlashcards = useInvalidateFlashcards();
 
 
   // FIXED: Redirect to landing page if not authenticated and not loading
@@ -222,6 +228,14 @@ export default function TakeQuizPage() {
 
       // Wait for all submissions to complete
       await Promise.all(submitPromises);
+
+      // Invalidate caches to ensure fresh data on navigation
+      if (currentUser?.user_id) {
+        invalidateBackendQuiz(currentUser.user_id, quizId);
+        invalidateBackendDashboard(currentUser.user_id);
+        // Also invalidate flashcards since quiz answers might affect flashcard existence
+        invalidateFlashcards(currentUser.user_id, { includeExistence: true });
+      }
 
       const result: QuizResult = {
         score,

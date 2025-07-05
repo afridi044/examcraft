@@ -48,11 +48,10 @@ export function useBackendQuizReview(quizId: string, userId: string) {
     queryFn: () => quizService.getQuizReview(quizId, userId),
     select: (response) => response.data,
     enabled: !!(quizId && userId),
-    staleTime: 5 * 60 * 1000, // 5 minutes - review data is relatively static
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    placeholderData: (previousData) => previousData,
-    gcTime: 15 * 60 * 1000, // 15 minutes cache time
+    staleTime: 0, // Always fetch fresh data for quiz reviews
+    refetchOnWindowFocus: true, // Refetch when user comes back to window
+    refetchOnMount: true, // Always refetch when component mounts
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes only
   });
 }
 

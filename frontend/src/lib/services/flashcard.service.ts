@@ -1,5 +1,6 @@
-// Flashcard Service - Backend API calls
 import { apiClient } from '../api-client';
+// Note: Types will be properly defined later
+// import { ApiResponse, Flashcard, FlashcardWithTopic, CreateFlashcardInput, UpdateFlashcardInput } from '@/types';ard Service - Backend API calls
 import type { 
   ApiResponse, 
   Flashcard,

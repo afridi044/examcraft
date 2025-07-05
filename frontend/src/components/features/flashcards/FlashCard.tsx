@@ -4,11 +4,10 @@ import { Pencil, Trash2, RotateCcw, Loader2, MoreVertical } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useDatabase";
 import { useDeleteFlashcard } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
-import type { FlashcardWithTopic } from "@/types";
 import { Button } from "@/components/ui/button";
 
 interface FlashCardProps {
-  flashcard: FlashcardWithTopic;
+  flashcard: any; // TODO: Define proper FlashcardWithTopic type
   index: number;
 }
 
@@ -130,13 +129,17 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
             <button
               onClick={() => {
                 setDropdownOpen(false);
-                // TODO: Implement delete handler
-                alert("Delete flashcard");
+                handleDelete();
               }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 group text-red-400 hover:text-white hover:bg-gradient-to-r hover:from-red-600/80 hover:to-red-700/80 hover:shadow-lg hover:shadow-red-700/20 focus-visible:ring-2 focus-visible:ring-blue-400/40"
+              disabled={deleteFlashcard.isPending}
+              className="w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-all duration-200 group text-red-400 hover:text-white hover:bg-gradient-to-r hover:from-red-600/80 hover:to-red-700/80 hover:shadow-lg hover:shadow-red-700/20 focus-visible:ring-2 focus-visible:ring-blue-400/40 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Trash2 className="h-4 w-4 transition-colors duration-200 group-hover:text-white" />
-              <span>Delete</span>
+              {deleteFlashcard.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin transition-colors duration-200 group-hover:text-white" />
+              ) : (
+                <Trash2 className="h-4 w-4 transition-colors duration-200 group-hover:text-white" />
+              )}
+              <span>{deleteFlashcard.isPending ? 'Deleting...' : 'Delete'}</span>
             </button>
           </div>
         </motion.div>

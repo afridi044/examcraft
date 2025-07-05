@@ -1,10 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { flashcardService } from '@/lib/services/flashcard.service';
-import type { 
-  FlashcardWithTopic, 
-  CreateFlashcardInput, 
-  UpdateFlashcardInput 
-} from '@/types';
 
 // Query keys for flashcard operations
 export const FLASHCARD_QUERY_KEYS = {
@@ -32,8 +28,10 @@ export function useUserFlashcards(userId: string) {
       return response.data || [];
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30 * 1000, // 30 seconds - shorter for real-time updates
+    gcTime: 5 * 60 * 1000, // 5 minutes cache time
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchOnMount: true, // Always fetch fresh data on mount
   });
 }
 
@@ -52,8 +50,10 @@ export function useDueFlashcards(userId: string) {
       return response.data || [];
     },
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always fetch fresh due flashcards
+    gcTime: 2 * 60 * 1000, // 2 minutes cache time
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchOnMount: true, // Always fetch fresh data on mount
   });
 }
 
@@ -72,8 +72,10 @@ export function useFlashcardExists(userId: string, questionId: string) {
       return response.data || { exists: false };
     },
     enabled: !!userId && !!questionId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 1000, // 10 seconds - quick updates for existence checks
+    gcTime: 2 * 60 * 1000, // 2 minutes cache time
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchOnMount: true, // Always fetch fresh data on mount
   });
 }
 
@@ -95,8 +97,10 @@ export function useFlashcardsExistBatch(userId: string, questionIds: string[]) {
       return response.data || {};
     },
     enabled: !!userId && questionIds.length > 0,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 1000, // 10 seconds - quick updates for existence checks
+    gcTime: 2 * 60 * 1000, // 2 minutes cache time
+    refetchOnWindowFocus: true, // Refetch when user returns to window
+    refetchOnMount: true, // Always fetch fresh data on mount
   });
 }
 
@@ -107,7 +111,7 @@ export function useCreateFlashcard() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (input: CreateFlashcardInput) => {
+    mutationFn: async (input: any) => {
       const response = await flashcardService.createFlashcard(input);
       if (!response.success) {
         throw new Error(response.error || 'Failed to create flashcard');
@@ -254,7 +258,7 @@ export function useUpdateFlashcard() {
   return useMutation({
     mutationFn: async ({ flashcardId, input }: { 
       flashcardId: string; 
-      input: UpdateFlashcardInput;
+      input: any;
     }) => {
       const response = await flashcardService.updateFlashcard(flashcardId, input);
       if (!response.success) {
@@ -307,4 +311,56 @@ export function useDeleteFlashcard() {
       });
     },
   });
-} 
+}
+
+// =============================================
+// Flashcard Cache Management
+// =============================================
+
+/**
+ * Hook to invalidate flashcard caches for real-time updates
+ */
+export function useInvalidateFlashcards() {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    (userId: string, options?: { 
+      includeExistence?: boolean;
+      questionId?: string;
+    }) => {
+      // Invalidate user flashcards
+      queryClient.invalidateQueries({
+        queryKey: FLASHCARD_QUERY_KEYS.user(userId),
+      });
+
+      // Invalidate due flashcards
+      queryClient.invalidateQueries({
+        queryKey: FLASHCARD_QUERY_KEYS.due(userId),
+      });
+
+      // Optionally invalidate existence checks
+      if (options?.includeExistence) {
+        if (options.questionId) {
+          // Invalidate specific question existence
+          queryClient.invalidateQueries({
+            queryKey: FLASHCARD_QUERY_KEYS.exists(userId, options.questionId),
+          });
+        } else {
+          // Invalidate all existence checks for the user
+          queryClient.invalidateQueries({
+            predicate: (query) => {
+              const queryKey = query.queryKey;
+              return (
+                Array.isArray(queryKey) &&
+                queryKey[0] === 'flashcards' &&
+                queryKey[1] === 'exists' &&
+                queryKey[2] === userId
+              );
+            },
+          });
+        }
+      }
+    },
+    [queryClient]
+  );
+}

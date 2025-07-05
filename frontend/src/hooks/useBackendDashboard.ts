@@ -30,12 +30,12 @@ export function useBackendDashboardStats(userId: string) {
       return response.data || null;
     },
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
-    refetchOnWindowFocus: false,
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: true, // Refetch when user comes back to tab
+    refetchOnMount: true, // Always refetch on mount
     retry: 1,
     refetchInterval: false,
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -49,12 +49,12 @@ export function useBackendRecentActivity(userId: string, limit: number = 10) {
       return result;
     },
     enabled: !!userId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true, // Refetch when user comes back to tab
+    refetchOnMount: true, // Always refetch on mount
     retry: 1,
     refetchInterval: false,
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -68,12 +68,12 @@ export function useBackendTopicProgress(userId: string) {
       return result;
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 60 * 1000, // 1 minute - topic progress changes less frequently
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true, // Refetch when user comes back to tab
+    refetchOnMount: true, // Always refetch on mount
     retry: 1,
     refetchInterval: false,
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -93,10 +93,10 @@ export function useBackendOptimizedDashboard(userId: string) {
       }
     },
     enabled: !!userId,
-    staleTime: 0, // CHANGED: Force fresh data
-    gcTime: 0, // CHANGED: No caching to eliminate cache issues
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes only
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchOnMount: true, // Always refetch on mount
     retry: 1,
     refetchInterval: false,
     select: (response) => {
