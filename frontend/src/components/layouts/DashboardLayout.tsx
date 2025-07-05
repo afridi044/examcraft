@@ -19,6 +19,7 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import { DashboardSidebar } from "./DashboardSidebar";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,7 +38,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024); // lg breakpoint
     };
-    
+
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -84,124 +85,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Top Navigation Bar */}
       <TopNavbar setIsSidebarOpen={setIsSidebarOpen} isSidebarOpen={isSidebarOpen} />
 
-      {/* Backdrop */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-          />
-        )}
-      </AnimatePresence>
-
       {/* Sidebar */}
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div
-            ref={sidebarRef}
-            initial={{ x: -320 }}
-            animate={{ x: 0 }}
-            exit={{ x: -320 }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className={`fixed top-0 left-0 h-full z-50 bg-white/5 backdrop-blur-xl border-r border-white/10 shadow-2xl ${
-              isMobile ? "w-72" : "w-80"
-            }`}
-          >
-            <div className="flex flex-col h-full p-4 sm:p-6">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6 sm:mb-8">
-                <Link href="/dashboard" className="flex items-center space-x-3">
-                  <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-base sm:text-lg font-bold text-white">ExamCraft</h1>
-                    <p className="text-xs text-gray-400 hidden sm:block">AI-Powered Learning</p>
-                  </div>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="h-8 w-8 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {/* Navigation */}
-              <nav className="flex-1 space-y-2">
-                <div className="mb-4 sm:mb-6">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">
-                    Navigation
-                  </p>
-                  {navigationItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={`group flex items-center space-x-3 px-3 py-2.5 sm:py-3 rounded-xl transition-all duration-200 ${
-                          isActive
-                            ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg"
-                            : "text-gray-300 hover:text-white hover:bg-white/10"
-                        }`}
-                      >
-                        <div
-                          className={`h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                            isActive
-                              ? "bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg"
-                              : "bg-white/10 group-hover:bg-white/20"
-                          }`}
-                        >
-                          <item.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                        </div>
-                        <span className="font-medium text-sm sm:text-base">{item.name}</span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </nav>
-
-              {/* Profile Section */}
-              <div className="border-t border-white/10 pt-4 sm:pt-6">
-                <div className="bg-white/5 rounded-xl p-3 sm:p-4 border border-white/10">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                      <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs sm:text-sm font-medium text-white truncate">
-                        {user?.email || "User"}
-                      </p>
-                      <p className="text-xs text-gray-400">Premium Account</p>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={handleSignOut}
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-white/10 rounded-lg text-xs sm:text-sm"
-                  >
-                    <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <DashboardSidebar
+        open={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        isMobile={isMobile}
+        navigationItems={navigationItems}
+        pathname={pathname}
+        user={user}
+        handleSignOut={handleSignOut}
+        sidebarRef={sidebarRef}
+      />
 
       {/* Main Content - Properly spaced and responsive */}
-      <main className={`transition-all duration-300 ${
-        isMobile 
-          ? "pt-[72px] px-7 pb-7 max-w-2xl mx-auto w-full" 
-          : "pt-[88px] px-6 pb-6 max-w-7xl mx-auto w-full"
-      }`}>
+      <main className={`transition-all duration-300 ${isMobile
+        ? "pt-[72px] px-7 pb-7 max-w-2xl mx-auto w-full"
+        : "pt-[88px] px-6 pb-6 max-w-7xl mx-auto w-full"
+        }`}>
         {children}
       </main>
     </div>
