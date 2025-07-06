@@ -37,7 +37,7 @@ jobs:
           git reset --hard origin/master
           
           # Copy environment file
-          cp .env.example .env || echo "No .env.example found, using existing .env"
+          cp /home/seed/env_folder/.env.local /opt/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
           
           # Remove any existing containers and images to ensure fresh build
           docker-compose down --volumes --remove-orphans || true
