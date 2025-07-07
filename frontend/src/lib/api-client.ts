@@ -48,9 +48,21 @@ class APIClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ API Error Response:', errorData);
+        
+        // Handle NestJS error response format
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        
+        if (errorData.message) {
+          // NestJS error format: { statusCode, message, error }
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          // Fallback to error field
+          errorMessage = errorData.error;
+        }
+        
         return {
           data: null,
-          error: errorData.message || `HTTP ${response.status}: ${response.statusText}`,
+          error: errorMessage,
           success: false,
         };
       }

@@ -11,6 +11,10 @@ export class CreateFlashcardFromQuestionDto {
   @IsOptional()
   quiz_id?: string; // optional, for analytics
 
+  @IsUUID()
+  @IsOptional()
+  topic_id?: string; // optional, to override the question's topic
+
   @IsString()
   @IsOptional()
   custom_question?: string;

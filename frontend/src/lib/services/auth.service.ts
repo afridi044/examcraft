@@ -35,11 +35,18 @@ export const authService = {
   async signIn(input: SignInInput): Promise<AuthResponse> {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/signin', input);
-      return response.data || {
-        success: false,
-        message: 'No response data',
-        error: 'Empty response from server'
-      };
+      
+      if (response.success && response.data) {
+        // API call succeeded, return the auth response
+        return response.data;
+      } else {
+        // API call failed, return error response
+        return {
+          success: false,
+          message: 'Sign in failed',
+          error: response.error || 'Authentication failed'
+        };
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Network error';
       return {
@@ -56,11 +63,18 @@ export const authService = {
   async signUp(input: SignUpInput): Promise<AuthResponse> {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/signup', input);
-      return response.data || {
-        success: false,
-        message: 'No response data',
-        error: 'Empty response from server'
-      };
+      
+      if (response.success && response.data) {
+        // API call succeeded, return the auth response
+        return response.data;
+      } else {
+        // API call failed, return error response
+        return {
+          success: false,
+          message: 'Sign up failed',
+          error: response.error || 'Registration failed'
+        };
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Network error';
       return {
@@ -77,11 +91,18 @@ export const authService = {
   async signOut(): Promise<AuthResponse> {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/signout');
-      return response.data || {
-        success: false,
-        message: 'No response data',
-        error: 'Empty response from server'
-      };
+      
+      if (response.success && response.data) {
+        // API call succeeded, return the auth response
+        return response.data;
+      } else {
+        // API call failed, return error response
+        return {
+          success: false,
+          message: 'Sign out failed',
+          error: response.error || 'Sign out failed'
+        };
+      }
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Network error';
       return {

@@ -485,7 +485,7 @@ export class FlashcardsService {
   ): Promise<ApiResponse<FlashcardRow>> {
     try {
       this.logger.log(
-        `🔧 Generating flashcard from question: ${dto.question_id}`,
+        `🔧 Generating flashcard from question: ${dto.question_id}, topic_id: ${dto.topic_id || 'using question topic'}`,
       );
 
       // Get the original question details
@@ -558,7 +558,7 @@ export class FlashcardsService {
         user_id: dto.user_id,
         question: flashcardQuestion,
         answer: flashcardAnswer,
-        topic_id: question.topic_id,
+        topic_id: dto.topic_id || question.topic_id, // Use provided topic_id or fall back to question's topic
         source_question_id: dto.question_id,
         tags: [
           question.question_type,
@@ -566,6 +566,10 @@ export class FlashcardsService {
           `difficulty-${question.difficulty || 1}`,
         ].filter(Boolean),
       };
+
+      this.logger.log(
+        `📝 Creating flashcard with topic_id: ${flashcardInput.topic_id} (provided: ${dto.topic_id}, question topic: ${question.topic_id})`,
+      );
 
       const flashcardResult =
         await this.databaseService.createFlashcard(flashcardInput);
@@ -579,7 +583,7 @@ export class FlashcardsService {
       }
 
       this.logger.log(
-        `✅ Flashcard generated from question: ${dto.question_id} → ${flashcardResult.data.flashcard_id}`,
+        `✅ Flashcard generated from question: ${dto.question_id} → ${flashcardResult.data.flashcard_id} with topic_id: ${flashcardResult.data.topic_id}`,
       );
 
       return {

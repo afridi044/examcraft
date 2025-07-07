@@ -28,7 +28,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { useCurrentUser, useTopics } from "@/hooks/useDatabase";
+import { useCurrentUser } from "@/hooks/useDatabase";
+import { useBackendTopics } from "@/hooks/useBackendTopics";
 import { useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
 
@@ -64,9 +65,9 @@ function CreateFlashcardContent() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useBackendAuth();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-  const { data: topics = [], isLoading: topicsLoading } = useTopics();
+  const { data: topics = [], isLoading: topicsLoading } = useBackendTopics();
   const generateAIFlashcards = useGenerateAIFlashcards();
-  
+
   // Scroll to top when navigating
   useScrollToTop();
 
@@ -366,14 +367,14 @@ function CreateFlashcardContent() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="text-center space-y-2"
         >
-          <motion.div 
+          <motion.div
             className="flex items-center justify-center space-x-3"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <motion.div 
+            <motion.div
               className="h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30"
-              whileHover={{ 
+              whileHover={{
                 boxShadow: "0 20px 25px -5px rgba(59, 130, 246, 0.4)",
                 rotate: [0, -10, 10, 0]
               }}
@@ -385,7 +386,7 @@ function CreateFlashcardContent() {
               AI Flashcard Generator
             </h1>
           </motion.div>
-          <motion.p 
+          <motion.p
             className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
             initial={{ opacity: 0 }}
             animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
@@ -393,7 +394,7 @@ function CreateFlashcardContent() {
           >
             Create personalized flashcards with AI. Provide your topic and content, and our AI will generate effective study materials optimized for active recall.
           </motion.p>
-          
+
 
         </motion.div>
 
@@ -407,269 +408,268 @@ function CreateFlashcardContent() {
           <div>
             <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
               <div className="space-y-4 sm:space-y-6">
-              {/* Topic Information */}
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-                  <div className="h-8 w-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                    <BookOpen className="h-4 w-4 text-white" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">Topic Selection</h2>
-                </div>
-
-                <motion.div 
-                  className="space-y-4"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                  transition={{ delay: 0.3, duration: 0.6 }}
-                >
-                  <Label className="text-gray-300">Topic</Label>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
-                      <Select
-                        id="topic"
-                        options={topicOptions}
-                        value={topicOptions.find((option: any) => option.value === form.topic_id) || null}
-                        onChange={(selectedOption) => {
-                          handleTopicSelection(selectedOption?.value || "");
-                        }}
-                        styles={selectStyles}
-                        placeholder="Choose a topic..."
-                        isClearable
-                        isSearchable
-                        className="react-select-container"
-                        classNamePrefix="react-select"
-                      />
+                {/* Topic Information */}
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                    <div className="h-8 w-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                      <BookOpen className="h-4 w-4 text-white" />
                     </div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Topic Selection</h2>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
-                      <div>
-                        <Input
-                          id="custom_topic"
-                          value={form.custom_topic}
-                          onChange={(e) => handleCustomTopic(e.target.value)}
-                          placeholder="e.g., Machine Learning Basics"
-                          className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200"
-                          disabled={!!form.topic_id}
+                  <motion.div
+                    className="space-y-4"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                  >
+                    <Label className="text-gray-300">Topic</Label>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
+                        <Select
+                          id="topic"
+                          options={topicOptions}
+                          value={topicOptions.find((option: any) => option.value === form.topic_id) || null}
+                          onChange={(selectedOption) => {
+                            handleTopicSelection(selectedOption?.value || "");
+                          }}
+                          styles={selectStyles}
+                          placeholder="Choose a topic..."
+                          isClearable
+                          isSearchable
+                          className="react-select-container"
+                          classNamePrefix="react-select"
                         />
                       </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
 
-              {/* Flashcard Configuration */}
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-                  <div className="h-8 w-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                    <Brain className="h-4 w-4 text-white" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">Flashcard Configuration</h2>
-                </div>
-
-                <motion.div 
-                  className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                >
-                  {/* Difficulty Level */}
-                  <div className="space-y-4">
-                    <Label className="text-gray-300 flex items-center space-x-2">
-                      <Star className="w-4 h-4" />
-                      <span>Difficulty Level</span>
-                    </Label>
-                    <div className="grid grid-cols-5 gap-1 sm:gap-2">
-                      {DIFFICULTY_LEVELS.map((level, index) => (
-                        <motion.button
-                          key={level.value}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={formInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                          transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
-                          whileHover={{ 
-                            scale: 1.05, 
-                            y: -2,
-                            boxShadow: form.difficulty === level.value 
-                              ? "0 10px 25px -5px rgba(59, 130, 246, 0.4)" 
-                              : "0 10px 25px -5px rgba(0, 0, 0, 0.2)"
-                          }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => updateForm("difficulty", level.value)}
-                          className={`p-2 sm:p-3 rounded-lg border text-center transition-all min-h-[44px] ${
-                            form.difficulty === level.value
-                              ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-lg shadow-blue-500/25"
-                              : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
-                          }`}
-                        >
-                          <div className="text-sm font-medium">{level.value}</div>
-                          <div className={`text-xs ${level.color}`}>{level.label}</div>
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Number of Flashcards */}
-                  <motion.div 
-                    className="space-y-2"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-                    transition={{ delay: 0.6, duration: 0.6 }}
-                  >
-                    <Label htmlFor="num_flashcards" className="text-gray-300 flex items-center space-x-2">
-                      <Layers className="w-4 h-4 " />
-                      <span>Number of Flashcards (1-50)</span>
-                    </Label>
-                    <div className="py-2">
-                      <NumericFormat
-                        id="num_flashcards"
-                        value={form.num_flashcards}
-                        onValueChange={(values) => {
-                          const { floatValue } = values;
-                          if (floatValue !== undefined && floatValue >= 1 && floatValue <= 50) {
-                            updateForm("num_flashcards", floatValue);
-                          }
-                        }}
-                        allowNegative={false}
-                        decimalScale={0}
-                        fixedDecimalScale={false}
-                        thousandSeparator={false}
-                        isAllowed={(values) => {
-                          const { floatValue } = values;
-                          return floatValue === undefined || (floatValue >= 1 && floatValue <= 50);
-                        }}
-                        customInput={Input}
-                        className="bg-gray-700/50 border-gray-600 text-white min-h-[44px] text-center font-medium text-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500/50"
-                        placeholder="10"
-                      />
+                      <div className="space-y-2">
+                        <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
+                        <div>
+                          <Input
+                            id="custom_topic"
+                            value={form.custom_topic}
+                            onChange={(e) => handleCustomTopic(e.target.value)}
+                            placeholder="e.g., Machine Learning Basics"
+                            className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200"
+                            disabled={!!form.topic_id}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
+                </div>
+
+                {/* Flashcard Configuration */}
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                    <div className="h-8 w-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                      <Brain className="h-4 w-4 text-white" />
+                    </div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Flashcard Configuration</h2>
+                  </div>
+
+                  <motion.div
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                  >
+                    {/* Difficulty Level */}
+                    <div className="space-y-4">
+                      <Label className="text-gray-300 flex items-center space-x-2">
+                        <Star className="w-4 h-4" />
+                        <span>Difficulty Level</span>
+                      </Label>
+                      <div className="grid grid-cols-5 gap-1 sm:gap-2">
+                        {DIFFICULTY_LEVELS.map((level, index) => (
+                          <motion.button
+                            key={level.value}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={formInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                            transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+                            whileHover={{
+                              scale: 1.05,
+                              y: -2,
+                              boxShadow: form.difficulty === level.value
+                                ? "0 10px 25px -5px rgba(59, 130, 246, 0.4)"
+                                : "0 10px 25px -5px rgba(0, 0, 0, 0.2)"
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => updateForm("difficulty", level.value)}
+                            className={`p-2 sm:p-3 rounded-lg border text-center transition-all min-h-[44px] ${form.difficulty === level.value
+                              ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-lg shadow-blue-500/25"
+                              : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
+                              }`}
+                          >
+                            <div className="text-sm font-medium">{level.value}</div>
+                            <div className={`text-xs ${level.color}`}>{level.label}</div>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Number of Flashcards */}
+                    <motion.div
+                      className="space-y-2"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                      transition={{ delay: 0.6, duration: 0.6 }}
+                    >
+                      <Label htmlFor="num_flashcards" className="text-gray-300 flex items-center space-x-2">
+                        <Layers className="w-4 h-4 " />
+                        <span>Number of Flashcards (1-50)</span>
+                      </Label>
+                      <div className="py-2">
+                        <NumericFormat
+                          id="num_flashcards"
+                          value={form.num_flashcards}
+                          onValueChange={(values) => {
+                            const { floatValue } = values;
+                            if (floatValue !== undefined && floatValue >= 1 && floatValue <= 50) {
+                              updateForm("num_flashcards", floatValue);
+                            }
+                          }}
+                          allowNegative={false}
+                          decimalScale={0}
+                          fixedDecimalScale={false}
+                          thousandSeparator={false}
+                          isAllowed={(values) => {
+                            const { floatValue } = values;
+                            return floatValue === undefined || (floatValue >= 1 && floatValue <= 50);
+                          }}
+                          customInput={Input}
+                          className="bg-gray-700/50 border-gray-600 text-white min-h-[44px] text-center font-medium text-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500/50"
+                          placeholder="10"
+                        />
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                </div>
+
+                {/* Content Source */}
+                <div className="space-y-4 sm:space-y-6">
+                  <div className="flex items-center space-x-3 mb-4 sm:mb-6">
+                    <div className="h-8 w-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-white" />
+                    </div>
+                    <h2 className="text-lg sm:text-xl font-bold text-white">Content & Instructions</h2>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="content_source" className="text-gray-300">Content Source (Optional)</Label>
+                      <textarea
+                        id="content_source"
+                        value={form.content_source}
+                        onChange={(e) => updateForm("content_source", e.target.value)}
+                        placeholder="Paste your study material, notes, or content that you want the flashcards to be based on..."
+                        rows={4}
+                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical min-h-[100px]"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="additional_instructions" className="text-gray-300">Additional Instructions (Optional)</Label>
+                      <textarea
+                        id="additional_instructions"
+                        value={form.additional_instructions}
+                        onChange={(e) => updateForm("additional_instructions", e.target.value)}
+                        placeholder="Any specific instructions for the AI (e.g., 'Focus on definitions', 'Include examples', etc.)"
+                        rows={3}
+                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical min-h-[80px]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Generate Button */}
+                <motion.div
+                  className="pt-4 sm:pt-6 border-t border-gray-700"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                >
+                  <div>
+                    <Button
+                      onClick={handleGenerateFlashcards}
+                      disabled={isGenerating || !currentUser}
+                      className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] text-base sm:text-lg shadow-lg hover:shadow-xl hover:shadow-blue-500/25"
+                    >
+                      <AnimatePresence mode="wait">
+                        {isGenerating ? (
+                          <motion.div
+                            key="generating"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center space-x-2"
+                          >
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            >
+                              <Loader2 className="h-5 w-5" />
+                            </motion.div>
+                            <span>Generating Flashcards...</span>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="generate"
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="flex items-center space-x-2"
+                          >
+                            <div>
+                              <Sparkles className="h-5 w-5" />
+                            </div>
+                            <span>Generate AI Flashcards</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </Button>
+                  </div>
                 </motion.div>
               </div>
-
-              {/* Content Source */}
-              <div className="space-y-4 sm:space-y-6">
-                <div className="flex items-center space-x-3 mb-4 sm:mb-6">
-                  <div className="h-8 w-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
-                    <FileText className="h-4 w-4 text-white" />
-                  </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">Content & Instructions</h2>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="content_source" className="text-gray-300">Content Source (Optional)</Label>
-                    <textarea
-                      id="content_source"
-                      value={form.content_source}
-                      onChange={(e) => updateForm("content_source", e.target.value)}
-                      placeholder="Paste your study material, notes, or content that you want the flashcards to be based on..."
-                      rows={4}
-                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical min-h-[100px]"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="additional_instructions" className="text-gray-300">Additional Instructions (Optional)</Label>
-                    <textarea
-                      id="additional_instructions"
-                      value={form.additional_instructions}
-                      onChange={(e) => updateForm("additional_instructions", e.target.value)}
-                      placeholder="Any specific instructions for the AI (e.g., 'Focus on definitions', 'Include examples', etc.)"
-                      rows={3}
-                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical min-h-[80px]"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Generate Button */}
-              <motion.div 
-                className="pt-4 sm:pt-6 border-t border-gray-700"
-                initial={{ opacity: 0, y: 20 }}
-                animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ delay: 0.8, duration: 0.6 }}
-              >
-                <div>
-                  <Button
-                    onClick={handleGenerateFlashcards}
-                    disabled={isGenerating || !currentUser}
-                    className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-medium py-3 px-6 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] text-base sm:text-lg shadow-lg hover:shadow-xl hover:shadow-blue-500/25"
-                  >
-                    <AnimatePresence mode="wait">
-                      {isGenerating ? (
-                        <motion.div 
-                          key="generating"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="flex items-center space-x-2"
-                        >
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          >
-                            <Loader2 className="h-5 w-5" />
-                          </motion.div>
-                          <span>Generating Flashcards...</span>
-                        </motion.div>
-                      ) : (
-                        <motion.div 
-                          key="generate"
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="flex items-center space-x-2"
-                        >
-                          <div>
-                            <Sparkles className="h-5 w-5" />
-                          </div>
-                          <span>Generate AI Flashcards</span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </Button>
-                </div>
-              </motion.div>
-            </div>
-          </Card>
-        </div>
-      </motion.div>
+            </Card>
+          </div>
+        </motion.div>
 
         {/* Tips Card */}
         <motion.div
           ref={tipsRef}
           initial={{ opacity: 0, y: 30 }}
           animate={tipsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
+          transition={{ duration: 0.4, delay: 0.0 }}
         >
           <div>
             <Card className="bg-gradient-to-r from-teal-500/10 to-blue-500/10 border-teal-500/20 p-4 sm:p-6 backdrop-blur-sm">
               <div className="flex items-start space-x-4">
-                <div 
+                <div
                   className="h-8 w-8 bg-gradient-to-br from-teal-500 to-blue-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1"
                 >
                   <Lightbulb className="h-4 w-4 text-white" />
                 </div>
                 <div className="space-y-2">
-                  <motion.h3 
+                  <motion.h3
                     className="text-base sm:text-lg font-bold text-teal-300 flex items-center space-x-2"
                     initial={{ opacity: 0, x: -10 }}
                     animate={tipsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                    transition={{ delay: 0.6, duration: 0.5 }}
+                    transition={{ delay: 0.1, duration: 0.5 }}
                   >
                     <Rocket className="w-4 h-4" />
                     <span>Pro Tips</span>
                   </motion.h3>
-                  <motion.ul 
+                  <motion.ul
                     className="text-sm text-gray-300 space-y-1"
                     initial={{ opacity: 0 }}
                     animate={tipsInView ? { opacity: 1 } : { opacity: 0 }}
-                    transition={{ delay: 0.8, duration: 0.6 }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
                   >
                     {[
                       "Provide detailed content for more accurate flashcards",
-                      "Use specific topics for better targeted learning", 
+                      "Use specific topics for better targeted learning",
                       "Include clear instructions for optimal AI generation",
                       "Start with 10-15 flashcards for effective study sessions"
                     ].map((tip, index) => (
@@ -677,7 +677,7 @@ function CreateFlashcardContent() {
                         key={index}
                         initial={{ opacity: 0, x: -10 }}
                         animate={tipsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                        transition={{ delay: 0.9 + index * 0.1, duration: 0.4 }}
+                        transition={{ delay: 0.3 + index * 0.1, duration: 0.4 }}
                         whileHover={{ x: 5, color: "#14b8a6" }}
                         className="transition-colors duration-200"
                       >

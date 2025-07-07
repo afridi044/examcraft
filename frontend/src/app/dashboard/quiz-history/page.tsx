@@ -16,10 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  useCurrentUser,
-  useDeleteQuiz,
-} from "@/hooks/useDatabase";
+import { useCurrentUser } from "@/hooks/useDatabase";
+import { useDeleteBackendQuiz } from "@/hooks/useBackendQuiz";
 import { useBackendUserQuizAttempts, BACKEND_QUIZ_KEYS } from "@/hooks/useBackendQuiz";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { toast } from "react-hot-toast";
@@ -40,7 +38,7 @@ import { SortDropdown, SortOption } from "@/components/ui/sort-dropdown";
 export default function QuizHistoryPage() {
   const { user, loading } = useBackendAuth();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-  const deleteQuizMutation = useDeleteQuiz();
+  const deleteQuizMutation = useDeleteBackendQuiz();
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -89,7 +87,7 @@ export default function QuizHistoryPage() {
       // Check if data is stale and invalidate if needed
       const queryState = queryClient.getQueryState(BACKEND_QUIZ_KEYS.userAttempts(userId));
       const isStale = !queryState || (Date.now() - (queryState.dataUpdatedAt || 0)) > 30000; // 30 seconds
-      
+
       if (isStale) {
         queryClient.invalidateQueries({
           queryKey: BACKEND_QUIZ_KEYS.userAttempts(userId),
@@ -127,17 +125,17 @@ export default function QuizHistoryPage() {
       setDeletingQuizId(quizId);
 
       // Optimistically update the cache immediately for better UX
-          queryClient.setQueryData(
-            BACKEND_QUIZ_KEYS.userAttempts(userId),
+      queryClient.setQueryData(
+        BACKEND_QUIZ_KEYS.userAttempts(userId),
         (oldData: QuizAttempt[] | { data: QuizAttempt[]; success: boolean; error: string | null } | undefined) => {
           // Handle both transformed array data and raw ApiResponse format
-              if (!oldData) return [];
-          
+          if (!oldData) return [];
+
           // If oldData is an array (transformed by select function)
           if (Array.isArray(oldData)) {
-              return oldData.filter((attempt) => attempt.quiz_id !== quizId);
-            }
-          
+            return oldData.filter((attempt) => attempt.quiz_id !== quizId);
+          }
+
           // If oldData is in ApiResponse format (raw cached data)
           if ('data' in oldData && Array.isArray(oldData.data)) {
             return {
@@ -145,7 +143,7 @@ export default function QuizHistoryPage() {
               data: oldData.data.filter((attempt: QuizAttempt) => attempt.quiz_id !== quizId)
             };
           }
-          
+
           // Fallback to empty array
           return [];
         }
@@ -221,7 +219,7 @@ export default function QuizHistoryPage() {
 
         {/* Statistics Overview */}
         <div className="mb-6 sm:mb-8">
-          <motion.div 
+          <motion.div
             className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

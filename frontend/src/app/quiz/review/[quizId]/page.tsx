@@ -21,10 +21,10 @@ import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader
 import type { QuizReviewData } from "@/types";
 import { flashcardService } from "@/lib/services";
 import toast from "react-hot-toast";
-import { useSimpleAuth } from "@/hooks/useSimpleAuth";
+import { useBackendAuth } from "@/hooks/useBackendAuth";
 
 export default function QuizReviewPage() {
-  const { user, loading: authLoading } = useSimpleAuth();
+  const { user, loading: authLoading } = useBackendAuth();
   const router = useRouter();
   const params = useParams();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
@@ -74,7 +74,7 @@ export default function QuizReviewPage() {
       const response = await flashcardService.createFromQuestion({
         questionId: questionId,
         userId: currentUser.user_id,
-        topicId: undefined, // Let backend determine topic from question
+        topicId: reviewData?.quiz?.topic?.topic_id, // Use quiz's topic if available
       });
 
       if (response.success) {

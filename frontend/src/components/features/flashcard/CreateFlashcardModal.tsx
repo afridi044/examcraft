@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useCurrentUser, useTopics } from "@/hooks/useDatabase";
+import { useCurrentUser } from "@/hooks/useDatabase";
+import { useBackendTopics } from "@/hooks/useBackendTopics";
 import { useCreateFlashcard, useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
 
@@ -53,7 +54,7 @@ export function CreateFlashcardModal({
   preselectedTopicId = "",
 }: CreateFlashcardModalProps) {
   const { data: currentUser } = useCurrentUser();
-  const { data: topics } = useTopics();
+  const { data: topics } = useBackendTopics();
   const createFlashcardMutation = useCreateFlashcard();
   const generateAIFlashcardsMutation = useGenerateAIFlashcards();
 
@@ -102,7 +103,7 @@ export function CreateFlashcardModal({
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!currentUser?.user_id) {
       toast.error("Please log in to create flashcards");
       return;
@@ -138,7 +139,7 @@ export function CreateFlashcardModal({
 
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!currentUser?.user_id) {
       toast.error("Please log in to generate flashcards");
       return;
@@ -164,7 +165,7 @@ export function CreateFlashcardModal({
       await generateAIFlashcardsMutation.mutateAsync({
         userId: currentUser.user_id,
         topicId: aiForm.topic_id || undefined,
-        topic: aiForm.topic_id 
+        topic: aiForm.topic_id
           ? topics?.find((t: any) => t.topic_id === aiForm.topic_id)?.name || ""
           : aiForm.custom_topic.trim(),
         count: aiForm.num_flashcards,
@@ -197,22 +198,20 @@ export function CreateFlashcardModal({
           <div className="flex bg-gray-700/50 rounded-lg p-1">
             <button
               onClick={() => setCreationMode("manual")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                creationMode === "manual"
-                  ? "bg-blue-500 text-white shadow-lg"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${creationMode === "manual"
+                ? "bg-blue-500 text-white shadow-lg"
+                : "text-gray-400 hover:text-white"
+                }`}
             >
               <Plus className="h-4 w-4" />
               Manual Creation
             </button>
             <button
               onClick={() => setCreationMode("ai")}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                creationMode === "ai"
-                  ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
-                  : "text-gray-400 hover:text-white"
-              }`}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${creationMode === "ai"
+                ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg"
+                : "text-gray-400 hover:text-white"
+                }`}
             >
               <Sparkles className="h-4 w-4" />
               AI Generation

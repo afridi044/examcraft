@@ -11,8 +11,8 @@ import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
 import { useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
 import {
   useCurrentUser,
-  useQuizWithQuestions,
 } from "@/hooks/useDatabase";
+import { useBackendQuizWithQuestions } from "@/hooks/useBackendQuiz";
 import { QuizTakingQuestionCard } from "@/components/features/quiz/QuizTakingQuestionCard";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 
@@ -68,7 +68,7 @@ export default function TakeQuizPage() {
   // Removed automatic invalidation on mount for better performance
 
   // OPTIMIZED: Removed debug logging for performance
-  const { data: quiz, isLoading } = useQuizWithQuestions(quizId);
+  const { data: quiz, isLoading } = useBackendQuizWithQuestions(quizId);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Map<string, UserAnswer>>(
@@ -156,8 +156,8 @@ export default function TakeQuizPage() {
       );
       const isCorrect = Boolean(
         correctOption?.option_id === optionId ||
-          (textAnswer &&
-            correctOption?.content.toLowerCase() === textAnswer.toLowerCase())
+        (textAnswer &&
+          correctOption?.content.toLowerCase() === textAnswer.toLowerCase())
       );
 
       const answer: UserAnswer = {
@@ -383,7 +383,7 @@ export default function TakeQuizPage() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Quiz Header */}
-        <DashboardHeader 
+        <DashboardHeader
           title={quiz.title}
           subtitle={quiz.description || "Answer the questions below"}
           iconLeft={<div className="h-8 w-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -454,13 +454,12 @@ export default function TakeQuizPage() {
                 return (
                   <div
                     key={index}
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full text-sm flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
-                      isCurrent
+                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full text-sm flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isCurrent
                         ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md shadow-purple-500/30 border border-purple-400/30"
                         : isAnswered
                           ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm shadow-green-500/20 border border-green-400/30"
                           : "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-400 border border-gray-600/30"
-                    }`}
+                      }`}
                   >
                     {index + 1}
                   </div>

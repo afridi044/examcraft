@@ -15,10 +15,16 @@ export const quizService = {
    * Generate a new quiz using AI
    */
   async generateQuiz(input: {
+    title?: string;
+    description?: string;
     topic: string;
     difficulty: 'easy' | 'medium' | 'hard';
     questionCount: number;
     userId: string;
+    topicId?: string;
+    customTopic?: string;
+    contentSource?: string;
+    additionalInstructions?: string;
   }): Promise<ApiResponse<{
     quiz: QuizWithQuestions;
     questions_created: number;
@@ -26,12 +32,16 @@ export const quizService = {
   }>> {
     // Convert frontend input to backend GenerateQuizDto format
     const backendPayload = {
-      title: `${input.topic} Quiz`,
-      description: `AI-generated quiz on ${input.topic}`,
+      title: input.title || `${input.topic} Quiz`,
+      description: input.description || `AI-generated quiz on ${input.topic}`,
       topic_name: input.topic,
+      topic_id: input.topicId,
+      custom_topic: input.customTopic,
       difficulty: input.difficulty === 'easy' ? 1 : input.difficulty === 'medium' ? 3 : 5,
       num_questions: input.questionCount,
       question_types: ['multiple-choice'], // Default to multiple choice
+      content_source: input.contentSource,
+      additional_instructions: input.additionalInstructions,
       user_id: input.userId,
     };
     return apiClient.post<{

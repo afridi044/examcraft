@@ -26,7 +26,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
         quiz_id: string;
         title: string;
         description: string | null;
-        topic: { name: string } | { name: string }[] | null;
+        topic: { topic_id: string; name: string } | { topic_id: string; name: string }[] | null;
         quiz_questions: {
           question_id: string;
           question_order: number;
@@ -46,7 +46,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
           quiz_id,
           title,
           description,
-          topic:topics(name),
+          topic:topics(topic_id, name),
           quiz_questions(question_id, question_order, questions(*, question_options(*)))
         `,
         )
@@ -185,10 +185,10 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
             const maybeArray = quizData.topic;
             if (Array.isArray(maybeArray)) {
               return maybeArray.length
-                ? { name: maybeArray[0]?.name || '' }
+                ? { topic_id: maybeArray[0]?.topic_id || '', name: maybeArray[0]?.name || '' }
                 : undefined;
             }
-            return { name: maybeArray.name };
+            return { topic_id: maybeArray.topic_id || '', name: maybeArray.name };
           })(),
         },
         questions,

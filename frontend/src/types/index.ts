@@ -33,6 +33,7 @@ export interface QuizReviewData {
     title: string;
     description?: string;
     topic?: {
+      topic_id: string;
       name: string;
     };
   };
