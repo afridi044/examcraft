@@ -5,17 +5,17 @@ set -e
 echo "🚀Starting deployment script..."
 
 
-cd /opt/examcraft
+cd /home/seed/examcraft
 
 git pull origin master || echo "No changes to pull"
 
 # Copy environment file
-cp /home/seed/env_folder/.env.local /opt/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
-cp /home/seed/env_folder/.env.production /opt/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
+cp /home/seed/env_folder/.env.local /home/seed/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
+cp /home/seed/env_folder/.env.production /home/seed/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
 
-echo "dcoker compose backend"
+echo "docker compose backend"
 
-cd /opt/examcraft/backend
+cd /home/seed/examcraft/backend
 
 docker-compose -f docker-compose.yml down
 docker-compose -f docker-compose.yml up --build -d
@@ -25,7 +25,7 @@ sleep 30
 
 echo "dcoker compose frontend"
 
-cd /opt/examcraft/frontend
+cd /home/seed/examcraft/frontend
 docker-compose -f docker-compose.yml down
 docker-compose -f docker-compose.yml up --build -d
 
