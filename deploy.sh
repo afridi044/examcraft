@@ -11,7 +11,7 @@ git pull origin master || echo "No changes to pull"
 
 # Copy environment file
 cp /home/seed/env_folder/.env.local /home/seed/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
-cp /home/seed/env_folder/.env.production /home/seed/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
+cp /home/seed/env_folder/.env.production /home/seed/examcraft/frontend/.env|| echo "No .env.example found, using existing .env"
 
 echo "docker compose backend"
 
