@@ -11,7 +11,7 @@ import {
 
 @Injectable()
 export class FlashcardDatabaseService extends BaseDatabaseService {
-  
+
   async createFlashcard(
     input: TablesInsert<'flashcards'>,
   ): Promise<ApiResponse<FlashcardRow>> {
@@ -242,9 +242,9 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     }
   }
 
-  async deleteFlashcard(flashcardId: string): Promise<ApiResponse<boolean>> {
+  async deleteFlashcard(flashcardId: string, userId: string): Promise<ApiResponse<boolean>> {
     try {
-      this.logger.log(`🗑️ Deleting flashcard: ${flashcardId}`);
+      this.logger.log(`🗑️ Deleting flashcard: ${flashcardId} for user: ${userId}`);
 
       // First check if the flashcard exists and get its details
       const { data: flashcard, error: fetchError } = await this.supabase
@@ -260,6 +260,11 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
         return this.handleError(fetchError, 'deleteFlashcard');
       }
 
+      // Check if the user owns this flashcard
+      if (flashcard.user_id !== userId) {
+        return this.handleError(new Error('Unauthorized: You can only delete your own flashcards'), 'deleteFlashcard');
+      }
+
       // Delete the flashcard
       const { error } = await this.supabase
         .from(TABLE_NAMES.FLASHCARDS)
@@ -267,7 +272,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
         .eq('flashcard_id', flashcardId);
 
       if (error) return this.handleError(error, 'deleteFlashcard');
-      
+
       this.logger.log(`✅ Successfully deleted flashcard: ${flashcardId}`);
       return this.handleSuccess(true);
     } catch (error) {

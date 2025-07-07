@@ -43,14 +43,11 @@ const DEFAULT_STATS = {
 export default function DashboardPage() {
   const router = useRouter();
   const { user: currentUser, loading: userLoading } = useBackendAuth();
-  
-  // Memoize userId to prevent unnecessary re-renders
-  const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
 
-  // Use individual backend-powered dashboard hooks
-  const statsQuery = useBackendDashboardStats(userId);
-  const activityQuery = useBackendRecentActivity(userId, 5);
-  const progressQuery = useBackendTopicProgress(userId);
+  // Use individual backend-powered dashboard hooks (JWT-secured)
+  const statsQuery = useBackendDashboardStats();
+  const activityQuery = useBackendRecentActivity(5);
+  const progressQuery = useBackendTopicProgress();
 
   // Scroll to top when navigating
   useScrollToTop();
@@ -67,8 +64,8 @@ export default function DashboardPage() {
 
   // Loading states
   const showLoadingScreen = useMemo(() => {
-    const authLoading = userLoading || (currentUser && !userId);
-    const anyQueryLoading = userId && (
+    const authLoading = userLoading || !currentUser;
+    const anyQueryLoading = (
       (statsQuery.isLoading && !statsQuery.data) ||
       (activityQuery.isLoading && !activityQuery.data) ||
       (progressQuery.isLoading && !progressQuery.data)
@@ -77,7 +74,6 @@ export default function DashboardPage() {
   }, [
     userLoading,
     currentUser,
-    userId,
     statsQuery.isLoading,
     statsQuery.data,
     activityQuery.isLoading,

@@ -30,7 +30,7 @@ describe('APIClient', () => {
       const result = await apiClient.post('/auth/signin', { email: 'test@example.com', password: 'wrong' });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Invalid login credentials');
+      expect(result.error).toBe('Session expired. Please sign in again.');
       expect(result.data).toBeNull();
     });
 

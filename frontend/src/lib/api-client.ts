@@ -1,7 +1,13 @@
 // API Client for Backend Communication
 // This replaces direct database operations with HTTP calls to NestJS backend
 
-import { ApiResponse } from '@/types';
+// Base response interface
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T | null;
+  error?: string | null;
+  message?: string;
+}
 
 // Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001/api/v1';
@@ -28,13 +34,20 @@ class APIClient {
         endpoint
       });
       
+      // Get JWT token from localStorage
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      console.log('🔑 Token for request:', token ? `${token.substring(0, 50)}...` : 'No token');
+      
       const config: RequestInit = {
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
           ...options.headers,
         },
         ...options,
       };
+
+      console.log('📋 Request config headers:', config.headers);
 
       const response = await fetch(url, config);
       
@@ -46,6 +59,83 @@ class APIClient {
       });
       
       if (!response.ok) {
+        // Handle 401 errors with automatic token refresh
+        if (response.status === 401 && endpoint !== '/auth/refresh' && typeof window !== 'undefined') {
+          console.log('🔄 Token expired, attempting refresh...');
+          
+          const refreshToken = localStorage.getItem('refresh_token');
+          if (refreshToken) {
+            try {
+              // Attempt to refresh token
+              const refreshResponse = await fetch(`${this.baseURL}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: refreshToken }),
+              });
+
+              if (refreshResponse.ok) {
+                const refreshData = await refreshResponse.json();
+                if (refreshData.success && refreshData.access_token) {
+                  // Store new tokens
+                  localStorage.setItem('access_token', refreshData.access_token);
+                  if (refreshData.refresh_token) {
+                    localStorage.setItem('refresh_token', refreshData.refresh_token);
+                  }
+                  
+                  console.log('✅ Token refreshed successfully, retrying request...');
+                  // Retry the original request with new token
+                  const newToken = localStorage.getItem('access_token');
+                  const retryConfig: RequestInit = {
+                    ...config,
+                    headers: {
+                      ...config.headers,
+                      'Authorization': `Bearer ${newToken}`,
+                    },
+                  };
+                  
+                  const retryResponse = await fetch(url, retryConfig);
+                  if (retryResponse.ok) {
+                    const retryData = await retryResponse.json();
+                    console.log('✅ Retry successful:', retryData);
+                    
+                    // Handle the response format as before
+                    if (retryData.data !== undefined) {
+                      return retryData.success ? {
+                        data: retryData.data,
+                        error: null,
+                        success: true,
+                      } : {
+                        data: null,
+                        error: retryData.error || 'Backend operation failed',
+                        success: false,
+                      };
+                    } else {
+                      return {
+                        data: retryData,
+                        error: null,
+                        success: true,
+                      };
+                    }
+                  }
+                }
+              }
+            } catch (refreshError) {
+              console.error('❌ Token refresh failed:', refreshError);
+            }
+          }
+          
+          // If refresh failed, clear tokens
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('examcraft-user');
+          
+          return {
+            data: null,
+            error: 'Session expired. Please sign in again.',
+            success: false,
+          };
+        }
+        
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ API Error Response:', errorData);
         

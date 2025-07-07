@@ -9,9 +9,6 @@ import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useInvalidateBackendQuiz } from "@/hooks/useBackendQuiz";
 import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
 import { useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
-import {
-  useCurrentUser,
-} from "@/hooks/useDatabase";
 import { useBackendQuizWithQuestions } from "@/hooks/useBackendQuiz";
 import { QuizTakingQuestionCard } from "@/components/features/quiz/QuizTakingQuestionCard";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
@@ -50,19 +47,20 @@ export default function TakeQuizPage() {
   const router = useRouter();
   const params = useParams();
   const quizId = params.quizId as string;
-  const { user, loading } = useBackendAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
   const invalidateBackendQuiz = useInvalidateBackendQuiz();
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
   const invalidateFlashcards = useInvalidateFlashcards();
 
+  // Memoize userId to prevent unnecessary re-renders
+  const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
 
   // FIXED: Redirect to landing page if not authenticated and not loading
   useEffect(() => {
-    if (!loading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [loading, user]); // Removed router from dependencies to prevent unnecessary re-runs
+  }, [userLoading, currentUser]); // Removed router from dependencies to prevent unnecessary re-runs
 
   // Only invalidate data if it's stale or on explicit user action
   // Removed automatic invalidation on mount for better performance
@@ -207,7 +205,6 @@ export default function TakeQuizPage() {
         async (answer) => {
           // MIGRATED: Use backend quiz service instead of frontend API route
           const response = await quizService.submitAnswer({
-            userId: currentUser.user_id,
             questionId: answer.question_id,
             selectedOptionId: answer.selected_option_id,
             textAnswer: answer.text_answer,
@@ -230,11 +227,11 @@ export default function TakeQuizPage() {
       await Promise.all(submitPromises);
 
       // Invalidate caches to ensure fresh data on navigation
-      if (currentUser?.user_id) {
-        invalidateBackendQuiz(currentUser.user_id, quizId);
-        invalidateBackendDashboard(currentUser.user_id);
+      if (userId) {
+        invalidateBackendQuiz(userId, quizId);
+        invalidateBackendDashboard(userId);
         // Also invalidate flashcards since quiz answers might affect flashcard existence
-        invalidateFlashcards(currentUser.user_id, { includeExistence: true });
+        invalidateFlashcards(userId, { includeExistence: true });
       }
 
       const result: QuizResult = {
@@ -258,10 +255,7 @@ export default function TakeQuizPage() {
   };
 
   // Improved loading logic - don't show loading state when user is signing out
-  const isMainLoading =
-    loading ||
-    (loading === false && user && userLoading) ||
-    (loading === false && user && !currentUser);
+  const isMainLoading = userLoading;
   const isDataLoading = isLoading;
 
   // Show full loading screen for both auth and initial data load, but not during sign out

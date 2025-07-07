@@ -28,7 +28,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { useCurrentUser } from "@/hooks/useDatabase";
 import { useBackendTopics } from "@/hooks/useBackendTopics";
 import { useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
@@ -63,8 +62,7 @@ const DIFFICULTY_LEVELS = [
 function CreateFlashcardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: authLoading } = useBackendAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
   const { data: topics = [], isLoading: topicsLoading } = useBackendTopics();
   const generateAIFlashcards = useGenerateAIFlashcards();
 
@@ -104,10 +102,10 @@ function CreateFlashcardContent() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [authLoading, user, router]);
+  }, [userLoading, currentUser, router]);
 
   // Set initial topic if preselected
   useEffect(() => {
@@ -122,7 +120,7 @@ function CreateFlashcardContent() {
 
 
   // Simple loading check
-  const isLoading = authLoading || (user && userLoading) || topicsLoading;
+  const isLoading = userLoading || topicsLoading;
 
   const updateForm = (field: keyof FlashcardForm, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -160,7 +158,6 @@ function CreateFlashcardContent() {
       const result = await generateAIFlashcards.mutateAsync({
         topic: topicName,
         count: form.num_flashcards,
-        userId: currentUser.user_id,
         difficulty,
         topicId: form.topic_id || undefined,
       });

@@ -9,39 +9,38 @@ import type {
 
 export const dashboardService = {
   /**
-   * Get user dashboard statistics
+   * Get user dashboard statistics - SECURE: Uses JWT token
    */
-  async getUserStats(userId: string): Promise<ApiResponse<DashboardStats>> {
-    return apiClient.get<DashboardStats>(`/dashboard/stats/${userId}`);
+  async getUserStats(): Promise<ApiResponse<DashboardStats>> {
+    return apiClient.get<DashboardStats>(`/dashboard/stats`);
   },
 
   /**
-   * Get user's recent activity
+   * Get user's recent activity - SECURE: Uses JWT token
    */
-  async getRecentActivity(userId: string): Promise<ApiResponse<RecentActivity[]>> {
-    return apiClient.get<RecentActivity[]>(`/dashboard/activity/${userId}`);
+  async getRecentActivity(): Promise<ApiResponse<RecentActivity[]>> {
+    return apiClient.get<RecentActivity[]>(`/dashboard/activity`);
   },
 
   /**
-   * Get user's topic progress
+   * Get user's topic progress - SECURE: Uses JWT token
    */
-  async getTopicProgress(userId: string): Promise<ApiResponse<TopicProgress[]>> {
-    return apiClient.get<TopicProgress[]>(`/dashboard/progress/${userId}`);
+  async getTopicProgress(): Promise<ApiResponse<TopicProgress[]>> {
+    return apiClient.get<TopicProgress[]>(`/dashboard/progress`);
   },
 
   /**
-   * Get all dashboard data in one call
+   * Get all dashboard data in one call - SECURE: Uses JWT token
    */
-  async getAllDashboardData(userId: string): Promise<ApiResponse<{
+  async getAllDashboardData(): Promise<ApiResponse<{
     stats: DashboardStats;
     recentActivity: RecentActivity[];
     topicProgress: TopicProgress[];
   }>> {
     console.log('🔍 Dashboard API call info:', {
-      userId,
-      endpoint: `/dashboard/all/${userId}`,
-      fullUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001/api/v1'}/dashboard/all/${userId}`
+      endpoint: `/dashboard/all`,
+      fullUrl: `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001/api/v1'}/dashboard/all`
     });
-    return apiClient.get(`/dashboard/all/${userId}`);
+    return apiClient.get(`/dashboard/all`);
   },
 }; 

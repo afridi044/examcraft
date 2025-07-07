@@ -5,29 +5,27 @@ import { flashcardService } from '@/lib/services/flashcard.service';
 // Query keys for flashcard operations
 export const FLASHCARD_QUERY_KEYS = {
   all: ['flashcards'] as const,
-  user: (userId: string) => [...FLASHCARD_QUERY_KEYS.all, 'user', userId] as const,
-  due: (userId: string) => [...FLASHCARD_QUERY_KEYS.all, 'due', userId] as const,
-  exists: (userId: string, questionId: string) => 
-    [...FLASHCARD_QUERY_KEYS.all, 'exists', userId, questionId] as const,
-  existsBatch: (userId: string, questionIds: string[]) => 
-    [...FLASHCARD_QUERY_KEYS.all, 'exists-batch', userId, questionIds.sort().join(',')] as const,
+  user: () => [...FLASHCARD_QUERY_KEYS.all, 'user'] as const,
+  due: () => [...FLASHCARD_QUERY_KEYS.all, 'due'] as const,
+  exists: (questionId: string) => 
+    [...FLASHCARD_QUERY_KEYS.all, 'exists', questionId] as const,
+  existsBatch: (questionIds: string[]) => 
+    [...FLASHCARD_QUERY_KEYS.all, 'exists-batch', questionIds.sort().join(',')] as const,
 };
 
 /**
  * Hook to get user's flashcards
  */
-export function useUserFlashcards(userId: string) {
+export function useUserFlashcards() {
   return useQuery({
-    queryKey: FLASHCARD_QUERY_KEYS.user(userId),
+    queryKey: FLASHCARD_QUERY_KEYS.user(),
     queryFn: async () => {
-      if (!userId) throw new Error('User ID is required');
-      const response = await flashcardService.getUserFlashcards(userId);
+      const response = await flashcardService.getUserFlashcards();
       if (!response.success) {
         throw new Error(response.error || 'Failed to fetch flashcards');
       }
       return response.data || [];
     },
-    enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds - shorter for real-time updates
     gcTime: 5 * 60 * 1000, // 5 minutes cache time
     refetchOnWindowFocus: true, // Refetch when user returns to window
@@ -38,18 +36,16 @@ export function useUserFlashcards(userId: string) {
 /**
  * Hook to get due flashcards for review
  */
-export function useDueFlashcards(userId: string) {
+export function useDueFlashcards() {
   return useQuery({
-    queryKey: FLASHCARD_QUERY_KEYS.due(userId),
+    queryKey: FLASHCARD_QUERY_KEYS.due(),
     queryFn: async () => {
-      if (!userId) throw new Error('User ID is required');
-      const response = await flashcardService.getDueFlashcards(userId);
+      const response = await flashcardService.getDueFlashcards();
       if (!response.success) {
         throw new Error(response.error || 'Failed to fetch due flashcards');
       }
       return response.data || [];
     },
-    enabled: !!userId,
     staleTime: 0, // Always fetch fresh due flashcards
     gcTime: 2 * 60 * 1000, // 2 minutes cache time
     refetchOnWindowFocus: true, // Refetch when user returns to window
@@ -60,18 +56,18 @@ export function useDueFlashcards(userId: string) {
 /**
  * Hook to check if flashcard exists for a question
  */
-export function useFlashcardExists(userId: string, questionId: string) {
+export function useFlashcardExists(questionId: string) {
   return useQuery({
-    queryKey: FLASHCARD_QUERY_KEYS.exists(userId, questionId),
+    queryKey: FLASHCARD_QUERY_KEYS.exists(questionId),
     queryFn: async () => {
-      if (!userId || !questionId) return { exists: false };
-      const response = await flashcardService.checkFlashcardExists(userId, questionId);
+      if (!questionId) return { exists: false };
+      const response = await flashcardService.checkFlashcardExists(questionId);
       if (!response.success) {
         throw new Error(response.error || 'Failed to check flashcard existence');
       }
       return response.data || { exists: false };
     },
-    enabled: !!userId && !!questionId,
+    enabled: !!questionId,
     staleTime: 10 * 1000, // 10 seconds - quick updates for existence checks
     gcTime: 2 * 60 * 1000, // 2 minutes cache time
     refetchOnWindowFocus: true, // Refetch when user returns to window
@@ -82,13 +78,12 @@ export function useFlashcardExists(userId: string, questionId: string) {
 /**
  * Hook to batch check if flashcards exist for multiple questions
  */
-export function useFlashcardsExistBatch(userId: string, questionIds: string[]) {
+export function useFlashcardsExistBatch(questionIds: string[]) {
   return useQuery({
-    queryKey: FLASHCARD_QUERY_KEYS.existsBatch(userId, questionIds),
+    queryKey: FLASHCARD_QUERY_KEYS.existsBatch(questionIds),
     queryFn: async () => {
-      if (!userId || questionIds.length === 0) return {};
+      if (questionIds.length === 0) return {};
       const response = await flashcardService.checkFlashcardsExistBatch({
-        userId,
         questionIds
       });
       if (!response.success) {
@@ -96,7 +91,7 @@ export function useFlashcardsExistBatch(userId: string, questionIds: string[]) {
       }
       return response.data || {};
     },
-    enabled: !!userId && questionIds.length > 0,
+    enabled: questionIds.length > 0,
     staleTime: 10 * 1000, // 10 seconds - quick updates for existence checks
     gcTime: 2 * 60 * 1000, // 2 minutes cache time
     refetchOnWindowFocus: true, // Refetch when user returns to window
@@ -118,15 +113,15 @@ export function useCreateFlashcard() {
       }
       return response.data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       // Invalidate user flashcards
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.user(variables.user_id)
+        queryKey: FLASHCARD_QUERY_KEYS.user()
       });
       
       // Invalidate due flashcards
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.due(variables.user_id)
+        queryKey: FLASHCARD_QUERY_KEYS.due()
       });
     },
   });
@@ -142,7 +137,6 @@ export function useGenerateAIFlashcards() {
     mutationFn: async (input: {
       topic: string;
       count: number;
-      userId: string;
       difficulty?: 'easy' | 'medium' | 'hard';
       topicId?: string;
     }) => {
@@ -153,14 +147,9 @@ export function useGenerateAIFlashcards() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidate user flashcards
+      // Invalidate all flashcard queries since we don't have userId anymore
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.user(variables.userId)
-      });
-      
-      // Invalidate due flashcards
-      queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.due(variables.userId)
+        queryKey: FLASHCARD_QUERY_KEYS.all
       });
     },
   });
@@ -175,7 +164,6 @@ export function useCreateFromQuestion() {
   return useMutation({
     mutationFn: async (input: {
       questionId: string;
-      userId: string;
       topicId?: string;
     }) => {
       const response = await flashcardService.createFromQuestion(input);
@@ -185,19 +173,9 @@ export function useCreateFromQuestion() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidate user flashcards
+      // Invalidate all flashcard queries since we don't have userId anymore
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.user(variables.userId)
-      });
-      
-      // Invalidate due flashcards
-      queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.due(variables.userId)
-      });
-      
-      // Invalidate existence check for this question
-      queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.exists(variables.userId, variables.questionId)
+        queryKey: FLASHCARD_QUERY_KEYS.all
       });
     },
   });
@@ -209,7 +187,6 @@ export function useCreateFromQuestion() {
 export function useStartStudySession() {
   return useMutation({
     mutationFn: async (input: {
-      userId: string;
       topicId: string; // Required by backend
       sessionType: 'learning' | 'under_review' | 'mastered' | 'all' | 'mixed';
     }) => {
@@ -268,16 +245,14 @@ export function useUpdateFlashcard() {
     },
     onSuccess: (data) => {
       // Invalidate user flashcards to reflect changes
-      if (data?.user_id) {
-        queryClient.invalidateQueries({
-          queryKey: FLASHCARD_QUERY_KEYS.user(data.user_id)
-        });
-        
-        // Invalidate due flashcards
-        queryClient.invalidateQueries({
-          queryKey: FLASHCARD_QUERY_KEYS.due(data.user_id)
-        });
-      }
+      queryClient.invalidateQueries({
+        queryKey: FLASHCARD_QUERY_KEYS.user()
+      });
+      
+      // Invalidate due flashcards
+      queryClient.invalidateQueries({
+        queryKey: FLASHCARD_QUERY_KEYS.due()
+      });
     },
   });
 }
@@ -289,25 +264,22 @@ export function useDeleteFlashcard() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ flashcardId, userId }: { 
-      flashcardId: string; 
-      userId: string;
-    }) => {
+    mutationFn: async (flashcardId: string) => {
       const response = await flashcardService.deleteFlashcard(flashcardId);
       if (!response.success) {
         throw new Error(response.error || 'Failed to delete flashcard');
       }
       return response.data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (data) => {
       // Invalidate user flashcards to reflect deletion
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.user(variables.userId)
+        queryKey: FLASHCARD_QUERY_KEYS.user()
       });
       
       // Invalidate due flashcards
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.due(variables.userId)
+        queryKey: FLASHCARD_QUERY_KEYS.due()
       });
     },
   });
@@ -324,18 +296,18 @@ export function useInvalidateFlashcards() {
   const queryClient = useQueryClient();
 
   return useCallback(
-    (userId: string, options?: { 
+    (options?: { 
       includeExistence?: boolean;
       questionId?: string;
     }) => {
       // Invalidate user flashcards
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.user(userId),
+        queryKey: FLASHCARD_QUERY_KEYS.user(),
       });
 
       // Invalidate due flashcards
       queryClient.invalidateQueries({
-        queryKey: FLASHCARD_QUERY_KEYS.due(userId),
+        queryKey: FLASHCARD_QUERY_KEYS.due(),
       });
 
       // Optionally invalidate existence checks
@@ -343,18 +315,17 @@ export function useInvalidateFlashcards() {
         if (options.questionId) {
           // Invalidate specific question existence
           queryClient.invalidateQueries({
-            queryKey: FLASHCARD_QUERY_KEYS.exists(userId, options.questionId),
+            queryKey: FLASHCARD_QUERY_KEYS.exists(options.questionId),
           });
         } else {
-          // Invalidate all existence checks for the user
+          // Invalidate all existence checks
           queryClient.invalidateQueries({
             predicate: (query) => {
               const queryKey = query.queryKey;
               return (
                 Array.isArray(queryKey) &&
                 queryKey[0] === 'flashcards' &&
-                queryKey[1] === 'exists' &&
-                queryKey[2] === userId
+                queryKey[1] === 'exists'
               );
             },
           });

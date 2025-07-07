@@ -19,9 +19,10 @@ import {
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { GenerateQuizDto } from './dto/generate-quiz.dto';
+import { User } from '../auth/decorators/user.decorator';
+import { AuthUser } from '../auth/strategies/jwt.strategy';
 
 interface SubmitAnswerDto {
-  user_id: string;
   question_id: string;
   quiz_id: string;
   selected_option_id?: string;
@@ -45,28 +46,26 @@ export class QuizController {
     return { success: true, message: 'Quiz controller is working!' };
   }
 
-  @Get('user/:userId')
-  @ApiOperation({ summary: 'Get all quizzes for a user' })
-  @ApiParam({ name: 'userId', description: 'User ID', example: 'uuid-user-id' })
+  @Get('user')
+  @ApiOperation({ summary: 'Get all quizzes for the authenticated user' })
   @ApiResponse({
     status: 200,
     description: 'User quizzes retrieved successfully',
   })
-  async getUserQuizzes(@Param('userId') userId: string) {
-    this.logger.log(`📚 Getting quizzes for user: ${userId}`);
-    return await this.quizService.getUserQuizzes(userId);
+  async getUserQuizzes(@User() user: AuthUser) {
+    this.logger.log(`📚 Getting quizzes for user: ${user.id}`);
+    return await this.quizService.getUserQuizzes(user.id);
   }
 
-  @Get('user-attempts/:userId')
-  @ApiOperation({ summary: 'Get quiz attempts/history for a user' })
-  @ApiParam({ name: 'userId', description: 'User ID', example: 'uuid-user-id' })
+  @Get('user-attempts')
+  @ApiOperation({ summary: 'Get quiz attempts/history for the authenticated user' })
   @ApiResponse({
     status: 200,
     description: 'User quiz attempts retrieved successfully',
   })
-  async getUserQuizAttempts(@Param('userId') userId: string) {
-    this.logger.log(`📊 Getting quiz attempts for user: ${userId}`);
-    return await this.quizService.getUserQuizAttempts(userId);
+  async getUserQuizAttempts(@User() user: AuthUser) {
+    this.logger.log(`📊 Getting quiz attempts for user: ${user.id}`);
+    return await this.quizService.getUserQuizAttempts(user.id);
   }
 
   @Get(':quizId')
@@ -83,20 +82,20 @@ export class QuizController {
   @ApiOperation({ summary: 'Submit an answer for a quiz question' })
   @ApiResponse({ status: 201, description: 'Answer submitted successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async submitAnswer(@Body() submitAnswerDto: SubmitAnswerDto) {
+  async submitAnswer(@Body() submitAnswerDto: SubmitAnswerDto, @User() user: AuthUser) {
     this.logger.log(
       `📝 Submitting answer for question: ${submitAnswerDto.question_id}`,
     );
-    return await this.quizService.submitAnswer(submitAnswerDto);
+    return await this.quizService.submitAnswer(submitAnswerDto, user.id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create a new quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async createQuiz(@Body() createQuizDto: CreateQuizDto) {
+  async createQuiz(@Body() createQuizDto: CreateQuizDto, @User() user: AuthUser) {
     this.logger.log(`✨ Creating quiz: ${createQuizDto.title}`);
-    return await this.quizService.createQuiz(createQuizDto);
+    return await this.quizService.createQuiz(createQuizDto, user.id);
   }
 
   @Post('generate')
@@ -126,27 +125,26 @@ export class QuizController {
   })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 500, description: 'AI generation failed' })
-  async generateQuiz(@Body() generateQuizDto: GenerateQuizDto) {
+  async generateQuiz(@Body() generateQuizDto: GenerateQuizDto, @User() user: AuthUser) {
     this.logger.log(`🤖 Generating AI quiz: ${generateQuizDto.title}`);
-    return await this.quizService.generateQuiz(generateQuizDto);
+    return await this.quizService.generateQuiz(generateQuizDto, user.id);
   }
 
-  @Get('review/:quizId/:userId')
-  @ApiOperation({ summary: 'Get detailed review data for a quiz by user' })
+  @Get('review/:quizId')
+  @ApiOperation({ summary: 'Get detailed review data for a quiz for authenticated user' })
   @ApiParam({ name: 'quizId', description: 'Quiz ID', example: 'uuid-quiz-id' })
-  @ApiParam({ name: 'userId', description: 'User ID', example: 'uuid-user-id' })
   @ApiResponse({
     status: 200,
     description: 'Quiz review data retrieved successfully',
   })
   async getQuizReview(
     @Param('quizId') quizId: string,
-    @Param('userId') userId: string,
+    @User() user: AuthUser,
   ) {
     this.logger.log(
-      `🧐 Getting quiz review: quiz ${quizId} for user ${userId}`,
+      `🧐 Getting quiz review: quiz ${quizId} for user ${user.id}`,
     );
-    return await this.quizService.getQuizReview(quizId, userId);
+    return await this.quizService.getQuizReview(quizId, user.id);
   }
 
   @Delete(':quizId')

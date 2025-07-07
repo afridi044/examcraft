@@ -16,10 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCurrentUser } from "@/hooks/useDatabase";
+import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useDeleteBackendQuiz } from "@/hooks/useBackendQuiz";
 import { useBackendUserQuizAttempts, BACKEND_QUIZ_KEYS } from "@/hooks/useBackendQuiz";
-import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { toast } from "react-hot-toast";
 import {
   getScoreColors,
@@ -36,8 +35,7 @@ import { FilterDropdown, FilterOption } from "@/components/ui/filter-dropdown";
 import { SortDropdown, SortOption } from "@/components/ui/sort-dropdown";
 
 export default function QuizHistoryPage() {
-  const { user, loading } = useBackendAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
   const deleteQuizMutation = useDeleteBackendQuiz();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -72,38 +70,38 @@ export default function QuizHistoryPage() {
   ];
 
   // Use the database user_id
-  const userId = currentUser?.user_id || "";
+  const userId = currentUser?.id || "";
 
   // FIXED: Redirect to landing page if not authenticated and not loading
   useEffect(() => {
-    if (!loading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [loading, user]); // Removed router from dependencies to prevent unnecessary re-runs
+  }, [userLoading, currentUser]); // Removed router from dependencies to prevent unnecessary re-runs
 
   // Refresh quiz attempts when user returns to page to ensure real-time updates
   useEffect(() => {
-    if (userId && user) {
+    if (currentUser) {
       // Check if data is stale and invalidate if needed
-      const queryState = queryClient.getQueryState(BACKEND_QUIZ_KEYS.userAttempts(userId));
+      const queryState = queryClient.getQueryState(["backend", "quiz", "attempts"]);
       const isStale = !queryState || (Date.now() - (queryState.dataUpdatedAt || 0)) > 30000; // 30 seconds
 
       if (isStale) {
         queryClient.invalidateQueries({
-          queryKey: BACKEND_QUIZ_KEYS.userAttempts(userId),
+          queryKey: ["backend", "quiz", "attempts"],
         });
       }
     }
-  }, [userId, user, queryClient]);
+  }, [currentUser, queryClient]);
 
-  // OPTIMIZED: Use the new optimized backend hook instead of direct fetch
+  // OPTIMIZED: Use the new secure backend hook (no userId needed - uses JWT token)
   const {
     data: quizAttempts,
     isLoading: loadingAttempts,
-  } = useBackendUserQuizAttempts(userId);
+  } = useBackendUserQuizAttempts();
 
   // Simplified loading state
-  const showLoadingScreen = loading || userLoading || (userId && loadingAttempts && !quizAttempts);
+  const showLoadingScreen = userLoading || (userId && loadingAttempts && !quizAttempts);
 
   // Safe data
   const safeQuizAttempts = quizAttempts || [];
@@ -126,7 +124,7 @@ export default function QuizHistoryPage() {
 
       // Optimistically update the cache immediately for better UX
       queryClient.setQueryData(
-        BACKEND_QUIZ_KEYS.userAttempts(userId),
+        ["backend", "quiz", "attempts"],
         (oldData: QuizAttempt[] | { data: QuizAttempt[]; success: boolean; error: string | null } | undefined) => {
           // Handle both transformed array data and raw ApiResponse format
           if (!oldData) return [];
@@ -151,7 +149,7 @@ export default function QuizHistoryPage() {
 
       try {
         // The mutation already handles cache invalidation in its onSuccess callback
-        await deleteQuizMutation.mutateAsync({ quizId, userId });
+        await deleteQuizMutation.mutateAsync(quizId);
         toast.success("Quiz deleted successfully!");
       } catch (error) {
         console.error("Delete quiz error:", error);
@@ -159,13 +157,13 @@ export default function QuizHistoryPage() {
 
         // Revert optimistic update on error by invalidating the cache
         queryClient.invalidateQueries({
-          queryKey: BACKEND_QUIZ_KEYS.userAttempts(userId),
+          queryKey: ["backend", "quiz", "attempts"],
         });
       } finally {
         setDeletingQuizId(null);
       }
     },
-    [deleteQuizMutation, userId, queryClient]
+    [deleteQuizMutation, queryClient]
   );
 
   const handleSortSelect = (id: string) => {
@@ -213,7 +211,6 @@ export default function QuizHistoryPage() {
           <DashboardHeader
             title="Quiz History"
             subtitle="Track your quiz performance over time"
-            emoji="📚"
           />
         </motion.div>
 

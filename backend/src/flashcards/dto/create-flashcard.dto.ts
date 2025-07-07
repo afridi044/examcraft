@@ -1,9 +1,6 @@
 import { IsString, IsUUID, IsOptional, IsArray } from 'class-validator';
 
 export class CreateFlashcardDto {
-  @IsUUID()
-  user_id: string;
-
   @IsString()
   question: string;
 

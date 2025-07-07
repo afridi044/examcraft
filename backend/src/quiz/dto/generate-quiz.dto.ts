@@ -62,9 +62,4 @@ export class GenerateQuizDto {
   @IsOptional()
   @IsString()
   additional_instructions?: string;
-
-  @ApiProperty({ description: 'User ID creating the quiz' })
-  @IsUUID()
-  @IsNotEmpty()
-  user_id: string;
 }

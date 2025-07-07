@@ -71,11 +71,11 @@ describe('QuizService', () => {
   };
 
   beforeAll(() => {
-    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
-    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
-    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
-    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {});
-    jest.spyOn(Logger.prototype, 'verbose').mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => { });
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => { });
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => { });
+    jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => { });
+    jest.spyOn(Logger.prototype, 'verbose').mockImplementation(() => { });
   });
 
   beforeEach(async () => {
@@ -188,7 +188,6 @@ describe('QuizService', () => {
   describe('submitAnswer', () => {
     it('should submit answer successfully', async () => {
       const submitAnswerDto = {
-        user_id: 'user-123',
         question_id: 'question-123',
         quiz_id: 'quiz-123',
         selected_option_id: 'option-123',
@@ -205,10 +204,10 @@ describe('QuizService', () => {
 
       databaseService.submitAnswer.mockResolvedValue(mockResponse);
 
-      const result = await service.submitAnswer(submitAnswerDto);
+      const result = await service.submitAnswer(submitAnswerDto, 'user-123');
 
       expect(databaseService.submitAnswer).toHaveBeenCalledWith({
-        user_id: submitAnswerDto.user_id,
+        user_id: 'user-123',
         question_id: submitAnswerDto.question_id,
         quiz_id: submitAnswerDto.quiz_id,
         selected_option_id: submitAnswerDto.selected_option_id,
@@ -226,7 +225,6 @@ describe('QuizService', () => {
         title: 'New Quiz',
         description: 'A new quiz',
         topic_id: 'topic-123',
-        user_id: 'user-123',
       };
 
       const mockResponse: ApiResponse<QuizRow> = {
@@ -237,10 +235,10 @@ describe('QuizService', () => {
 
       databaseService.createQuiz.mockResolvedValue(mockResponse);
 
-      const result = await service.createQuiz(createQuizDto);
+      const result = await service.createQuiz(createQuizDto, 'user-123');
 
       expect(databaseService.createQuiz).toHaveBeenCalledWith({
-        user_id: createQuizDto.user_id,
+        user_id: 'user-123',
         title: createQuizDto.title,
         description: createQuizDto.description,
         topic_id: createQuizDto.topic_id,
@@ -257,7 +255,6 @@ describe('QuizService', () => {
       difficulty: 3,
       num_questions: 5,
       question_types: ['multiple-choice'],
-      user_id: 'user-123',
     };
 
     beforeEach(() => {
@@ -325,7 +322,7 @@ describe('QuizService', () => {
         error: null,
       });
 
-      const result = await service.generateQuiz(generateQuizDto);
+      const result = await service.generateQuiz(generateQuizDto, 'user-123');
 
       expect(result.success).toBe(true);
       expect(result.data?.quiz).toEqual(mockQuiz);
@@ -410,7 +407,7 @@ describe('QuizService', () => {
         error: null,
       });
 
-      const result = await service.generateQuiz(customTopicDto);
+      const result = await service.generateQuiz(customTopicDto, 'user-123');
 
       expect(databaseService.createTopic).toHaveBeenCalledWith({
         name: 'Custom Topic',
@@ -435,7 +432,7 @@ describe('QuizService', () => {
         error: null,
       });
 
-      const result = await service.generateQuiz(generateQuizDto);
+      const result = await service.generateQuiz(generateQuizDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('AI did not return any questions. Please try again.');
@@ -458,7 +455,7 @@ describe('QuizService', () => {
         error: null,
       });
 
-      const result = await service.generateQuiz(generateQuizDto);
+      const result = await service.generateQuiz(generateQuizDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('AI did not return any questions. Please try again.');
@@ -473,7 +470,7 @@ describe('QuizService', () => {
 
       databaseService.createQuiz.mockResolvedValue(mockQuizResponse);
 
-      const result = await service.generateQuiz(generateQuizDto);
+      const result = await service.generateQuiz(generateQuizDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Failed to create quiz');
@@ -494,7 +491,7 @@ describe('QuizService', () => {
 
       databaseService.createTopic.mockResolvedValue(mockTopicResponse);
 
-      const result = await service.generateQuiz(customTopicDto);
+      const result = await service.generateQuiz(customTopicDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Failed to create topic');

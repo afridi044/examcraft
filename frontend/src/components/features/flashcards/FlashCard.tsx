@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Pencil, Trash2, RotateCcw, Loader2, MoreVertical } from "lucide-react";
-import { useCurrentUser } from "@/hooks/useDatabase";
+import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useDeleteFlashcard } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ interface FlashCardProps {
 
 export function FlashCard({ flashcard, index }: FlashCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
-  const { data: currentUser } = useCurrentUser();
+  const { user: currentUser } = useBackendAuth();
   const deleteFlashcard = useDeleteFlashcard();
 
   // Calculate touch device once and memoize
@@ -52,7 +52,7 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
   }, []);
 
   const handleDelete = useCallback(async () => {
-    if (!currentUser?.user_id) {
+    if (!currentUser?.id) {
       toast.error("Please log in to delete flashcards");
       return;
     }
@@ -62,10 +62,7 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
     }
 
     try {
-      await deleteFlashcard.mutateAsync({
-        flashcardId: flashcard.flashcard_id,
-        userId: currentUser.user_id,
-      });
+      await deleteFlashcard.mutateAsync(flashcard.flashcard_id);
       toast.success("Flashcard deleted successfully");
     } catch (error) {
       console.error("Delete flashcard error:", error);
@@ -73,21 +70,21 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
         error instanceof Error ? error.message : "Failed to delete flashcard"
       );
     }
-  }, [flashcard.flashcard_id, currentUser?.user_id, deleteFlashcard]);
+  }, [flashcard.flashcard_id, currentUser?.id, deleteFlashcard]);
 
   // Calculate dynamic height based on current content (question or answer)
   const getContentLength = (text: string) => text.length;
   const currentContent = isFlipped ? flashcard.answer : flashcard.question;
   const currentContentLength = getContentLength(currentContent);
-  
+
   // Default size (minimum size that card will never shrink below)
   const defaultHeight = "h-40 sm:h-44 md:h-48";
-  
+
   // Dynamic height calculation - only grows larger, never shrinks below default
   const getDynamicHeight = () => {
     // If content is short (≤50 chars), use default size
     if (currentContentLength <= 50) return defaultHeight;
-    
+
     // Only grow larger for longer content
     if (currentContentLength <= 100) return "h-48 sm:h-52 md:h-56"; // Medium content
     if (currentContentLength <= 200) return "h-56 sm:h-60 md:h-64"; // Long content

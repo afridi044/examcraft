@@ -1,20 +1,12 @@
 import { apiClient } from '../api-client';
 // Note: Types will be properly defined later
-// import { ApiResponse, Flashcard, FlashcardWithTopic, CreateFlashcardInput, UpdateFlashcardInput } from '@/types';ard Service - Backend API calls
-import type { 
-  ApiResponse, 
-  Flashcard,
-  FlashcardWithTopic,
-  CreateFlashcardInput,
-  UpdateFlashcardInput
-} from '@/types';
 
 export const flashcardService = {
   /**
    * Create a new flashcard
    */
-  async createFlashcard(input: CreateFlashcardInput): Promise<ApiResponse<Flashcard>> {
-    return apiClient.post<Flashcard>('/flashcards', input);
+  async createFlashcard(input: any): Promise<any> {
+    return apiClient.post('/flashcards', input);
   },
 
   /**
@@ -23,36 +15,18 @@ export const flashcardService = {
   async generateAIFlashcards(input: {
     topic: string;
     count: number;
-    userId: string;
     difficulty?: 'easy' | 'medium' | 'hard';
     topicId?: string;
-  }): Promise<ApiResponse<{
-    flashcards: Flashcard[];
-    topic_id?: string;
-    topic_name: string;
-    generated_count: number;
-    requested_count: number;
-    errors?: string[];
-    message: string;
-  }>> {
+  }): Promise<any> {
     // Convert frontend parameters to backend DTO format
     const difficultyMap = { 'easy': 1, 'medium': 3, 'hard': 5 };
     const backendPayload = {
-      user_id: input.userId,
       topic_id: input.topicId,
       topic_name: input.topic,
       num_flashcards: input.count,
       difficulty: difficultyMap[input.difficulty || 'medium'],
     };
-    return apiClient.post<{
-      flashcards: Flashcard[];
-      topic_id?: string;
-      topic_name: string;
-      generated_count: number;
-      requested_count: number;
-      errors?: string[];
-      message: string;
-    }>('/flashcards/generate-ai', backendPayload);
+    return apiClient.post('/flashcards/generate-ai', backendPayload);
   },
 
   /**
@@ -60,91 +34,63 @@ export const flashcardService = {
    */
   async createFromQuestion(input: {
     questionId: string;
-    userId: string;
     topicId?: string;
-  }): Promise<ApiResponse<Flashcard>> {
+  }): Promise<any> {
     // Convert camelCase to snake_case for backend API
     const backendPayload = {
       question_id: input.questionId,
-      user_id: input.userId,
       topic_id: input.topicId,
     };
-    return apiClient.post<Flashcard>('/flashcards/generate-from-question', backendPayload);
+    return apiClient.post('/flashcards/generate-from-question', backendPayload);
   },
 
   /**
    * Get user's flashcards
    */
-  async getUserFlashcards(userId: string): Promise<ApiResponse<FlashcardWithTopic[]>> {
-    return apiClient.get<FlashcardWithTopic[]>(`/flashcards/user/${userId}`);
+  async getUserFlashcards(): Promise<any> {
+    return apiClient.get('/flashcards/user');
   },
 
   /**
    * Get due flashcards for review
    */
-  async getDueFlashcards(userId: string): Promise<ApiResponse<FlashcardWithTopic[]>> {
-    return apiClient.get<FlashcardWithTopic[]>(`/flashcards/due/${userId}`);
+  async getDueFlashcards(): Promise<any> {
+    return apiClient.get('/flashcards/due');
   },
 
   /**
    * Check if flashcard exists for a question
    */
-  async checkFlashcardExists(userId: string, questionId: string): Promise<ApiResponse<{ exists: boolean }>> {
-    return apiClient.get<{ exists: boolean }>(`/flashcards/exists/${userId}/${questionId}`);
+  async checkFlashcardExists(questionId: string): Promise<any> {
+    return apiClient.get(`/flashcards/exists/${questionId}`);
   },
 
   /**
    * Batch check if flashcards exist for multiple questions
    */
   async checkFlashcardsExistBatch(input: {
-    userId: string;
     questionIds: string[];
-  }): Promise<ApiResponse<{ [questionId: string]: boolean }>> {
+  }): Promise<any> {
     // Convert camelCase to snake_case for backend API
     const backendPayload = {
-      user_id: input.userId,
       question_ids: input.questionIds,
     };
-    return apiClient.post<{ [questionId: string]: boolean }>('/flashcards/exists-batch', backendPayload);
+    return apiClient.post('/flashcards/exists-batch', backendPayload);
   },
 
   /**
    * Start a study session
    */
   async startStudySession(input: {
-    userId: string;
     topicId: string; // Required by backend
     sessionType: 'learning' | 'under_review' | 'mastered' | 'all' | 'mixed';
-  }): Promise<ApiResponse<{
-    session: {
-      session_id: string;
-      topic_id: string;
-      topic_name: string;
-      total_cards: number;
-      mastery_status: string;
-      cards: FlashcardWithTopic[];
-    };
-    fallback?: boolean;
-    message?: string;
-  }>> {
+  }): Promise<any> {
     // Convert camelCase to snake_case for backend API
     const backendPayload = {
-      user_id: input.userId,
       topic_id: input.topicId,
       mastery_status: input.sessionType,
     };
-    return apiClient.post<{
-      session: {
-        session_id: string;
-        topic_id: string;
-        topic_name: string;
-        total_cards: number;
-        mastery_status: string;
-        cards: FlashcardWithTopic[];
-      };
-      fallback?: boolean;
-      message?: string;
-    }>('/flashcards/study-session', backendPayload);
+    return apiClient.post('/flashcards/study-session', backendPayload);
   },
 
   /**
@@ -154,14 +100,7 @@ export const flashcardService = {
     flashcardId: string;
     quality: number;
     timeSpent: number;
-  }): Promise<ApiResponse<{
-    flashcard_id: string;
-    performance: string;
-    mastery_status: string;
-    consecutive_correct: number;
-    message: string;
-    invalidate_cache: boolean;
-  }>> {
+  }): Promise<any> {
     // Convert frontend parameters to backend DTO format
     // Use quality >= 3 as threshold for "know" vs "dont_know"
     const performance = input.quality >= 3 ? 'know' : 'dont_know';
@@ -179,27 +118,20 @@ export const flashcardService = {
       timeSpent: input.timeSpent
     });
     
-    return apiClient.post<{
-      flashcard_id: string;
-      performance: string;
-      mastery_status: string;
-      consecutive_correct: number;
-      message: string;
-      invalidate_cache: boolean;
-    }>('/flashcards/update-progress', backendPayload);
+    return apiClient.post('/flashcards/update-progress', backendPayload);
   },
 
   /**
    * Update a flashcard
    */
-  async updateFlashcard(flashcardId: string, input: UpdateFlashcardInput): Promise<ApiResponse<Flashcard>> {
-    return apiClient.patch<Flashcard>(`/flashcards/${flashcardId}`, input);
+  async updateFlashcard(flashcardId: string, input: any): Promise<any> {
+    return apiClient.patch(`/flashcards/${flashcardId}`, input);
   },
 
   /**
    * Delete a flashcard
    */
-  async deleteFlashcard(flashcardId: string): Promise<ApiResponse<void>> {
-    return apiClient.delete<void>(`/flashcards/${flashcardId}`);
+  async deleteFlashcard(flashcardId: string): Promise<any> {
+    return apiClient.delete(`/flashcards/${flashcardId}`);
   },
 }; 

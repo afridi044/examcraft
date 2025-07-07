@@ -13,6 +13,8 @@ import {
   RecentActivity,
   TopicProgress,
 } from '../types/shared.types';
+import { User } from '../auth/decorators/user.decorator';
+import { AuthUser } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Dashboard')
 @Controller('dashboard')
@@ -21,9 +23,8 @@ export class DashboardController {
 
   constructor(private dashboardService: DashboardService) {}
 
-  @Get('stats/:userId')
-  @ApiOperation({ summary: 'Get dashboard statistics for a user' })
-  @ApiParam({ name: 'userId', description: 'User ID' })
+  @Get('stats')
+  @ApiOperation({ summary: 'Get dashboard statistics for authenticated user' })
   @ApiResponse({
     status: 200,
     description: 'Dashboard statistics retrieved successfully',
@@ -31,15 +32,14 @@ export class DashboardController {
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getDashboardStats(
-    @Param('userId') userId: string,
+    @User() user: AuthUser,
   ): Promise<CustomApiResponse<DashboardStats>> {
-    this.logger.log(`📊 Dashboard stats requested for user: ${userId}`);
-    return this.dashboardService.getDashboardStats(userId);
+    this.logger.log(`📊 Dashboard stats requested for user: ${user.id}`);
+    return this.dashboardService.getDashboardStats(user.id);
   }
 
-  @Get('activity/:userId')
-  @ApiOperation({ summary: 'Get recent activity for a user' })
-  @ApiParam({ name: 'userId', description: 'User ID' })
+  @Get('activity')
+  @ApiOperation({ summary: 'Get recent activity for authenticated user' })
   @ApiQuery({
     name: 'limit',
     required: false,
@@ -52,19 +52,18 @@ export class DashboardController {
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getRecentActivity(
-    @Param('userId') userId: string,
+    @User() user: AuthUser,
     @Query('limit') limit?: string,
   ): Promise<CustomApiResponse<RecentActivity[]>> {
     const activityLimit = limit ? parseInt(limit, 10) : 10;
     this.logger.log(
-      `🔄 Recent activity requested for user: ${userId} (limit: ${activityLimit})`,
+      `🔄 Recent activity requested for user: ${user.id} (limit: ${activityLimit})`,
     );
-    return this.dashboardService.getRecentActivity(userId, activityLimit);
+    return this.dashboardService.getRecentActivity(user.id, activityLimit);
   }
 
-  @Get('progress/:userId')
-  @ApiOperation({ summary: 'Get topic progress for a user' })
-  @ApiParam({ name: 'userId', description: 'User ID' })
+  @Get('progress')
+  @ApiOperation({ summary: 'Get topic progress for authenticated user' })
   @ApiResponse({
     status: 200,
     description: 'Topic progress retrieved successfully',
@@ -72,33 +71,32 @@ export class DashboardController {
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async getTopicProgress(
-    @Param('userId') userId: string,
+    @User() user: AuthUser,
   ): Promise<CustomApiResponse<TopicProgress[]>> {
-    this.logger.log(`📈 Topic progress requested for user: ${userId}`);
-    return this.dashboardService.getTopicProgress(userId);
+    this.logger.log(`📈 Topic progress requested for user: ${user.id}`);
+    return this.dashboardService.getTopicProgress(user.id);
   }
 
-  @Get('all/:userId')
+  @Get('all')
   @ApiOperation({
-    summary: 'Get all dashboard data for a user (optimized single call)',
+    summary: 'Get all dashboard data for authenticated user (optimized single call)',
   })
-  @ApiParam({ name: 'userId', description: 'User ID' })
   @ApiResponse({
     status: 200,
     description: 'All dashboard data retrieved successfully',
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
-  async getAllDashboardData(@Param('userId') userId: string): Promise<
+  async getAllDashboardData(@User() user: AuthUser): Promise<
     CustomApiResponse<{
       stats: DashboardStats;
       recentActivity: RecentActivity[];
       topicProgress: TopicProgress[];
     }>
   > {
-    this.logger.log(`🚀 All dashboard data requested for user: ${userId}`);
-    const result = await this.dashboardService.getAllDashboardData(userId);
-    this.logger.log(`✅ Dashboard data result for user ${userId}:`, {
+    this.logger.log(`🚀 All dashboard data requested for user: ${user.id}`);
+    const result = await this.dashboardService.getAllDashboardData(user.id);
+    this.logger.log(`✅ Dashboard data result for user ${user.id}:`, {
       success: result.success,
       hasStats: !!result.data?.stats,
       activityCount: result.data?.recentActivity?.length || 0,

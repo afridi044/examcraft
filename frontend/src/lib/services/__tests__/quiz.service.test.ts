@@ -45,8 +45,7 @@ describe('quizService', () => {
         topic_name: 'JavaScript',
         difficulty: 3,
         num_questions: 5,
-        question_types: ['multiple-choice'],
-        user_id: 'user123'
+        question_types: ['multiple-choice']
       });
     });
 
@@ -169,7 +168,7 @@ describe('quizService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/quiz/user-attempts/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/quiz/user-attempts');
     });
   });
 
@@ -202,7 +201,6 @@ describe('quizService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
       expect(mockedApiClient.post).toHaveBeenCalledWith('/quiz/submit-answer', {
-        user_id: 'user123',
         question_id: 'question1',
         selected_option_id: 'option1',
         text_answer: null,
@@ -249,7 +247,7 @@ describe('quizService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/quiz/review/${quizId}/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith(`/quiz/review/${quizId}`);
     });
   });
 

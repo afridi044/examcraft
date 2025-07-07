@@ -20,9 +20,6 @@ export class ExamResponseDto {
   exam_id: string;
 
   @ApiProperty()
-  user_id: string;
-
-  @ApiProperty()
   title: string;
 
   @ApiPropertyOptional()

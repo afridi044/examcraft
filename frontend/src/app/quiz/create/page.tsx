@@ -9,10 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import {
-  useCurrentUser,
-  useInvalidateUserData,
-} from "@/hooks/useDatabase";
 import { useBackendTopics } from "@/hooks/useBackendTopics";
 import { quizService } from "@/lib/services";
 import { motion } from "framer-motion";
@@ -65,10 +61,8 @@ const DIFFICULTY_LEVELS = [
 
 export default function CreateQuizPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useBackendAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
   const { data: topics = [], isLoading: topicsLoading } = useBackendTopics() as { data: Array<{ topic_id: string; name: string }>, isLoading: boolean };
-  const invalidateUserData = useInvalidateUserData();
 
   // Intersection observer for scroll animations
   const [headerRef, headerInView] = useInView({ threshold: 0.1, triggerOnce: true });
@@ -97,13 +91,13 @@ export default function CreateQuizPage() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [authLoading, user, router]);
+  }, [userLoading, currentUser, router]);
 
   // Simple loading check
-  const isLoading = authLoading || (user && userLoading) || topicsLoading;
+  const isLoading = userLoading || topicsLoading;
 
   const updateForm = (field: keyof QuizForm, value: string | number) => {
     setForm(prev => {
@@ -155,7 +149,6 @@ export default function CreateQuizPage() {
         topic,
         difficulty: form.difficulty === 1 ? 'easy' : form.difficulty <= 3 ? 'medium' : 'hard',
         questionCount: form.num_questions,
-        userId: currentUser.user_id,
         topicId: form.topic_id,
         customTopic: form.custom_topic,
         contentSource: form.content_source,
@@ -169,8 +162,6 @@ export default function CreateQuizPage() {
       toast.success("Quiz generated successfully!");
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
-      // Invalidate cache for real-time updates
-      invalidateUserData(currentUser.user_id);
 
       setGeneratedQuiz({
         quiz_id: response.data.quiz.quiz_id,
@@ -191,9 +182,6 @@ export default function CreateQuizPage() {
   };
 
   const navigateToDashboard = () => {
-    if (currentUser?.user_id) {
-      invalidateUserData(currentUser.user_id);
-    }
     router.push("/dashboard");
   };
 
@@ -611,7 +599,7 @@ export default function CreateQuizPage() {
                 <div>
                   <FormButton
                     onClick={handleGenerateQuiz}
-                    disabled={isGenerating || !user}
+                    disabled={isGenerating || !currentUser}
                     isLoading={isGenerating}
                     loadingIcon={<Loader2 className="h-5 w-5 animate-spin" />}
                     loadingText="Generating Quiz..."

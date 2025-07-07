@@ -119,7 +119,7 @@ describe('FlashcardDatabaseService', () => {
 
   describe('getFlashcardsByUserAndQuestionIds', () => {
     it('should return ids for found flashcards', async () => {
-      const mockData = [ { source_question_id: 'q1' }, { source_question_id: 'q2' } ];
+      const mockData = [{ source_question_id: 'q1' }, { source_question_id: 'q2' }];
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
@@ -127,9 +127,9 @@ describe('FlashcardDatabaseService', () => {
           })
         })
       });
-      const result = await service.getFlashcardsByUserAndQuestionIds('u1', ['q1','q2']);
+      const result = await service.getFlashcardsByUserAndQuestionIds('u1', ['q1', 'q2']);
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(['q1','q2']);
+      expect(result.data).toEqual(['q1', 'q2']);
     });
     it('should return empty array for empty input', async () => {
       const result = await service.getFlashcardsByUserAndQuestionIds('u1', []);
@@ -156,7 +156,7 @@ describe('FlashcardDatabaseService', () => {
 
   describe('getUserFlashcards', () => {
     it('should return user flashcards', async () => {
-      const mockData = [ { flashcard_id: 'f1' }, { flashcard_id: 'f2' } ];
+      const mockData = [{ flashcard_id: 'f1' }, { flashcard_id: 'f2' }];
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
@@ -256,7 +256,7 @@ describe('FlashcardDatabaseService', () => {
 
   describe('getFlashcardsByMastery', () => {
     it('should return flashcards by mastery', async () => {
-      const mockData = [ { flashcard_id: 'f1' } ];
+      const mockData = [{ flashcard_id: 'f1' }];
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
@@ -292,7 +292,7 @@ describe('FlashcardDatabaseService', () => {
 
   describe('getFlashcardsByTopic', () => {
     it('should return flashcards by topic', async () => {
-      const mockData = [ { flashcard_id: 'f1' } ];
+      const mockData = [{ flashcard_id: 'f1' }];
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
@@ -328,7 +328,7 @@ describe('FlashcardDatabaseService', () => {
 
   describe('getFlashcardsByTopicAndMastery', () => {
     it('should return flashcards by topic and mastery', async () => {
-      const mockData = [ { flashcard_id: 'f1' } ];
+      const mockData = [{ flashcard_id: 'f1' }];
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({
@@ -380,7 +380,7 @@ describe('FlashcardDatabaseService', () => {
           eq: jest.fn().mockResolvedValueOnce({ error: null })
         })
       });
-      const result = await service.deleteFlashcard('f1');
+      const result = await service.deleteFlashcard('f1', 'u1');
       expect(result.success).toBe(true);
       expect(result.data).toBe(true);
     });
@@ -392,7 +392,7 @@ describe('FlashcardDatabaseService', () => {
           })
         })
       });
-      const result = await service.deleteFlashcard('f1');
+      const result = await service.deleteFlashcard('f1', 'u1');
       expect(result.success).toBe(false);
       expect(result.error).toContain('not found');
     });
@@ -404,7 +404,7 @@ describe('FlashcardDatabaseService', () => {
           })
         })
       });
-      const result = await service.deleteFlashcard('f1');
+      const result = await service.deleteFlashcard('f1', 'u1');
       expect(result.success).toBe(false);
     });
     it('should handle supabase error on delete', async () => {
@@ -420,19 +420,19 @@ describe('FlashcardDatabaseService', () => {
           eq: jest.fn().mockResolvedValueOnce({ error: 'err' })
         })
       });
-      const result = await service.deleteFlashcard('f1');
+      const result = await service.deleteFlashcard('f1', 'u1');
       expect(result.success).toBe(false);
     });
     it('should handle thrown error', async () => {
       supabase.from.mockImplementation(() => { throw new Error('fail'); });
-      const result = await service.deleteFlashcard('f1');
+      const result = await service.deleteFlashcard('f1', 'u1');
       expect(result.success).toBe(false);
     });
   });
 
   describe('getFlashcardsDueForReview', () => {
     it('should return due flashcards', async () => {
-      const mockData = [ { flashcard_id: 'f1' } ];
+      const mockData = [{ flashcard_id: 'f1' }];
       supabase.from.mockReturnValueOnce({
         select: jest.fn().mockReturnValueOnce({
           eq: jest.fn().mockReturnValueOnce({

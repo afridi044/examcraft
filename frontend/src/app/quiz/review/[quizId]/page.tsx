@@ -14,23 +14,24 @@ import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { QuestionCard } from "@/components/features/quiz-review/QuestionCard";
 import { PerformanceSummary } from "@/components/features/quiz-review/PerformanceSummary";
-import { useCurrentUser } from "@/hooks/useDatabase";
-import { useBackendQuizReview, useInvalidateBackendQuiz } from "@/hooks/useBackendQuiz";
+import { useBackendAuth } from "@/hooks/useBackendAuth";
+import { useBackendQuizReview, useInvalidateBackendQuiz, useUpdateQuizFlashcardStatus } from "@/hooks/useBackendQuiz";
 import { formatTime, getDifficultyColor, getDifficultyLabel } from "@/lib/utils/quiz-review";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import type { QuizReviewData } from "@/types";
 import { flashcardService } from "@/lib/services";
 import toast from "react-hot-toast";
-import { useBackendAuth } from "@/hooks/useBackendAuth";
 
 export default function QuizReviewPage() {
-  const { user, loading: authLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
   const router = useRouter();
   const params = useParams();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   // Flashcard status is displayed from backend data with creation functionality
   const [processingQuestionId, setProcessingQuestionId] = useState<string | null>(null);
+  // Optimistic updates for flashcard creation
+  const [optimisticFlashcardStatus, setOptimisticFlashcardStatus] = useState<Record<string, boolean>>({});
   const invalidateQuiz = useInvalidateBackendQuiz();
+  const updateFlashcardStatus = useUpdateQuizFlashcardStatus();
 
   const quizId = params.quizId as string;
 
@@ -39,7 +40,7 @@ export default function QuizReviewPage() {
     data: reviewData,
     isLoading: loading,
     error: reviewError,
-  } = useBackendQuizReview(quizId, currentUser?.user_id || "");
+  } = useBackendQuizReview(quizId);
 
   const error = reviewError?.message || null;
 
@@ -52,40 +53,54 @@ export default function QuizReviewPage() {
 
   // FIXED: Redirect to landing page if not authenticated and not loading
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [authLoading, user]); // Removed router from dependencies to prevent unnecessary re-runs
+  }, [userLoading, currentUser]); // Removed router from dependencies to prevent unnecessary re-runs
 
   // Improved loading logic - wait for all required data
-  const showFullLoadingScreen = authLoading || userLoading || loading || !currentUser?.user_id || !reviewData;
+  const showFullLoadingScreen = userLoading || loading || !currentUser?.id || !reviewData;
 
-  // Flashcard creation function
+  // Flashcard creation function with optimistic updates
   const createFlashcard = async (questionId: string): Promise<void> => {
     if (!currentUser) {
       toast.error("Please log in to create flashcards");
       return;
     }
 
-    // Set processing state
+    // Set processing state and optimistic update
     setProcessingQuestionId(questionId);
+    setOptimisticFlashcardStatus(prev => ({ ...prev, [questionId]: true }));
 
     try {
       const response = await flashcardService.createFromQuestion({
         questionId: questionId,
-        userId: currentUser.user_id,
         topicId: reviewData?.quiz?.topic?.topic_id, // Use quiz's topic if available
       });
 
       if (response.success) {
         toast.success("Flashcard created successfully!");
-        // Invalidate the quiz review cache to get updated flashcard status from backend
-        invalidateQuiz(currentUser.user_id, quizId);
-        // Keep processing state until new data is loaded (handled in useEffect above)
+        // Clear processing state immediately - optimistic update already shows success
+        setProcessingQuestionId(null);
+        // Update cache with granular update instead of full invalidation
+        updateFlashcardStatus(quizId, questionId, true);
+        // Clear optimistic state since cache is now updated
+        setOptimisticFlashcardStatus(prev => {
+          const newState = { ...prev };
+          delete newState[questionId];
+          return newState;
+        });
       } else {
         throw new Error(response.error || "Failed to create flashcard");
       }
     } catch (error) {
+      // Revert optimistic update on error
+      setOptimisticFlashcardStatus(prev => {
+        const newState = { ...prev };
+        delete newState[questionId];
+        return newState;
+      });
+
       toast.error(
         error instanceof Error ? error.message : "Failed to create flashcard"
       );
@@ -172,18 +187,27 @@ export default function QuizReviewPage() {
             iconLeft={<BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />}
           />
 
-          {reviewData.questions.map((question: QuizReviewData['questions'][number], index: number) => (
-            <QuestionCard
-              key={question.question_id}
-              question={question}
-              index={index}
-              onCreateFlashcard={createFlashcard}
-              formatTime={formatTime}
-              getDifficultyColor={getDifficultyColor}
-              getDifficultyLabel={getDifficultyLabel}
-              isProcessing={processingQuestionId === question.question_id}
-            />
-          ))}
+          {reviewData.questions.map((question: QuizReviewData['questions'][number], index: number) => {
+            // Use optimistic status if available, otherwise use backend data
+            const flashcardExists = optimisticFlashcardStatus[question.question_id] ?? question.flashcard_exists;
+            const questionWithOptimisticStatus = {
+              ...question,
+              flashcard_exists: flashcardExists
+            };
+
+            return (
+              <QuestionCard
+                key={question.question_id}
+                question={questionWithOptimisticStatus}
+                index={index}
+                onCreateFlashcard={createFlashcard}
+                formatTime={formatTime}
+                getDifficultyColor={getDifficultyColor}
+                getDifficultyLabel={getDifficultyLabel}
+                isProcessing={processingQuestionId === question.question_id}
+              />
+            );
+          })}
         </div>
       </div>
     </DashboardLayout>

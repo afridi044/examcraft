@@ -26,6 +26,8 @@ import { CreateExamDto } from './dto/create-exam.dto';
 import { UpdateExamDto } from './dto/update-exam.dto';
 import { GenerateExamDto } from './dto/generate-exam.dto';
 import { ExamResponseDto, ExamListResponseDto } from './dto/exam-response.dto';
+import { User } from '../auth/decorators/user.decorator';
+import { AuthUser } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Exams')
 @Controller('exams')
@@ -39,23 +41,18 @@ export class ExamsController {
   // Exam Management
   // =============================================
 
-  @Get('user/:userId')
+  @Get('user')
   @ApiOperation({
-    summary: 'Get exams for user',
-    description: 'Retrieve all exams created by a specific user',
-  })
-  @ApiParam({
-    name: 'userId',
-    description: 'User ID',
-    example: 'user-uuid-here',
+    summary: 'Get exams for authenticated user',
+    description: 'Retrieve all exams created by the authenticated user',
   })
   @ApiResponse({
     status: 200,
     description: 'Exams retrieved successfully',
     type: [ExamListResponseDto],
   })
-  async getUserExams(@Param('userId') userId: string) {
-    return await this.examsService.getUserExams(userId);
+  async getUserExams(@User() user: AuthUser) {
+    return await this.examsService.getUserExams(user.id);
   }
 
   @Get(':examId')
@@ -89,8 +86,8 @@ export class ExamsController {
     type: ExamResponseDto,
   })
   @HttpCode(HttpStatus.CREATED)
-  async createExam(@Body() createExamDto: CreateExamDto) {
-    return await this.examsService.createExam(createExamDto);
+  async createExam(@Body() createExamDto: CreateExamDto, @User() user: AuthUser) {
+    return await this.examsService.createExam(createExamDto, user.id);
   }
 
   @Post('generate')
@@ -116,9 +113,9 @@ export class ExamsController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 500, description: 'AI generation failed' })
   @ApiBody({ type: GenerateExamDto })
-  async generateExam(@Body() generateExamDto: GenerateExamDto) {
+  async generateExam(@Body() generateExamDto: GenerateExamDto, @User() user: AuthUser) {
     this.logger.log(`🤖 Generating AI exam: ${generateExamDto.title}`);
-    return await this.examsService.generateExam(generateExamDto);
+    return await this.examsService.generateExam(generateExamDto, user.id);
   }
 
   @Put(':examId')
@@ -166,15 +163,10 @@ export class ExamsController {
   // Exam Sessions
   // =============================================
 
-  @Get('sessions/user/:userId')
+  @Get('sessions/user')
   @ApiOperation({
-    summary: 'Get exam sessions for user',
-    description: 'Retrieve all exam sessions (attempts) for a user',
-  })
-  @ApiParam({
-    name: 'userId',
-    description: 'User ID',
-    example: 'user-uuid-here',
+    summary: 'Get exam sessions for authenticated user',
+    description: 'Retrieve all exam sessions (attempts) for the authenticated user',
   })
   @ApiQuery({
     name: 'examId',
@@ -187,10 +179,10 @@ export class ExamsController {
     description: 'Exam sessions retrieved successfully',
   })
   async getUserExamSessions(
-    @Param('userId') userId: string,
+    @User() user: AuthUser,
     @Query('examId') examId?: string,
   ) {
-    return await this.examsService.getUserExamSessions(userId, examId);
+    return await this.examsService.getUserExamSessions(user.id, examId);
   }
 
   @Post('sessions/start')
@@ -207,13 +199,8 @@ export class ExamsController {
           example: 'exam-uuid-here',
           description: 'Exam ID to start',
         },
-        userId: {
-          type: 'string',
-          example: 'user-uuid-here',
-          description: 'User ID starting the exam',
-        },
       },
-      required: ['examId', 'userId'],
+      required: ['examId'],
     },
   })
   @ApiResponse({
@@ -222,9 +209,10 @@ export class ExamsController {
   })
   @HttpCode(HttpStatus.CREATED)
   async startExamSession(
-    @Body() body: { examId: string; userId: string },
+    @Body() body: { examId: string },
+    @User() user: AuthUser,
   ) {
-    return await this.examsService.startExamSession(body.examId, body.userId);
+    return await this.examsService.startExamSession(body.examId, user.id);
   }
 
   @Put('sessions/:sessionId/end')
@@ -319,11 +307,6 @@ export class ExamsController {
           example: 'question-uuid-here',
           description: 'Question ID being answered',
         },
-        userId: {
-          type: 'string',
-          example: 'user-uuid-here',
-          description: 'User ID submitting the answer',
-        },
         selectedOptionId: {
           type: 'string',
           example: 'option-uuid-here',
@@ -345,7 +328,7 @@ export class ExamsController {
           description: 'Time taken to answer in seconds',
         },
       },
-      required: ['questionId', 'userId'],
+      required: ['questionId'],
     },
   })
   @ApiResponse({
@@ -358,17 +341,17 @@ export class ExamsController {
     @Body()
     body: {
       questionId: string;
-      userId: string;
       selectedOptionId?: string;
       textAnswer?: string;
       isCorrect?: boolean;
       timeTakenSeconds?: number;
     },
+    @User() user: AuthUser,
   ) {
     return await this.examsService.submitExamAnswer(
       sessionId,
       body.questionId,
-      body.userId,
+      user.id,
       body.selectedOptionId,
       body.textAnswer,
       body.isCorrect,

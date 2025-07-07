@@ -36,11 +36,11 @@ export class ExamsService {
   /**
    * Create a new exam
    */
-  async createExam(createExamDto: CreateExamDto): Promise<ApiResponse<ExamRow>> {
+  async createExam(createExamDto: CreateExamDto, userId: string): Promise<ApiResponse<ExamRow>> {
     this.logger.log(`✨ Creating exam: ${createExamDto.title}`);
 
     const examInput: ExamInsert = {
-      user_id: createExamDto.user_id,
+      user_id: userId,
       title: createExamDto.title,
       description: createExamDto.description,
       duration_minutes: createExamDto.duration_minutes,
@@ -57,7 +57,7 @@ export class ExamsService {
   /**
    * Generate AI-powered exam
    */
-  async generateExam(generateExamDto: GenerateExamDto): Promise<ApiResponse<{ exam: ExamRow; questions: any[] }>> {
+  async generateExam(generateExamDto: GenerateExamDto, userId: string): Promise<ApiResponse<{ exam: ExamRow; questions: any[] }>> {
     this.logger.log(`🤖 Generating AI exam: ${generateExamDto.title}`);
 
     let createdExamId: string | null = null;
@@ -82,7 +82,7 @@ export class ExamsService {
 
       // Step 2: Create the exam first
       const examInput: ExamInsert = {
-        user_id: generateExamDto.user_id,
+        user_id: userId,
         title: generateExamDto.title,
         description: generateExamDto.description || `AI-generated exam on ${generateExamDto.topic_name}`,
         duration_minutes: generateExamDto.duration_minutes,

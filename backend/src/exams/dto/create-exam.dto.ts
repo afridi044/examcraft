@@ -3,14 +3,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateExamDto {
   @ApiProperty({
-    description: 'User ID who creates the exam',
-    example: 'user-uuid-here'
-  })
-  @IsString()
-  @IsUUID()
-  user_id: string;
-
-  @ApiProperty({
     description: 'Exam title',
     example: 'Final Mathematics Exam'
   })

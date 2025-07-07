@@ -10,9 +10,6 @@ import {
 
 export class GenerateAiFlashcardsDto {
   @IsUUID()
-  user_id: string;
-
-  @IsUUID()
   @IsOptional()
   topic_id?: string;
 

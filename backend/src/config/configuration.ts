@@ -11,6 +11,7 @@ export default () => ({
       process.env.SUPABASE_ANON_KEY ||
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    jwtSecret: process.env.SUPABASE_JWT_SECRET, // Add Supabase JWT secret
   },
 
   // OpenRouter AI Configuration
@@ -28,12 +29,6 @@ export default () => ({
   throttle: {
     ttl: parseInt(process.env.THROTTLE_TTL || '60000', 10), // 1 minute
     limit: parseInt(process.env.THROTTLE_LIMIT || '100', 10), // 100 requests per minute
-  },
-
-  // JWT Configuration
-  jwt: {
-    secret: process.env.JWT_SECRET || 'your-secret-key',
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
   },
 });
  

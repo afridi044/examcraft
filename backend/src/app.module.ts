@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './health/health.module';
 import { QuizModule } from './quiz/quiz.module';
 import { FlashcardsModule } from './flashcards/flashcards.module';
@@ -11,6 +12,7 @@ import { QuestionsModule } from './questions/questions.module';
 import { UsersModule } from './users/users.module';
 import { ExamsModule } from './exams/exams.module';
 import { AnswersModule } from './answers/answers.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import configuration from './config/configuration';
 
 @Module({
@@ -33,6 +35,11 @@ import configuration from './config/configuration';
     AnswersModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}

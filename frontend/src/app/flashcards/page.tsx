@@ -2,14 +2,13 @@
 
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { useCurrentUser } from "@/hooks/useDatabase";
 import {
   Loader2,
   Plus,
   Play,
   BookOpen,
 } from "lucide-react";
-import { useEffect, Suspense } from "react";
+import { useEffect, Suspense, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
@@ -24,8 +23,10 @@ import { CustomHeader } from "@/components/features/dashboard/CustomHeader";
 function FlashcardsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading } = useBackendAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
+
+  // Memoize userId to prevent unnecessary re-renders
+  const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
 
   // Scroll to top when navigating
   useScrollToTop();
@@ -37,14 +38,14 @@ function FlashcardsPageContent() {
   const {
     isLoadingFlashcards,
     stats,
-  } = useFlashcardData(currentUser?.user_id, selectedTopicId);
+  } = useFlashcardData(userId, selectedTopicId);
 
   // Redirect to landing page if not authenticated and not loading
   useEffect(() => {
-    if (!loading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [loading, user, router]);
+  }, [userLoading, currentUser, router]);
 
   const handleCreateFlashcard = (topicId?: string) => {
     if (topicId) {
@@ -65,7 +66,7 @@ function FlashcardsPageContent() {
   };
 
   // Simplified loading logic
-  const showFullLoadingScreen = loading || userLoading || isLoadingFlashcards;
+  const showFullLoadingScreen = userLoading || isLoadingFlashcards;
 
   if (showFullLoadingScreen) {
     return (

@@ -22,20 +22,20 @@ describe('QuizReviewDatabaseService', () => {
   let service: QuizReviewDatabaseService;
   let supabase: any;
 
-      beforeEach(async () => {
-      // Create a more flexible mock that can handle different query patterns
-      supabase = {
-        from: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            eq: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({ data: null, error: null }),
-              order: jest.fn().mockResolvedValue({ data: null, error: null }),
-              in: jest.fn().mockResolvedValue({ data: null, error: null }),
-            }),
+  beforeEach(async () => {
+    // Create a more flexible mock that can handle different query patterns
+    supabase = {
+      from: jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({ data: null, error: null }),
+            order: jest.fn().mockResolvedValue({ data: null, error: null }),
             in: jest.fn().mockResolvedValue({ data: null, error: null }),
           }),
+          in: jest.fn().mockResolvedValue({ data: null, error: null }),
         }),
-      };
+      }),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -50,11 +50,11 @@ describe('QuizReviewDatabaseService', () => {
     }).compile();
 
     service = module.get(QuizReviewDatabaseService);
-    
+
     // Directly assign to protected properties
     (service as any).supabase = supabase;
     (service as any).logger = mockLogger;
-    
+
     // Mock protected methods
     jest.spyOn(service as any, 'handleSuccess').mockImplementation((data) => ({ success: true, data, error: null }));
     jest.spyOn(service as any, 'handleError').mockImplementation((err, method) => ({ success: false, data: null, error: String(err) }));
@@ -144,7 +144,7 @@ describe('QuizReviewDatabaseService', () => {
         .mockReturnValueOnce(createFlexibleMock({ data: mockFlashcardData, error: null }));
 
       const result = await service.getQuizReview('quiz-1', 'user-1');
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('quiz');
       expect(result.data).toHaveProperty('questions');
@@ -255,7 +255,7 @@ describe('QuizReviewDatabaseService', () => {
         .mockReturnValueOnce(createFlexibleMock({ data: null, error: { message: 'Explanations error' } }));
 
       const result = await service.getQuizReview('quiz-1', 'user-1');
-      
+
       // Should still succeed even with explanations error
       expect(result.success).toBe(true);
       expect(mockLogger.warn).toHaveBeenCalled();
@@ -304,9 +304,9 @@ describe('QuizReviewDatabaseService', () => {
         });
 
       const result = await service.getQuizReview('quiz-1', 'user-1');
-      
+
       expect(result.success).toBe(true);
-      expect(result.data.quiz.topic).toEqual({ name: 'Mathematics' });
+      expect(result.data.quiz.topic).toEqual({ topic_id: '', name: 'Mathematics' });
     });
 
     it('should handle null topic', async () => {
@@ -351,7 +351,7 @@ describe('QuizReviewDatabaseService', () => {
         });
 
       const result = await service.getQuizReview('quiz-1', 'user-1');
-      
+
       expect(result.success).toBe(true);
       expect(result.data.quiz.topic).toBeUndefined();
     });
@@ -382,14 +382,14 @@ describe('QuizReviewDatabaseService', () => {
       });
 
       const result = await service['getFlashcardsByUserAndQuestionIds']('user-1', ['q1', 'q2', 'q3']);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toEqual(['q1', 'q2']); // null values filtered out
     });
 
     it('should return empty array for empty question IDs', async () => {
       const result = await service['getFlashcardsByUserAndQuestionIds']('user-1', []);
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
     });

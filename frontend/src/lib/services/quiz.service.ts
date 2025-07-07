@@ -20,16 +20,11 @@ export const quizService = {
     topic: string;
     difficulty: 'easy' | 'medium' | 'hard';
     questionCount: number;
-    userId: string;
     topicId?: string;
     customTopic?: string;
     contentSource?: string;
     additionalInstructions?: string;
-  }): Promise<ApiResponse<{
-    quiz: QuizWithQuestions;
-    questions_created: number;
-    message: string;
-  }>> {
+  }): Promise<any> {
     // Convert frontend input to backend GenerateQuizDto format
     const backendPayload = {
       title: input.title || `${input.topic} Quiz`,
@@ -42,7 +37,6 @@ export const quizService = {
       question_types: ['multiple-choice'], // Default to multiple choice
       content_source: input.contentSource,
       additional_instructions: input.additionalInstructions,
-      user_id: input.userId,
     };
     return apiClient.post<{
       quiz: QuizWithQuestions;
@@ -66,17 +60,16 @@ export const quizService = {
   },
 
   /**
-   * Get user's quiz attempts
+   * Get user's quiz attempts - SECURE: Uses JWT token, no userId parameter
    */
-  async getUserAttempts(userId: string): Promise<ApiResponse<QuizAttempt[]>> {
-    return apiClient.get<QuizAttempt[]>(`/quiz/user-attempts/${userId}`);
+  async getUserAttempts(): Promise<ApiResponse<QuizAttempt[]>> {
+    return apiClient.get<QuizAttempt[]>(`/quiz/user-attempts`);
   },
 
   /**
    * Submit an answer to a quiz question
    */
   async submitAnswer(input: {
-    userId: string;
     questionId: string;
     selectedOptionId?: string;
     textAnswer?: string;
@@ -86,7 +79,6 @@ export const quizService = {
   }): Promise<ApiResponse<UserAnswer>> {
     // Convert camelCase to snake_case for backend API
     const backendPayload = {
-      user_id: input.userId,
       question_id: input.questionId,
       selected_option_id: input.selectedOptionId || null,
       text_answer: input.textAnswer || null,
@@ -100,8 +92,8 @@ export const quizService = {
   /**
    * Get quiz review/results
    */
-  async getQuizReview(quizId: string, userId: string): Promise<ApiResponse<QuizReviewData>> {
-    return apiClient.get<QuizReviewData>(`/quiz/review/${quizId}/${userId}`);
+  async getQuizReview(quizId: string): Promise<ApiResponse<QuizReviewData>> {
+    return apiClient.get<QuizReviewData>(`/quiz/review/${quizId}`);
   },
 
   /**

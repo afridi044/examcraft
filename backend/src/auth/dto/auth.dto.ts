@@ -47,8 +47,16 @@ export class AuthResponseDto {
     id: string;
     auth_id: string;
     email: string;
+    first_name?: string;
+    last_name?: string;
     full_name?: string;
   };
+
+  @ApiProperty({ required: false, description: 'Supabase JWT access token' })
+  access_token?: string;
+
+  @ApiProperty({ required: false, description: 'Supabase JWT refresh token' })
+  refresh_token?: string;
 
   @ApiProperty()
   message: string;

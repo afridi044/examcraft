@@ -15,7 +15,6 @@ import {
 } from '../types/shared.types';
 
 interface SubmitAnswerDto {
-  user_id: string;
   question_id: string;
   quiz_id: string;
   selected_option_id?: string;
@@ -49,13 +48,14 @@ export class QuizService {
 
   async submitAnswer(
     submitAnswerDto: SubmitAnswerDto,
+    userId: string,
   ): Promise<ApiResponse<any>> {
     this.logger.log(
       `📝 Submitting answer for question: ${submitAnswerDto.question_id}`,
     );
 
     const answerInput: CreateUserAnswerInput = {
-      user_id: submitAnswerDto.user_id,
+      user_id: userId,
       question_id: submitAnswerDto.question_id,
       quiz_id: submitAnswerDto.quiz_id,
       selected_option_id: submitAnswerDto.selected_option_id,
@@ -69,11 +69,12 @@ export class QuizService {
 
   async createQuiz(
     createQuizDto: CreateQuizDto,
+    userId: string,
   ): Promise<ApiResponse<QuizRow>> {
     this.logger.log(`✨ Creating quiz: ${createQuizDto.title}`);
 
     const quizInput: CreateQuizInput = {
-      user_id: createQuizDto.user_id,
+      user_id: userId,
       title: createQuizDto.title,
       description: createQuizDto.description,
       topic_id: createQuizDto.topic_id,
@@ -82,7 +83,7 @@ export class QuizService {
     return await this.databaseService.createQuiz(quizInput);
   }
 
-  async generateQuiz(generateQuizDto: GenerateQuizDto): Promise<
+  async generateQuiz(generateQuizDto: GenerateQuizDto, userId: string): Promise<
     ApiResponse<{
       quiz: QuizRow;
       questions_created: number;
@@ -121,7 +122,7 @@ export class QuizService {
       // 2. Create quiz record first
       // ------------------------------------------------
       const quizInput: CreateQuizInput = {
-        user_id: generateQuizDto.user_id,
+        user_id: userId,
         title: generateQuizDto.title,
         description:
           generateQuizDto.description ||

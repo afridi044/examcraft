@@ -48,7 +48,7 @@ describe('examService', () => {
         error: null,
         success: true
       });
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/user/user1');
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/user');
     });
 
     it('handles empty exams list', async () => {
@@ -65,7 +65,7 @@ describe('examService', () => {
         error: null,
         success: true
       });
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/user/user1');
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/user');
     });
 
     it('handles API error response', async () => {
@@ -326,7 +326,7 @@ describe('examService', () => {
         error: null,
         success: true
       });
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/sessions/user/user1');
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/sessions/user');
     });
 
     it('handles empty sessions list', async () => {
@@ -343,7 +343,7 @@ describe('examService', () => {
         error: null,
         success: true
       });
-      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/sessions/user/user1');
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/exams/sessions/user');
     });
 
     it('handles API error response', async () => {

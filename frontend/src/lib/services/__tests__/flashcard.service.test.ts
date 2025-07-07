@@ -86,7 +86,6 @@ describe('flashcardService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
       expect(mockedApiClient.post).toHaveBeenCalledWith('/flashcards/generate-ai', {
-        user_id: 'user123',
         topic_id: 'topic1',
         topic_name: 'React Hooks',
         num_flashcards: 5,
@@ -156,7 +155,6 @@ describe('flashcardService', () => {
       expect(result.data).toEqual(mockResponse);
       expect(mockedApiClient.post).toHaveBeenCalledWith('/flashcards/generate-from-question', {
         question_id: 'question1',
-        user_id: 'user123',
         topic_id: 'topic1'
       });
     });
@@ -181,7 +179,7 @@ describe('flashcardService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/flashcards/user/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/flashcards/user');
     });
 
     it('handles empty flashcard list', async () => {
@@ -216,7 +214,7 @@ describe('flashcardService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/flashcards/due/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/flashcards/due');
     });
   });
 
@@ -233,11 +231,11 @@ describe('flashcardService', () => {
         success: true
       });
 
-      const result = await flashcardService.checkFlashcardExists(userId, questionId);
+      const result = await flashcardService.checkFlashcardExists(questionId);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/flashcards/exists/${userId}/${questionId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith(`/flashcards/exists/${questionId}`);
     });
   });
 
@@ -265,7 +263,6 @@ describe('flashcardService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
       expect(mockedApiClient.post).toHaveBeenCalledWith('/flashcards/exists-batch', {
-        user_id: 'user123',
         question_ids: ['question1', 'question2', 'question3']
       });
     });
@@ -304,7 +301,6 @@ describe('flashcardService', () => {
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
       expect(mockedApiClient.post).toHaveBeenCalledWith('/flashcards/study-session', {
-        user_id: 'user123',
         topic_id: 'topic1',
         mastery_status: 'learning'
       });

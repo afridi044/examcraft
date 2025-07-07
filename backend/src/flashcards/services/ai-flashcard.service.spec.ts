@@ -32,7 +32,6 @@ describe('AiFlashcardService', () => {
 
   describe('generateFlashcardsWithAI', () => {
     const mockDto: GenerateAiFlashcardsDto = {
-      user_id: 'test-user-id',
       topic_name: 'JavaScript Fundamentals',
       num_flashcards: 3,
       difficulty: 2,
@@ -342,7 +341,6 @@ describe('AiFlashcardService', () => {
   describe('buildAIPrompt', () => {
     it('should build prompt with all fields', () => {
       const dto: GenerateAiFlashcardsDto = {
-        user_id: 'test-user-id',
         topic_name: 'React Hooks',
         num_flashcards: 5,
         difficulty: 3,
@@ -362,7 +360,6 @@ describe('AiFlashcardService', () => {
 
     it('should build prompt without optional fields', () => {
       const dto: GenerateAiFlashcardsDto = {
-        user_id: 'test-user-id',
         topic_name: 'Basic Math',
         num_flashcards: 2,
         difficulty: 1,
@@ -379,7 +376,6 @@ describe('AiFlashcardService', () => {
 
     it('should include proper JSON structure in prompt', () => {
       const dto: GenerateAiFlashcardsDto = {
-        user_id: 'test-user-id',
         topic_name: 'Test Topic',
         num_flashcards: 1,
         difficulty: 2,

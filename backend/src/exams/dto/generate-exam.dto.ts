@@ -74,9 +74,4 @@ export class GenerateExamDto {
   @IsOptional()
   @IsString()
   additional_instructions?: string;
-
-  @ApiProperty({ description: 'User ID creating the exam' })
-  @IsUUID()
-  @IsNotEmpty()
-  user_id: string;
 } 

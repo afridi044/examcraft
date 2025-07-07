@@ -2,7 +2,6 @@
 
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { useCurrentUser } from "@/hooks/useDatabase";
 import { useUpdateProgress, useUserFlashcards, useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
 import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
 import { flashcardService } from "@/lib/services/flashcard.service";
@@ -23,7 +22,7 @@ import {
   Clock,
   TrendingUp,
 } from "lucide-react";
-import type { FlashcardWithTopic } from "@/types";
+// import type { Flashcard } from "@/types";
 
 interface StudySession {
   session_id: string;
@@ -31,7 +30,7 @@ interface StudySession {
   topic_name: string;
   total_cards: number;
   mastery_status: "learning" | "under_review" | "mastered" | "all";
-  cards: FlashcardWithTopic[];
+  cards: any[]; // FlashcardWithTopic[];
 }
 
 type PerformanceType = "know" | "dont_know";
@@ -50,14 +49,13 @@ interface SessionStats {
 
 export default function StudySessionPage({ params }: StudySessionPageProps) {
   const router = useRouter();
-  const { user, loading } = useBackendAuth();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const { user: currentUser, loading: userLoading } = useBackendAuth();
   const updateProgress = useUpdateProgress();
   const invalidateFlashcards = useInvalidateFlashcards();
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
   
   // Flashcard data hook for cache invalidation
-  const { refetch: refetchFlashcards } = useUserFlashcards(currentUser?.user_id || "");
+  const { refetch: refetchFlashcards } = useUserFlashcards();
   
   // Core state
   const [topicId, setTopicId] = useState<string>("");
@@ -82,20 +80,20 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    if (!userLoading && !currentUser) {
       router.push("/");
     }
-  }, [loading, user, router]);
+  }, [userLoading, currentUser, router]);
 
   // Invalidate flashcard cache when component unmounts (user navigates away)
   useEffect(() => {
     return () => {
       // Refetch flashcards when user leaves the study page
-      if (currentUser?.user_id) {
+      if (currentUser?.id) {
         setTimeout(() => refetchFlashcards(), 100);
       }
     };
-  }, [currentUser?.user_id, refetchFlashcards]);
+  }, [currentUser?.id, refetchFlashcards]);
 
   // Extract topic ID from params
   useEffect(() => {
@@ -128,7 +126,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
     let mounted = true;
     
     const initializeStudySession = async () => {
-      if (!currentUser?.user_id || !topicId || session) {
+      if (!currentUser?.id || !topicId || session) {
         return;
       }
 
@@ -136,10 +134,9 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
         setIsInitializing(true);
         setInitError(null);
         
-        console.log('🚀 Initializing study session:', { userId: currentUser.user_id, topicId });
+        console.log('🚀 Initializing study session:', { userId: currentUser.id, topicId });
         
         const response = await flashcardService.startStudySession({
-          userId: currentUser.user_id,
           topicId,
           sessionType: 'mixed'
         });
@@ -178,14 +175,14 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
       }
     };
 
-    if (currentUser?.user_id && topicId && !session) {
+    if (currentUser?.id && topicId && !session) {
       initializeStudySession();
     }
 
     return () => {
       mounted = false;
     };
-  }, [currentUser?.user_id, topicId, session]);
+  }, [currentUser?.id, topicId, session]);
 
   // Show buttons with delay after flipping to answer
   useEffect(() => {
@@ -248,9 +245,9 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
       // Navigate to completion if last card
       if (isLastCard) {
         // Comprehensive cache invalidation for real-time updates
-        if (currentUser?.user_id) {
-          invalidateFlashcards(currentUser.user_id, { includeExistence: true });
-          invalidateBackendDashboard(currentUser.user_id);
+        if (currentUser?.id) {
+          invalidateFlashcards(currentUser.id, { includeExistence: true });
+          invalidateBackendDashboard(currentUser.id);
         }
         router.push(`/flashcards/study/${topicId}/complete`);
       }
@@ -264,7 +261,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
 
   // Restart session
   const handleRestart = async () => {
-    if (!currentUser?.user_id || !topicId) return;
+    if (!currentUser?.id || !topicId) return;
 
     try {
       setIsInitializing(true);
@@ -284,7 +281,6 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const response = await flashcardService.startStudySession({
-        userId: currentUser.user_id,
         topicId,
         sessionType: 'mixed'
       });
@@ -330,7 +326,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   }, [session?.cards, currentCardIndex, sessionStats.totalSeen]);
 
   // Loading states
-  const isAuthLoading = loading || (user && userLoading) || (user && !currentUser);
+  const isAuthLoading = userLoading;
   const showMainLoadingScreen = isAuthLoading || isInitializing;
 
   // Main loading screen

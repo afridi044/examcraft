@@ -124,7 +124,6 @@ describe('ExamsService', () => {
   describe('createExam', () => {
     it('should create exam successfully', async () => {
       const createExamDto: CreateExamDto = {
-        user_id: 'user-123',
         title: 'Test Exam',
         description: 'Test Description',
         duration_minutes: 60,
@@ -153,11 +152,11 @@ describe('ExamsService', () => {
 
       databaseService.createExam.mockResolvedValue(mockResponse);
 
-      const result = await service.createExam(createExamDto);
+      const result = await service.createExam(createExamDto, 'user-123');
 
       expect(databaseService.createExam).toHaveBeenCalledWith(
         {
-          user_id: createExamDto.user_id,
+          user_id: 'user-123',
           title: createExamDto.title,
           description: createExamDto.description,
           duration_minutes: createExamDto.duration_minutes,
@@ -173,7 +172,6 @@ describe('ExamsService', () => {
 
   describe('generateExam', () => {
     const generateExamDto: GenerateExamDto = {
-      user_id: 'user-123',
       title: 'AI Generated Exam',
       description: 'AI generated exam',
       topic_name: 'Mathematics',
@@ -248,7 +246,7 @@ describe('ExamsService', () => {
 
       databaseService.createQuestionOption.mockResolvedValue({
         success: true,
-        data: { 
+        data: {
           option_id: 'option-123',
           content: '4',
           is_correct: true,
@@ -259,7 +257,7 @@ describe('ExamsService', () => {
 
       databaseService.createExplanation.mockResolvedValue({
         success: true,
-        data: { 
+        data: {
           explanation_id: 'explanation-123',
           content: '2+2 equals 4',
           ai_generated: true,
@@ -281,7 +279,7 @@ describe('ExamsService', () => {
         json: jest.fn().mockResolvedValue(mockAIResponse),
       });
 
-      const result = await service.generateExam(generateExamDto);
+      const result = await service.generateExam(generateExamDto, 'user-123');
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveProperty('exam');
@@ -329,7 +327,7 @@ describe('ExamsService', () => {
 
       databaseService.createQuestion.mockResolvedValue({
         success: true,
-        data: { 
+        data: {
           question_id: 'question-123',
           content: 'What is 2+2?',
           question_type: 'multiple-choice',
@@ -343,7 +341,7 @@ describe('ExamsService', () => {
 
       databaseService.createQuestionOption.mockResolvedValue({
         success: true,
-        data: { 
+        data: {
           option_id: 'option-123',
           content: '4',
           is_correct: true,
@@ -354,7 +352,7 @@ describe('ExamsService', () => {
 
       databaseService.createExplanation.mockResolvedValue({
         success: true,
-        data: { 
+        data: {
           explanation_id: 'explanation-123',
           content: '2+2 equals 4',
           ai_generated: true,
@@ -376,7 +374,7 @@ describe('ExamsService', () => {
         json: jest.fn().mockResolvedValue(mockAIResponse),
       });
 
-      const result = await service.generateExam(dtoWithCustomTopic);
+      const result = await service.generateExam(dtoWithCustomTopic, 'user-123');
 
       expect(result.success).toBe(true);
       expect(databaseService.createTopic).toHaveBeenCalledWith({
@@ -397,7 +395,7 @@ describe('ExamsService', () => {
         status: 500,
       });
 
-      const result = await service.generateExam(generateExamDto);
+      const result = await service.generateExam(generateExamDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('AI API error');
@@ -418,7 +416,7 @@ describe('ExamsService', () => {
         }),
       });
 
-      const result = await service.generateExam(generateExamDto);
+      const result = await service.generateExam(generateExamDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Unexpected token');
@@ -444,7 +442,7 @@ describe('ExamsService', () => {
         }),
       });
 
-      const result = await service.generateExam(generateExamDto);
+      const result = await service.generateExam(generateExamDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('AI failed to generate questions');
@@ -457,7 +455,7 @@ describe('ExamsService', () => {
         error: 'Failed to create exam',
       });
 
-      const result = await service.generateExam(generateExamDto);
+      const result = await service.generateExam(generateExamDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Failed to create exam');
@@ -489,7 +487,7 @@ describe('ExamsService', () => {
         json: jest.fn().mockResolvedValue(mockAIResponse),
       });
 
-      const result = await service.generateExam(generateExamDto);
+      const result = await service.generateExam(generateExamDto, 'user-123');
 
       expect(result.success).toBe(false);
       expect(databaseService.deleteExam).toHaveBeenCalledWith('exam-123');
@@ -887,27 +885,27 @@ describe('ExamsService', () => {
     describe('buildExamPrompt', () => {
       it('should build correct AI prompt', () => {
         const dto: GenerateExamDto = {
-          user_id: 'user-123',
           title: 'Test Exam',
+          description: 'Test description',
           topic_name: 'Mathematics',
           difficulty: 3,
-          num_questions: 10,
+          num_questions: 5,
           duration_minutes: 60,
           passing_score: 70,
-          question_types: ['multiple-choice', 'true-false'],
-          content_source: 'Chapter 1',
-          additional_instructions: 'Focus on algebra',
+          question_types: ['multiple-choice'],
+          content_source: 'Test content',
+          additional_instructions: 'Test instructions',
         };
 
         // Access private method through any
         const prompt = (service as any).buildExamPrompt(dto);
 
-        expect(prompt).toContain('Generate 10 multiple-choice, true-false questions');
+        expect(prompt).toContain('Generate 5 multiple-choice questions');
         expect(prompt).toContain('Mathematics');
         expect(prompt).toContain('difficulty 3/5');
         expect(prompt).toContain('60 minutes');
-        expect(prompt).toContain('Chapter 1');
-        expect(prompt).toContain('Focus on algebra');
+        expect(prompt).toContain('Test content');
+        expect(prompt).toContain('Test instructions');
         expect(prompt).toContain('JSON');
       });
     });

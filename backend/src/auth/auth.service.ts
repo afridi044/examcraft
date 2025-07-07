@@ -45,7 +45,7 @@ export class AuthService {
         throw new UnauthorizedException(authError.message);
       }
 
-      if (!authData.user) {
+      if (!authData.user || !authData.session) {
         throw new UnauthorizedException('Authentication failed');
       }
 
@@ -104,8 +104,12 @@ export class AuthService {
             id: newUser!.user_id,
             auth_id: authData.user.id,
             email: newUser!.email,
+            first_name: newUser!.first_name,
+            last_name: newUser!.last_name,
             full_name: `${newUser!.first_name} ${newUser!.last_name}`.trim(),
           },
+          access_token: authData.session.access_token, // Return Supabase JWT
+          refresh_token: authData.session.refresh_token,
           message: 'Sign in successful (user record created)',
         };
       }
@@ -116,8 +120,12 @@ export class AuthService {
           id: user.user_id,
           auth_id: authData.user.id,
           email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
           full_name: `${user.first_name} ${user.last_name}`.trim(),
         },
+        access_token: authData.session.access_token, // Return Supabase JWT
+        refresh_token: authData.session.refresh_token,
         message: 'Sign in successful',
       };
     } catch (error) {
@@ -181,6 +189,30 @@ export class AuthService {
         throw new BadRequestException('Failed to create user profile');
       }
 
+      // Sign in the user to get JWT tokens
+      const { data: signInData, error: signInError } =
+        await this.supabaseAdmin.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+      if (signInError || !signInData.session) {
+        console.warn('⚠️ User created but could not generate tokens, user will need to sign in manually');
+        return {
+          success: true,
+          user: {
+            id: createUserResponse.data.user_id,
+            auth_id: authData.user.id,
+            email: createUserResponse.data.email,
+            first_name: createUserResponse.data.first_name,
+            last_name: createUserResponse.data.last_name,
+            full_name:
+              `${createUserResponse.data.first_name} ${createUserResponse.data.last_name}`.trim(),
+          },
+          message: 'Account created successfully, please sign in',
+        };
+      }
+
       return {
         success: true,
         user: {
@@ -190,6 +222,8 @@ export class AuthService {
           full_name:
             `${createUserResponse.data.first_name} ${createUserResponse.data.last_name}`.trim(),
         },
+        access_token: signInData.session.access_token,
+        refresh_token: signInData.session.refresh_token,
         message: 'Account created successfully',
       };
     } catch (error) {
@@ -209,5 +243,58 @@ export class AuthService {
       success: true,
       message: 'Signed out successfully',
     };
+  }
+
+  async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
+    try {
+      if (!refreshToken) {
+        throw new UnauthorizedException('Refresh token is required');
+      }
+
+      // Use Supabase to refresh the token
+      const { data, error } = await this.supabaseAdmin.auth.refreshSession({
+        refresh_token: refreshToken,
+      });
+
+      if (error) {
+        throw new UnauthorizedException(error.message);
+      }
+
+      if (!data.session || !data.user) {
+        throw new UnauthorizedException('Failed to refresh token');
+      }
+
+      // Get user from our database
+      const userResponse = await this.databaseService.getUserByAuthId(data.user.id);
+
+      if (!userResponse.success || !userResponse.data) {
+        throw new UnauthorizedException('User not found in database');
+      }
+
+      const user = userResponse.data;
+
+      return {
+        success: true,
+        user: {
+          id: user.user_id,
+          auth_id: data.user.id,
+          email: user.email,
+          full_name: `${user.first_name} ${user.last_name}`.trim(),
+        },
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+        message: 'Token refreshed successfully',
+      };
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      console.error('Token refresh error:', error);
+      throw new UnauthorizedException('Token refresh failed');
+    }
   }
 }

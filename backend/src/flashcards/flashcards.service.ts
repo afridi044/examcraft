@@ -33,12 +33,12 @@ export class FlashcardsService {
     private readonly databaseService: DatabaseService,
     private readonly aiFlashcardService: AiFlashcardService,
     private readonly progressTrackingService: ProgressTrackingService,
-  ) {}
+  ) { }
 
-  async createFlashcard(dto: CreateFlashcardDto): Promise<ApiResponse<any>> {
+  async createFlashcard(dto: CreateFlashcardDto, userId: string): Promise<ApiResponse<any>> {
     try {
       this.logger.log(`📝 Creating flashcard with topic_id: ${dto.topic_id}, custom_topic: ${dto.custom_topic}`);
-      
+
       let topicId = dto.topic_id;
       if (!topicId && dto.custom_topic) {
         this.logger.log(`🔧 Creating custom topic: ${dto.custom_topic}`);
@@ -58,7 +58,7 @@ export class FlashcardsService {
       this.logger.log(`📋 Final topic_id for flashcard: ${topicId}`);
 
       const flashInput: CreateFlashcardInput = {
-        user_id: dto.user_id,
+        user_id: userId,
         question: dto.question,
         answer: dto.answer,
         topic_id: topicId,
@@ -106,7 +106,7 @@ export class FlashcardsService {
     return this.databaseService.getUserFlashcards(userId);
   }
 
-  async generateAiFlashcards(dto: GenerateAiFlashcardsDto): Promise<
+  async generateAiFlashcards(dto: GenerateAiFlashcardsDto, userId: string): Promise<
     ApiResponse<{
       flashcards: any[];
       topic_id?: string;
@@ -119,13 +119,13 @@ export class FlashcardsService {
   > {
     try {
       this.logger.log(
-        `🤖 Starting AI flashcard generation for user: ${dto.user_id}, topic: ${dto.topic_name}`,
+        `🤖 Starting AI flashcard generation for user: ${userId}, topic: ${dto.topic_name}`,
       );
 
       // Create or get topic
       let topicId = dto.topic_id;
       this.logger.log(`🤖 AI Generation - Initial topic_id: ${topicId}, custom_topic: ${dto.custom_topic}`);
-      
+
       if (!topicId && dto.custom_topic) {
         this.logger.log(`🔧 Creating custom topic for AI generation: ${dto.custom_topic}`);
         const topicInput: CreateTopicInput = {
@@ -156,7 +156,7 @@ export class FlashcardsService {
 
         try {
           const flashcardInput: CreateFlashcardInput = {
-            user_id: dto.user_id,
+            user_id: userId,
             question: aiFlashcard.question,
             answer: aiFlashcard.answer,
             topic_id: topicId,
@@ -213,7 +213,7 @@ export class FlashcardsService {
     }
   }
 
-  async createStudySession(dto: StudySessionDto): Promise<
+  async createStudySession(dto: StudySessionDto, userId: string): Promise<
     ApiResponse<{
       session: {
         session_id: string;
@@ -229,7 +229,7 @@ export class FlashcardsService {
   > {
     try {
       this.logger.log(
-        `📚 Creating study session for user: ${dto.user_id}, topic: ${dto.topic_id}, mastery: ${dto.mastery_status || 'learning'}`,
+        `📚 Creating study session for user: ${userId}, topic: ${dto.topic_id}, mastery: ${dto.mastery_status || 'learning'}`,
       );
 
       const masteryFilter = dto.mastery_status || 'learning';
@@ -248,16 +248,16 @@ export class FlashcardsService {
       if (masteryFilter === 'mixed') {
         // --- Mixed session: build a deck with quotas ---
 
-        const allCardsByStatus: Record<'learning'|'under_review'|'mastered', FlashcardRow[]> = {
+        const allCardsByStatus: Record<'learning' | 'under_review' | 'mastered', FlashcardRow[]> = {
           learning: [],
           under_review: [],
           mastered: [],
         };
 
         // Fetch each subset (could be optimized with parallel promises)
-        for (const status of ['learning','under_review','mastered'] as const) {
+        for (const status of ['learning', 'under_review', 'mastered'] as const) {
           const res = await this.databaseService.getFlashcardsByTopicAndMastery(
-            dto.user_id,
+            userId,
             dto.topic_id,
             status,
           );
@@ -267,16 +267,16 @@ export class FlashcardsService {
         }
 
         // Determine deck size (default to min total available or 20)
-        const totalAvailable = Object.values(allCardsByStatus).reduce((sum, arr)=>sum+arr.length,0);
+        const totalAvailable = Object.values(allCardsByStatus).reduce((sum, arr) => sum + arr.length, 0);
         const deckSize = Math.min(totalAvailable, 20);
 
         const pickCards = (cards: FlashcardRow[], count: number) => {
           // Shuffle then slice to count
-          return cards.sort(() => Math.random()-0.5).slice(0,count);
+          return cards.sort(() => Math.random() - 0.5).slice(0, count);
         };
 
         // Build deck according to quotas
-        for (const status of ['under_review','learning','mastered'] as const) {
+        for (const status of ['under_review', 'learning', 'mastered'] as const) {
           const quotaCount = Math.round(deckSize * MIXED_QUOTAS[status]);
           const picked = pickCards(allCardsByStatus[status], quotaCount);
           flashcards.push(...picked);
@@ -286,9 +286,9 @@ export class FlashcardsService {
         if (flashcards.length < deckSize) {
           const remaining = deckSize - flashcards.length;
           const fallbackPool = [
-            ...allCardsByStatus.learning.filter(c=>!flashcards.includes(c)),
-            ...allCardsByStatus.under_review.filter(c=>!flashcards.includes(c)),
-            ...allCardsByStatus.mastered.filter(c=>!flashcards.includes(c)),
+            ...allCardsByStatus.learning.filter(c => !flashcards.includes(c)),
+            ...allCardsByStatus.under_review.filter(c => !flashcards.includes(c)),
+            ...allCardsByStatus.mastered.filter(c => !flashcards.includes(c)),
           ];
           flashcards.push(...pickCards(fallbackPool, remaining));
         }
@@ -301,7 +301,7 @@ export class FlashcardsService {
       } else if (masteryFilter !== 'all') {
         const masteryCardsRes =
           await this.databaseService.getFlashcardsByTopicAndMastery(
-            dto.user_id,
+            userId,
             dto.topic_id,
             masteryFilter as 'learning' | 'under_review' | 'mastered',
           );
@@ -315,7 +315,7 @@ export class FlashcardsService {
         } else {
           // Fallback to all cards for this topic
           const allCardsRes = await this.databaseService.getFlashcardsByTopic(
-            dto.user_id,
+            userId,
             dto.topic_id,
           );
           if (
@@ -330,7 +330,7 @@ export class FlashcardsService {
       } else {
         // Get all cards for the topic
         const allCardsRes = await this.databaseService.getFlashcardsByTopic(
-          dto.user_id,
+          userId,
           dto.topic_id,
         );
         if (allCardsRes.success && allCardsRes.data) {
@@ -355,7 +355,7 @@ export class FlashcardsService {
       const topicName = shuffledCards[0]?.topic?.name || 'General';
       this.logger.log(`📝 Extracted topic name: ${topicName}`);
 
-      const sessionId = `session_${Date.now()}_${dto.user_id}`;
+      const sessionId = `session_${Date.now()}_${userId}`;
 
       this.logger.log(
         `✅ Study session created with ${shuffledCards.length} cards`,
@@ -482,6 +482,7 @@ export class FlashcardsService {
 
   async generateFromQuestion(
     dto: CreateFlashcardFromQuestionDto,
+    userId: string,
   ): Promise<ApiResponse<FlashcardRow>> {
     try {
       this.logger.log(
@@ -502,21 +503,18 @@ export class FlashcardsService {
 
       const question = questionResult.data;
 
-      // Check if flashcard already exists for this question
-      const existingFlashcardsResult =
-        await this.databaseService.getUserFlashcards(dto.user_id);
-      if (existingFlashcardsResult.success && existingFlashcardsResult.data) {
-        const existingFlashcard = existingFlashcardsResult.data.find(
-          (f) => f.source_question_id === dto.question_id,
-        );
+      // Check if flashcard already exists for this question - OPTIMIZED
+      const existingFlashcardResult = await this.databaseService.getFlashcardByUserAndSourceQuestion(
+        userId,
+        dto.question_id
+      );
 
-        if (existingFlashcard) {
-          return {
-            success: false,
-            data: null,
-            error: 'Flashcard already exists for this question',
-          };
-        }
+      if (existingFlashcardResult.success && existingFlashcardResult.data) {
+        return {
+          success: false,
+          data: null,
+          error: 'Flashcard already exists for this question',
+        };
       }
 
       // Generate flashcard content
@@ -555,7 +553,7 @@ export class FlashcardsService {
 
       // Create the flashcard
       const flashcardInput: CreateFlashcardInput = {
-        user_id: dto.user_id,
+        user_id: userId,
         question: flashcardQuestion,
         answer: flashcardAnswer,
         topic_id: dto.topic_id || question.topic_id, // Use provided topic_id or fall back to question's topic
@@ -644,7 +642,7 @@ export class FlashcardsService {
     }
   }
 
-  async deleteFlashcard(flashcardId: string): Promise<ApiResponse<boolean>> {
-    return this.databaseService.deleteFlashcard(flashcardId);
+  async deleteFlashcard(flashcardId: string, userId: string): Promise<ApiResponse<boolean>> {
+    return this.databaseService.deleteFlashcard(flashcardId, userId);
   }
 }

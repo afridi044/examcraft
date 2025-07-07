@@ -12,7 +12,7 @@ import { QuizReviewDatabaseService } from './services/quiz-review-database.servi
 @Injectable()
 export class DatabaseService implements OnModuleInit {
   private baseDatabaseService: BaseDatabaseService;
-  
+
   constructor(
     private configService: ConfigService,
     private userService: UserDatabaseService,
@@ -29,10 +29,10 @@ export class DatabaseService implements OnModuleInit {
   async onModuleInit() {
     // Initialize all services with the base configuration
     await this.baseDatabaseService.initializeClients();
-    
+
     // Share the initialized clients with all other services
     const { supabase, supabaseAdmin } = this.baseDatabaseService as any;
-    
+
     // Set clients for all services
     [
       this.userService,
@@ -165,8 +165,8 @@ export class DatabaseService implements OnModuleInit {
     return this.flashcardService.getFlashcardsByTopicAndMastery(userId, topicId, masteryStatus);
   }
 
-  async deleteFlashcard(flashcardId: string) {
-    return this.flashcardService.deleteFlashcard(flashcardId);
+  async deleteFlashcard(flashcardId: string, userId: string) {
+    return this.flashcardService.deleteFlashcard(flashcardId, userId);
   }
 
   async getFlashcardsDueForReview(userId: string) {

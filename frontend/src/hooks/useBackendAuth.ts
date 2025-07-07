@@ -20,31 +20,36 @@ export function useBackendAuth() {
 
   // Check for stored user session on mount
   useEffect(() => {
-    const checkStoredSession = () => {
+    const checkStoredSession = async () => {
       try {
-        const storedUser = localStorage.getItem('examcraft-user');
-        if (storedUser) {
-          const user = JSON.parse(storedUser) as AuthUser;
+        // First check if we have a stored token
+        if (!authService.hasStoredToken()) {
+          setState(prev => ({ ...prev, loading: false }));
+          return;
+        }
+
+        // Validate the token with the backend
+        const validation = await authService.validateToken();
+        
+        if (validation.success && validation.user) {
           setState(prev => ({
             ...prev,
-            user,
+            user: validation.user!,
             isAuthenticated: true,
             loading: false,
           }));
         } else {
-          setState(prev => ({
-            ...prev,
-            loading: false,
-          }));
+          // Token is invalid, clear local state
+          localStorage.removeItem('examcraft-user');
+          setState(prev => ({ ...prev, loading: false }));
         }
       } catch (error) {
-        console.error('Error loading stored session:', error);
+        console.error('Error validating session:', error);
         // Clear corrupted data
         localStorage.removeItem('examcraft-user');
-        setState(prev => ({
-          ...prev,
-          loading: false,
-        }));
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setState(prev => ({ ...prev, loading: false }));
       }
     };
 
@@ -58,7 +63,7 @@ export function useBackendAuth() {
       const response = await authService.signIn({ email, password });
       
       if (response.success && response.user) {
-        // Store user in localStorage for persistence
+        // Store user in localStorage for persistence (legacy support)
         localStorage.setItem('examcraft-user', JSON.stringify(response.user));
         
         setState(prev => ({
@@ -104,7 +109,7 @@ export function useBackendAuth() {
       });
       
       if (response.success && response.user) {
-        // Store user in localStorage for persistence
+        // Store user in localStorage for persistence (legacy support)
         localStorage.setItem('examcraft-user', JSON.stringify(response.user));
         
         setState(prev => ({
@@ -133,10 +138,10 @@ export function useBackendAuth() {
     setState(prev => ({ ...prev, signingOut: true }));
 
     try {
-      // Call backend signout endpoint
+      // Call backend signout endpoint (this will clear tokens)
       await authService.signOut();
       
-      // Clear stored session
+      // Clear stored session (legacy support)
       localStorage.removeItem('examcraft-user');
       
       setState({
@@ -156,8 +161,10 @@ export function useBackendAuth() {
 
   const clearAuthState = useCallback(async () => {
     try {
-      // Clear localStorage auth data
+      // Clear localStorage auth data and JWT tokens
       localStorage.removeItem('examcraft-user');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       
       setState({
         user: null,

@@ -19,15 +19,17 @@ import { StudySessionDto } from './dto/study-session.dto';
 import { UpdateProgressDto } from './dto/update-progress.dto';
 import { CheckFlashcardsExistBatchDto } from './dto/check-exists-batch.dto';
 import { UpdateFlashcardDto } from './dto/update-flashcard.dto';
+import { User } from '../auth/decorators/user.decorator';
+import { AuthUser } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Flashcards')
 @Controller('flashcards')
 export class FlashcardsController {
-  constructor(private readonly flashcardsService: FlashcardsService) {}
+  constructor(private readonly flashcardsService: FlashcardsService) { }
 
   @Post()
-  async createFlashcard(@Body() dto: CreateFlashcardDto) {
-    const result = await this.flashcardsService.createFlashcard(dto);
+  async createFlashcard(@Body() dto: CreateFlashcardDto, @User() user: AuthUser) {
+    const result = await this.flashcardsService.createFlashcard(dto, user.id);
     if (!result.success) {
       throw new BadRequestException(result.error || 'Failed to create');
     }
@@ -36,30 +38,30 @@ export class FlashcardsController {
 
 
 
-  @Get('exists/:userId/:questionId')
+  @Get('exists/:questionId')
   async checkExists(
-    @Param('userId') userId: string,
+    @User() user: AuthUser,
     @Param('questionId') questionId: string,
   ) {
     const exists = await this.flashcardsService.hasFlashcard(
-      userId,
+      user.id,
       questionId,
     );
     return { exists };
   }
 
   @Post('exists-batch')
-  async checkExistsBatch(@Body() dto: CheckFlashcardsExistBatchDto) {
+  async checkExistsBatch(@Body() dto: CheckFlashcardsExistBatchDto, @User() user: AuthUser) {
     const ids = await this.flashcardsService.hasFlashcardsBatch(
-      dto.user_id,
+      user.id,
       dto.question_ids,
     );
     return { ids };
   }
 
-  @Get('user/:userId')
-  async getUserFlashcards(@Param('userId') userId: string) {
-    const res = await this.flashcardsService.getUserFlashcards(userId);
+  @Get('user')
+  async getUserFlashcards(@User() user: AuthUser) {
+    const res = await this.flashcardsService.getUserFlashcards(user.id);
     if (!res.success) {
       throw new BadRequestException(res.error || 'Failed');
     }
@@ -84,8 +86,8 @@ export class FlashcardsController {
     status: 500,
     description: 'Failed to generate flashcards',
   })
-  async generateAiFlashcards(@Body() dto: GenerateAiFlashcardsDto) {
-    const result = await this.flashcardsService.generateAiFlashcards(dto);
+  async generateAiFlashcards(@Body() dto: GenerateAiFlashcardsDto, @User() user: AuthUser) {
+    const result = await this.flashcardsService.generateAiFlashcards(dto, user.id);
     if (!result.success) {
       throw new BadRequestException(
         result.error || 'Failed to generate AI flashcards',
@@ -112,8 +114,8 @@ export class FlashcardsController {
     status: 400,
     description: 'Invalid input data',
   })
-  async createStudySession(@Body() dto: StudySessionDto) {
-    const result = await this.flashcardsService.createStudySession(dto);
+  async createStudySession(@Body() dto: StudySessionDto, @User() user: AuthUser) {
+    const result = await this.flashcardsService.createStudySession(dto, user.id);
     if (!result.success) {
       if (result.error?.includes('No') && result.error?.includes('found')) {
         throw new BadRequestException(result.error);
@@ -178,8 +180,8 @@ export class FlashcardsController {
     status: 400,
     description: 'Invalid input data or could not generate answer',
   })
-  async generateFromQuestion(@Body() dto: CreateFlashcardFromQuestionDto) {
-    const result = await this.flashcardsService.generateFromQuestion(dto);
+  async generateFromQuestion(@Body() dto: CreateFlashcardFromQuestionDto, @User() user: AuthUser) {
+    const result = await this.flashcardsService.generateFromQuestion(dto, user.id);
     if (!result.success) {
       if (result.error?.includes('not found')) {
         throw new NotFoundException(result.error);
@@ -194,11 +196,11 @@ export class FlashcardsController {
     return result;
   }
 
-  @Get('due/:userId')
-  @ApiOperation({ summary: 'Get flashcards due for review' })
+  @Get('due')
+  @ApiOperation({ summary: 'Get flashcards due for review for authenticated user' })
   @ApiResponse({ status: 200, description: 'List of due flashcards' })
-  async getDueFlashcards(@Param('userId') userId: string) {
-    const res = await this.flashcardsService.getDueFlashcards(userId);
+  async getDueFlashcards(@User() user: AuthUser) {
+    const res = await this.flashcardsService.getDueFlashcards(user.id);
     if (!res.success) {
       throw new BadRequestException(res.error || 'Failed to fetch');
     }
@@ -222,8 +224,8 @@ export class FlashcardsController {
   @Delete(':flashcardId')
   @ApiOperation({ summary: 'Delete a flashcard' })
   @ApiResponse({ status: 200, description: 'Flashcard deleted' })
-  async deleteFlashcard(@Param('flashcardId') flashcardId: string) {
-    const res = await this.flashcardsService.deleteFlashcard(flashcardId);
+  async deleteFlashcard(@Param('flashcardId') flashcardId: string, @User() user: AuthUser) {
+    const res = await this.flashcardsService.deleteFlashcard(flashcardId, user.id);
     if (!res.success) {
       throw new BadRequestException(res.error || 'Failed to delete');
     }

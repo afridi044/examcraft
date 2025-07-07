@@ -2,9 +2,6 @@ import { IsString, IsUUID, IsOptional, IsIn } from 'class-validator';
 
 export class StudySessionDto {
   @IsUUID()
-  user_id: string;
-
-  @IsUUID()
   topic_id: string;
 
   @IsOptional()

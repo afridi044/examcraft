@@ -104,7 +104,7 @@ describe('AuthService', () => {
       it('should sign in successfully when user exists in database', async () => {
         // Arrange
         const mockAuthResponse = {
-          data: { user: mockAuthUser },
+          data: { user: mockAuthUser, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
@@ -137,7 +137,11 @@ describe('AuthService', () => {
             auth_id: mockAuthUser.id,
             email: mockDatabaseUser.email,
             full_name: 'John Doe',
+            first_name: 'John',
+            last_name: 'Doe',
           },
+          access_token: 'token',
+          refresh_token: 'refresh',
           message: 'Sign in successful',
         });
       });
@@ -147,7 +151,7 @@ describe('AuthService', () => {
       it('should create user record when authenticated but not in database', async () => {
         // Arrange
         const mockAuthResponse = {
-          data: { user: mockAuthUser },
+          data: { user: mockAuthUser, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
@@ -189,7 +193,11 @@ describe('AuthService', () => {
             auth_id: mockAuthUser.id,
             email: mockDatabaseUser.email,
             full_name: 'John Doe',
+            first_name: 'John',
+            last_name: 'Doe',
           },
+          access_token: 'token',
+          refresh_token: 'refresh',
           message: 'Sign in successful (user record created)',
         });
       });
@@ -200,9 +208,8 @@ describe('AuthService', () => {
           ...mockAuthUser,
           user_metadata: {},
         };
-
         const mockAuthResponse = {
-          data: { user: mockAuthUserWithoutName },
+          data: { user: mockAuthUserWithoutName, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
@@ -281,7 +288,7 @@ describe('AuthService', () => {
       it('should throw UnauthorizedException when user creation fails', async () => {
         // Arrange
         const mockAuthResponse = {
-          data: { user: mockAuthUser },
+          data: { user: mockAuthUser, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
@@ -405,7 +412,7 @@ describe('AuthService', () => {
       it('should create user successfully with all fields', async () => {
         // Arrange
         const mockAuthResponse = {
-          data: { user: mockAuthUser },
+          data: { user: mockAuthUser, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
@@ -415,8 +422,14 @@ describe('AuthService', () => {
           error: null,
         };
 
+        const mockSignInResponse = {
+          data: { user: mockAuthUser, session: { access_token: 'token', refresh_token: 'refresh' } },
+          error: null,
+        };
+
         mockSupabaseAdminAuth.createUser.mockResolvedValue(mockAuthResponse);
         databaseService.createUser.mockResolvedValue(mockCreateUserResponse);
+        mockSupabaseAuth.signInWithPassword.mockResolvedValue(mockSignInResponse);
 
         // Act
         const result = await service.signUp(mockSignUpDto);
@@ -448,6 +461,8 @@ describe('AuthService', () => {
             email: mockDatabaseUser.email,
             full_name: 'Jane Smith',
           },
+          access_token: 'token',
+          refresh_token: 'refresh',
           message: 'Account created successfully',
         });
       });
@@ -457,25 +472,32 @@ describe('AuthService', () => {
         const minimalSignUpDto: SignUpDto = {
           email: 'minimal@example.com',
           password: 'password123',
+          full_name: 'Minimal User',
         };
-
         const mockAuthUserMinimal = {
-          ...mockAuthUser,
+          id: 'minimal-auth-user-id',
           email: 'minimal@example.com',
-          user_metadata: {},
+          email_confirmed_at: '2023-01-01T00:00:00Z',
+          created_at: '2023-01-01T00:00:00Z',
+          user_metadata: {
+            full_name: 'Minimal User',
+          },
         };
-
         const mockDatabaseUserMinimal = {
-          ...mockDatabaseUser,
+          user_id: 'minimal-db-user-id',
           email: 'minimal@example.com',
-          first_name: 'User',
-          last_name: '',
+          first_name: 'Minimal',
+          last_name: 'User',
+          created_at: '2023-01-01T00:00:00Z',
+          updated_at: '2023-01-01T00:00:00Z',
+          password_hash: 'hashed-password',
+          supabase_auth_id: 'minimal-auth-user-id',
           institution: null,
           field_of_study: null,
+          last_login: null,
         };
-
         const mockAuthResponse = {
-          data: { user: mockAuthUserMinimal },
+          data: { user: mockAuthUserMinimal, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
@@ -485,68 +507,97 @@ describe('AuthService', () => {
           error: null,
         };
 
+        const mockSignInResponse = {
+          data: { user: mockAuthUserMinimal, session: { access_token: 'token', refresh_token: 'refresh' } },
+          error: null,
+        };
+
         mockSupabaseAdminAuth.createUser.mockResolvedValue(mockAuthResponse);
         databaseService.createUser.mockResolvedValue(mockCreateUserResponse);
+        mockSupabaseAuth.signInWithPassword.mockResolvedValue(mockSignInResponse);
 
         // Act
         const result = await service.signUp(minimalSignUpDto);
 
         // Assert
-                 expect(mockSupabaseAdminAuth.createUser).toHaveBeenCalledWith({
-           email: minimalSignUpDto.email,
-           password: minimalSignUpDto.password,
-           email_confirm: true,
-           user_metadata: {
-             full_name: null,
-           },
-         });
+        expect(mockSupabaseAdminAuth.createUser).toHaveBeenCalledWith({
+          email: minimalSignUpDto.email,
+          password: minimalSignUpDto.password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: 'Minimal User',
+          },
+        });
 
         expect(databaseService.createUser).toHaveBeenCalledWith({
           supabase_auth_id: mockAuthUserMinimal.id,
           email: mockAuthUserMinimal.email,
-          first_name: 'User',
-          last_name: '',
+          first_name: 'Minimal',
+          last_name: 'User',
           institution: null,
           field_of_study: null,
         });
 
-        expect(result.user?.full_name).toBe('User');
+        expect(result).toEqual({
+          success: true,
+          user: {
+            id: mockDatabaseUserMinimal.user_id,
+            auth_id: mockAuthUserMinimal.id,
+            email: mockDatabaseUserMinimal.email,
+            full_name: 'Minimal User',
+          },
+          access_token: 'token',
+          refresh_token: 'refresh',
+          message: 'Account created successfully',
+        });
       });
 
       it('should handle name parsing with single name', async () => {
         // Arrange
         const singleNameSignUpDto: SignUpDto = {
-          email: 'single@example.com',
+          email: 'singlename@example.com',
           password: 'password123',
-          full_name: 'John',
+          full_name: 'Singlename',
         };
-
         const mockAuthUserSingle = {
-          ...mockAuthUser,
-          email: 'single@example.com',
-          user_metadata: { full_name: 'John' },
+          id: 'single-auth-user-id',
+          email: 'singlename@example.com',
+          email_confirmed_at: '2023-01-01T00:00:00Z',
+          created_at: '2023-01-01T00:00:00Z',
+          user_metadata: {
+            full_name: 'Singlename',
+          },
         };
-
         const mockDatabaseUserSingle = {
-          ...mockDatabaseUser,
-          email: 'single@example.com',
-          first_name: 'John',
+          user_id: 'single-db-user-id',
+          email: 'singlename@example.com',
+          first_name: 'Singlename',
           last_name: '',
+          created_at: '2023-01-01T00:00:00Z',
+          updated_at: '2023-01-01T00:00:00Z',
+          password_hash: 'hashed-password',
+          supabase_auth_id: 'single-auth-user-id',
+          institution: null,
+          field_of_study: null,
+          last_login: null,
         };
-
         const mockAuthResponse = {
-          data: { user: mockAuthUserSingle },
+          data: { user: mockAuthUserSingle, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
-        const mockCreateUserResponse = {
-          success: true,
-          data: mockDatabaseUserSingle,
+        const mockSignInResponse = {
+          data: { user: mockAuthUserSingle, session: { access_token: 'token', refresh_token: 'refresh' } },
           error: null,
         };
 
         mockSupabaseAdminAuth.createUser.mockResolvedValue(mockAuthResponse);
-        databaseService.createUser.mockResolvedValue(mockCreateUserResponse);
+        databaseService.createUser.mockResolvedValue({
+          success: true,
+          data: mockDatabaseUserSingle,
+          error: null,
+        });
+        mockSupabaseAuth.signInWithPassword.mockResolvedValue(mockSignInResponse);
 
         // Act
         const result = await service.signUp(singleNameSignUpDto);
@@ -555,13 +606,24 @@ describe('AuthService', () => {
         expect(databaseService.createUser).toHaveBeenCalledWith({
           supabase_auth_id: mockAuthUserSingle.id,
           email: mockAuthUserSingle.email,
-          first_name: 'John',
+          first_name: 'Singlename',
           last_name: '',
           institution: null,
           field_of_study: null,
         });
 
-        expect(result.user?.full_name).toBe('John');
+        expect(result).toEqual({
+          success: true,
+          user: {
+            id: mockDatabaseUserSingle.user_id,
+            auth_id: mockAuthUserSingle.id,
+            email: mockDatabaseUserSingle.email,
+            full_name: 'Singlename',
+          },
+          access_token: 'token',
+          refresh_token: 'refresh',
+          message: 'Account created successfully',
+        });
       });
     });
 

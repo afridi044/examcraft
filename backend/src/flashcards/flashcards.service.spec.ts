@@ -29,27 +29,33 @@ describe('FlashcardsService (CRUD & Existence)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FlashcardsService,
-        { provide: DatabaseService, useValue: {
-          createFlashcard: jest.fn(),
-          createTopic: jest.fn(),
-          getFlashcardByUserAndSourceQuestion: jest.fn(),
-          getFlashcardsByUserAndQuestionIds: jest.fn(),
-          getUserFlashcards: jest.fn(),
-          updateFlashcard: jest.fn(),
-          deleteFlashcard: jest.fn(),
-          getFlashcardsByTopicAndMastery: jest.fn(),
-          getFlashcardsByTopic: jest.fn(),
-          getFlashcardById: jest.fn(),
-          getQuestionById: jest.fn(),
-          getFlashcardsDueForReview: jest.fn(),
-        } },
-        { provide: AiFlashcardService, useValue: {
-          generateFlashcardsWithAI: jest.fn(),
-        } },
-        { provide: ProgressTrackingService, useValue: {
-          calculateMasteryStatus: jest.fn(),
-          getMasteryMessage: jest.fn(),
-        } },
+        {
+          provide: DatabaseService, useValue: {
+            createFlashcard: jest.fn(),
+            createTopic: jest.fn(),
+            getFlashcardByUserAndSourceQuestion: jest.fn(),
+            getFlashcardsByUserAndQuestionIds: jest.fn(),
+            getUserFlashcards: jest.fn(),
+            updateFlashcard: jest.fn(),
+            deleteFlashcard: jest.fn(),
+            getFlashcardsByTopicAndMastery: jest.fn(),
+            getFlashcardsByTopic: jest.fn(),
+            getFlashcardById: jest.fn(),
+            getQuestionById: jest.fn(),
+            getFlashcardsDueForReview: jest.fn(),
+          }
+        },
+        {
+          provide: AiFlashcardService, useValue: {
+            generateFlashcardsWithAI: jest.fn(),
+          }
+        },
+        {
+          provide: ProgressTrackingService, useValue: {
+            calculateMasteryStatus: jest.fn(),
+            getMasteryMessage: jest.fn(),
+          }
+        },
       ],
     }).compile();
 
@@ -71,7 +77,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
   describe('createFlashcard', () => {
     it('should create flashcard with existing topic', async () => {
       const dto: CreateFlashcardDto = {
-        user_id: 'user-1',
         question: 'Q?',
         answer: 'A',
         topic_id: 'topic-1',
@@ -96,14 +101,13 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       };
       const mockResponse: ApiResponse<any> = { success: true, data: mockFlashcard, error: null };
       databaseService.createFlashcard.mockResolvedValue(mockResponse);
-      const result = await service.createFlashcard(dto);
-      expect(databaseService.createFlashcard).toHaveBeenCalledWith(expect.objectContaining({ user_id: dto.user_id, question: dto.question, answer: dto.answer, topic_id: dto.topic_id, tags: dto.tags }));
+      const result = await service.createFlashcard(dto, 'user-1');
+      expect(databaseService.createFlashcard).toHaveBeenCalledWith(expect.objectContaining({ user_id: 'user-1', question: dto.question, answer: dto.answer, topic_id: dto.topic_id, tags: dto.tags }));
       expect(result).toEqual(mockResponse);
     });
 
     it('should create flashcard with custom topic', async () => {
       const dto: CreateFlashcardDto = {
-        user_id: 'user-1',
         question: 'Q?',
         answer: 'A',
         custom_topic: 'Custom',
@@ -130,7 +134,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       const flashRes = { success: true, data: mockFlashcard, error: null };
       databaseService.createTopic.mockResolvedValue(topicRes);
       databaseService.createFlashcard.mockResolvedValue(flashRes);
-      const result = await service.createFlashcard(dto);
+      const result = await service.createFlashcard(dto, 'user-1');
       expect(databaseService.createTopic).toHaveBeenCalledWith(expect.objectContaining({ name: 'Custom' }));
       expect(databaseService.createFlashcard).toHaveBeenCalledWith(expect.objectContaining({ topic_id: 'topic-custom' }));
       expect(result).toEqual(flashRes);
@@ -138,7 +142,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should handle custom topic creation failure', async () => {
       const dto: CreateFlashcardDto = {
-        user_id: 'user-1',
         question: 'Q?',
         answer: 'A',
         custom_topic: 'Custom',
@@ -146,21 +149,20 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       };
       const topicRes = { success: false, data: null, error: 'fail' };
       databaseService.createTopic.mockResolvedValue(topicRes);
-      const result = await service.createFlashcard(dto);
+      const result = await service.createFlashcard(dto, 'user-1');
       expect(result.success).toBe(false);
       expect(result.error).toBe('fail');
     });
 
     it('should handle database error', async () => {
       const dto: CreateFlashcardDto = {
-        user_id: 'user-1',
         question: 'Q?',
         answer: 'A',
         topic_id: 'topic-1',
         tags: ['tag1'],
       };
       databaseService.createFlashcard.mockRejectedValue(new Error('db error'));
-      const result = await service.createFlashcard(dto);
+      const result = await service.createFlashcard(dto, 'user-1');
       expect(result.success).toBe(false);
       expect(result.error).toBe('db error');
     });
@@ -295,10 +297,10 @@ describe('FlashcardsService (CRUD & Existence)', () => {
         mastery_status: 'learning',
         tags: ['tag1'],
       };
-      databaseService.updateFlashcard.mockResolvedValue({ 
-        success: false, 
-        data: null, 
-        error: 'Database error' 
+      databaseService.updateFlashcard.mockResolvedValue({
+        success: false,
+        data: null,
+        error: 'Database error'
       });
       const result = await service.updateFlashcard('f1', dto);
       expect(result.success).toBe(false);
@@ -309,8 +311,8 @@ describe('FlashcardsService (CRUD & Existence)', () => {
   describe('deleteFlashcard', () => {
     it('should call databaseService.deleteFlashcard', async () => {
       databaseService.deleteFlashcard.mockResolvedValue({ success: true, data: true, error: null });
-      const result = await service.deleteFlashcard('f1');
-      expect(databaseService.deleteFlashcard).toHaveBeenCalledWith('f1');
+      const result = await service.deleteFlashcard('f1', 'user-1');
+      expect(databaseService.deleteFlashcard).toHaveBeenCalledWith('f1', 'user-1');
       expect(result).toEqual({ success: true, data: true, error: null });
     });
   });
@@ -318,7 +320,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
   describe('generateAiFlashcards', () => {
     it('should generate AI flashcards successfully', async () => {
       const dto: GenerateAiFlashcardsDto = {
-        user_id: 'user-1',
         topic_name: 'Mathematics',
         num_flashcards: 5,
         difficulty: 3,
@@ -351,7 +352,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       aiFlashcardService.generateFlashcardsWithAI.mockResolvedValue(aiFlashcards);
       databaseService.createFlashcard.mockResolvedValue({ success: true, data: mockFlashcard, error: null });
 
-      const result = await service.generateAiFlashcards(dto);
+      const result = await service.generateAiFlashcards(dto, 'user-1');
 
       expect(result.success).toBe(true);
       expect(result.data?.generated_count).toBe(2);
@@ -362,7 +363,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should handle custom topic creation for AI generation', async () => {
       const dto: GenerateAiFlashcardsDto = {
-        user_id: 'user-1',
         topic_name: 'Physics',
         num_flashcards: 3,
         difficulty: 2,
@@ -396,7 +396,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       databaseService.createTopic.mockResolvedValue(topicRes);
       databaseService.createFlashcard.mockResolvedValue({ success: true, data: mockFlashcard, error: null });
 
-      const result = await service.generateAiFlashcards(dto);
+      const result = await service.generateAiFlashcards(dto, 'user-1');
 
       expect(result.success).toBe(true);
       expect(databaseService.createTopic).toHaveBeenCalledWith(expect.objectContaining({ name: 'Advanced Physics' }));
@@ -404,7 +404,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should handle AI generation errors', async () => {
       const dto: GenerateAiFlashcardsDto = {
-        user_id: 'user-1',
         topic_name: 'Chemistry',
         num_flashcards: 3,
         difficulty: 2,
@@ -413,7 +412,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
       aiFlashcardService.generateFlashcardsWithAI.mockRejectedValue(new Error('AI service error'));
 
-      const result = await service.generateAiFlashcards(dto);
+      const result = await service.generateAiFlashcards(dto, 'user-1');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('AI service error');
@@ -423,7 +422,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
   describe('createStudySession', () => {
     it('should create study session with specific mastery status', async () => {
       const dto: StudySessionDto = {
-        user_id: 'user-1',
         topic_id: 'topic-1',
         mastery_status: 'learning',
       };
@@ -469,7 +467,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
       databaseService.getFlashcardsByTopicAndMastery.mockResolvedValue({ success: true, data: mockFlashcards, error: null });
 
-      const result = await service.createStudySession(dto);
+      const result = await service.createStudySession(dto, 'user-1');
 
       expect(result.success).toBe(true);
       expect(result.data?.session.total_cards).toBe(2);
@@ -480,7 +478,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should create mixed study session', async () => {
       const dto: StudySessionDto = {
-        user_id: 'user-1',
         topic_id: 'topic-1',
         mastery_status: 'mixed',
       };
@@ -553,7 +550,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
         .mockResolvedValueOnce({ success: true, data: learningCards, error: null })
         .mockResolvedValueOnce({ success: true, data: masteredCards, error: null });
 
-      const result = await service.createStudySession(dto);
+      const result = await service.createStudySession(dto, 'user-1');
 
       expect(result.success).toBe(true);
       expect(result.data?.session.mastery_status).toBe('mixed');
@@ -561,7 +558,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should handle no flashcards found', async () => {
       const dto: StudySessionDto = {
-        user_id: 'user-1',
         topic_id: 'topic-1',
         mastery_status: 'learning',
       };
@@ -569,7 +565,7 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       databaseService.getFlashcardsByTopicAndMastery.mockResolvedValue({ success: true, data: [], error: null });
       databaseService.getFlashcardsByTopic.mockResolvedValue({ success: true, data: [], error: null });
 
-      const result = await service.createStudySession(dto);
+      const result = await service.createStudySession(dto, 'user-1');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('No learning flashcards found');
@@ -675,7 +671,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
   describe('generateFromQuestion', () => {
     it('should generate flashcard from question successfully', async () => {
       const dto: CreateFlashcardFromQuestionDto = {
-        user_id: 'user-1',
         question_id: 'q1',
         custom_question: 'What is 2+2?',
         custom_answer: '4',
@@ -717,10 +712,10 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       };
 
       databaseService.getQuestionById.mockResolvedValue({ success: true, data: mockQuestion, error: null });
-      databaseService.getUserFlashcards.mockResolvedValue({ success: true, data: [], error: null });
+      databaseService.getFlashcardByUserAndSourceQuestion.mockResolvedValue({ success: true, data: null, error: null });
       databaseService.createFlashcard.mockResolvedValue({ success: true, data: mockFlashcard, error: null });
 
-      const result = await service.generateFromQuestion(dto);
+      const result = await service.generateFromQuestion(dto, 'user-1');
 
       expect(result.success).toBe(true);
       expect(result.data?.flashcard_id).toBe('f1');
@@ -729,13 +724,12 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should handle question not found', async () => {
       const dto: CreateFlashcardFromQuestionDto = {
-        user_id: 'user-1',
         question_id: 'q1',
       };
 
       databaseService.getQuestionById.mockResolvedValue({ success: false, data: null, error: 'Question not found' });
 
-      const result = await service.generateFromQuestion(dto);
+      const result = await service.generateFromQuestion(dto, 'user-1');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Question not found');
@@ -743,7 +737,6 @@ describe('FlashcardsService (CRUD & Existence)', () => {
 
     it('should handle existing flashcard for question', async () => {
       const dto: CreateFlashcardFromQuestionDto = {
-        user_id: 'user-1',
         question_id: 'q1',
       };
 
@@ -778,9 +771,9 @@ describe('FlashcardsService (CRUD & Existence)', () => {
       };
 
       databaseService.getQuestionById.mockResolvedValue({ success: true, data: mockQuestion, error: null });
-      databaseService.getUserFlashcards.mockResolvedValue({ success: true, data: [existingFlashcard], error: null });
+      databaseService.getFlashcardByUserAndSourceQuestion.mockResolvedValue({ success: true, data: existingFlashcard, error: null });
 
-      const result = await service.generateFromQuestion(dto);
+      const result = await service.generateFromQuestion(dto, 'user-1');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Flashcard already exists for this question');

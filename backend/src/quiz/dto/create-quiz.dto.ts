@@ -25,12 +25,4 @@ export class CreateQuizDto {
   @IsOptional()
   @IsUUID()
   topic_id?: string;
-
-  @ApiProperty({
-    description: 'User ID creating the quiz',
-    example: 'uuid-user-id',
-  })
-  @IsUUID()
-  @IsNotEmpty()
-  user_id: string;
 }

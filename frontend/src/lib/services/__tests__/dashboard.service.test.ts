@@ -33,7 +33,7 @@ describe('dashboardService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/dashboard/stats/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/stats');
     });
 
     it('handles API error', async () => {
@@ -104,7 +104,7 @@ describe('dashboardService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/dashboard/activity/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/activity');
     });
 
     it('handles empty activity list', async () => {
@@ -169,7 +169,7 @@ describe('dashboardService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/dashboard/progress/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/progress');
     });
 
     it('handles empty progress list', async () => {
@@ -245,7 +245,7 @@ describe('dashboardService', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/dashboard/all/${userId}`);
+      expect(mockedApiClient.get).toHaveBeenCalledWith('/dashboard/all');
     });
 
     it('logs API call info in development', async () => {
@@ -267,9 +267,8 @@ describe('dashboardService', () => {
       await dashboardService.getAllDashboardData(userId);
 
       expect(consoleSpy).toHaveBeenCalledWith('🔍 Dashboard API call info:', {
-        userId: 'user123',
-        endpoint: '/dashboard/all/user123',
-        fullUrl: expect.stringContaining('/dashboard/all/user123')
+        endpoint: '/dashboard/all',
+        fullUrl: 'http://localhost:5001/api/v1/dashboard/all'
       });
 
       consoleSpy.mockRestore();

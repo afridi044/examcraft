@@ -10,26 +10,25 @@ import { dashboardService } from "@/lib/services";
 // =============================================
 
 export const BACKEND_QUERY_KEYS = {
-  // Backend dashboard data
-  dashboardStats: (userId: string) => ["backend", "dashboard", "stats", userId] as const,
-  recentActivity: (userId: string) => ["backend", "dashboard", "activity", userId] as const,
-  topicProgress: (userId: string) => ["backend", "dashboard", "progress", userId] as const,
-  allDashboardData: (userId: string) => ["backend", "dashboard", "all", userId] as const,
+  // Backend dashboard data - JWT secured, no userId needed
+  dashboardStats: () => ["backend", "dashboard", "stats"] as const,
+  recentActivity: () => ["backend", "dashboard", "activity"] as const,
+  topicProgress: () => ["backend", "dashboard", "progress"] as const,
+  allDashboardData: () => ["backend", "dashboard", "all"] as const,
 } as const;
 
 // =============================================
 // Individual Backend Hooks
 // =============================================
 
-export function useBackendDashboardStats(userId: string) {
+export function useBackendDashboardStats() {
   return useQuery({
-    queryKey: BACKEND_QUERY_KEYS.dashboardStats(userId),
-    queryFn: () => dashboardService.getUserStats(userId),
+    queryKey: BACKEND_QUERY_KEYS.dashboardStats(),
+    queryFn: () => dashboardService.getUserStats(),
     select: (response) => {
       // API client now properly unwraps backend response
       return response.data || null;
     },
-    enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
     refetchOnWindowFocus: true, // Refetch when user comes back to tab
@@ -39,16 +38,15 @@ export function useBackendDashboardStats(userId: string) {
   });
 }
 
-export function useBackendRecentActivity(userId: string, limit: number = 10) {
+export function useBackendRecentActivity(limit: number = 10) {
   return useQuery({
-    queryKey: [...BACKEND_QUERY_KEYS.recentActivity(userId), limit],
-    queryFn: () => dashboardService.getRecentActivity(userId),
+    queryKey: [...BACKEND_QUERY_KEYS.recentActivity(), limit],
+    queryFn: () => dashboardService.getRecentActivity(),
     select: (response) => {
       // API client now properly unwraps backend response
       const result = Array.isArray(response.data) ? response.data : [];
       return result;
     },
-    enabled: !!userId,
     staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true, // Refetch when user comes back to tab
@@ -58,16 +56,15 @@ export function useBackendRecentActivity(userId: string, limit: number = 10) {
   });
 }
 
-export function useBackendTopicProgress(userId: string) {
+export function useBackendTopicProgress() {
   return useQuery({
-    queryKey: BACKEND_QUERY_KEYS.topicProgress(userId),
-    queryFn: () => dashboardService.getTopicProgress(userId),
+    queryKey: BACKEND_QUERY_KEYS.topicProgress(),
+    queryFn: () => dashboardService.getTopicProgress(),
     select: (response) => {
       // API client now properly unwraps backend response
       const result = Array.isArray(response.data) ? response.data : [];
       return result;
     },
-    enabled: !!userId,
     staleTime: 60 * 1000, // 1 minute - topic progress changes less frequently
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true, // Refetch when user comes back to tab
@@ -81,18 +78,17 @@ export function useBackendTopicProgress(userId: string) {
 // Optimized Backend Dashboard Hook
 // =============================================
 
-export function useBackendOptimizedDashboard(userId: string) {
+export function useBackendOptimizedDashboard() {
   return useQuery({
-    queryKey: BACKEND_QUERY_KEYS.allDashboardData(userId),
+    queryKey: BACKEND_QUERY_KEYS.allDashboardData(),
     queryFn: async () => {
       try {
-        const response = await dashboardService.getAllDashboardData(userId);
+        const response = await dashboardService.getAllDashboardData();
         return response;
       } catch (error) {
         throw error;
       }
     },
-    enabled: !!userId,
     staleTime: 0, // Always fetch fresh data
     gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes only
     refetchOnWindowFocus: true, // Refetch when user returns to tab
@@ -116,16 +112,15 @@ export function useBackendOptimizedDashboard(userId: string) {
 // =============================================
 
 export function useBackendDashboardData(
-  userId: string,
   useOptimized: boolean = true
 ) {
   // OPTIMIZED VERSION: Single batched call (recommended)
-  const optimizedResult = useBackendOptimizedDashboard(userId);
+  const optimizedResult = useBackendOptimizedDashboard();
 
   // LEGACY VERSION: Individual hooks (for backward compatibility)
-  const stats = useBackendDashboardStats(userId);
-  const recentActivity = useBackendRecentActivity(userId);
-  const topicProgress = useBackendTopicProgress(userId);
+  const stats = useBackendDashboardStats();
+  const recentActivity = useBackendRecentActivity();
+  const topicProgress = useBackendTopicProgress();
 
   // Create a stable empty state object to prevent re-renders
   const emptyState = useMemo(
@@ -151,11 +146,6 @@ export function useBackendDashboardData(
   );
 
   return useMemo(() => {
-    // If no userId, return empty state
-    if (!userId) {
-      return emptyState;
-    }
-
     // Use optimized version (default and recommended)
     if (useOptimized) {
       return {
@@ -194,7 +184,6 @@ export function useBackendDashboardData(
       error: stats.error || recentActivity.error || topicProgress.error,
     };
   }, [
-    userId,
     useOptimized,
     optimizedResult,
     stats,
@@ -212,19 +201,19 @@ export function useInvalidateBackendDashboard() {
   const queryClient = useQueryClient();
 
   return useCallback(
-    (userId: string) => {
-      // Invalidate all backend dashboard data
+    () => {
+      // Invalidate all backend dashboard data (JWT-secured, user-agnostic)
       queryClient.invalidateQueries({
-        queryKey: BACKEND_QUERY_KEYS.dashboardStats(userId),
+        queryKey: BACKEND_QUERY_KEYS.dashboardStats(),
       });
       queryClient.invalidateQueries({
-        queryKey: BACKEND_QUERY_KEYS.recentActivity(userId),
+        queryKey: BACKEND_QUERY_KEYS.recentActivity(),
       });
       queryClient.invalidateQueries({
-        queryKey: BACKEND_QUERY_KEYS.topicProgress(userId),
+        queryKey: BACKEND_QUERY_KEYS.topicProgress(),
       });
       queryClient.invalidateQueries({
-        queryKey: BACKEND_QUERY_KEYS.allDashboardData(userId),
+        queryKey: BACKEND_QUERY_KEYS.allDashboardData(),
       });
     },
     [queryClient]

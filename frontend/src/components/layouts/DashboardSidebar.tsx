@@ -103,9 +103,9 @@ export function DashboardSidebar({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-xs sm:text-sm font-medium text-white truncate">
-                                            {user?.email || "User"}
+                                            {user?.first_name || user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || "User"}
                                         </p>
-                                        <p className="text-xs text-gray-400">Premium Account</p>
+                                        <p className="text-xs text-gray-400">{user?.email}</p>
                                     </div>
                                 </div>
                                 <Button
