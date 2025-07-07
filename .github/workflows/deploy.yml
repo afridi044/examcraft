@@ -28,8 +28,8 @@ jobs:
           script: |
             echo "Deploying to production server..."
             # Ensure the directory exists
-            cd /opt/examcraft
+            cd /home/seed/examcraft
 
-            chmod +x /opt/examcraft/deploy.sh
-            /opt/examcraft/deploy.sh
+            chmod +x /home/seed/examcraft/deploy.sh
+            /home/seed/examcraft/deploy.sh
 
