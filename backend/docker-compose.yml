@@ -11,6 +11,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5001
+      - HOSTNAME=localhost
     env_file:
       - .env
     restart: unless-stopped

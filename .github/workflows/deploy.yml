@@ -18,78 +18,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
+
+      - name: Deploy to azure vm
+        uses: appleboy/ssh-action@v0.1.7
         with:
-          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            echo "Deploying to production server..."
+            # Ensure the directory exists
+            cd /opt/examcraft
 
-      - name: Add host to known_hosts
-        run: |
-          ssh-keyscan -H ${{ secrets.PRODUCTION_HOST }} >> ~/.ssh/known_hosts
+            chmod +x /opt/examcraft/deploy.sh
+            /opt/examcraft/deploy.sh
 
-      - name: Deploy Backend to Production
-        run: |
-          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF_PRODUCTION_BACKEND'
-          cd /opt/examcraft/backend
-          
-          # Pull latest code
-          git fetch origin
-          git reset --hard origin/master
-          
-          # Copy environment file
-          cp /home/seed/env_folder/.env.local /opt/examcraft/backend/.env|| echo "No .env.example found, using existing .env"
-          
-          # Remove any existing containers and images to ensure fresh build
-          docker-compose down --volumes --remove-orphans || true
-          docker system prune -f || true
-          
-          # Build with no cache to ensure latest source code is used
-          docker-compose build --no-cache --force-rm
-          
-          # Start the application
-          docker-compose up -d
-          
-          # Wait for backend to be ready
-          sleep 30
-          
-          # Health check
-          curl -f http://localhost:5001/api/v1/health || exit 1
-          
-          echo "Backend deployed successfully to production"
-          EOF_PRODUCTION_BACKEND
-
-      - name: Deploy Frontend to Production
-        run: |
-          ssh ${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }} << 'EOF_PRODUCTION_FRONTEND'
-          cd /opt/examcraft/frontend
-          
-          # Pull latest code
-          git fetch origin
-          git reset --hard origin/master
-          
-          # Remove any existing containers and images to ensure fresh build
-          docker-compose down --volumes --remove-orphans || true
-          docker system prune -f || true
-          
-          # Build with no cache to ensure latest source code is used
-          docker-compose build --no-cache --force-rm
-          
-          # Start the application
-          docker-compose up -d
-          
-          # Wait for frontend to be ready
-          sleep 30
-          
-          # Health check
-          curl -f http://localhost:3000/api/health || exit 1
-          
-          echo "Frontend deployed successfully to production"
-          EOF_PRODUCTION_FRONTEND
-
-      - name: Notify Production Deployment
-        run: |
-          echo "🚀 Production deployment completed successfully!"
-          echo "🌐 Backend: http://${{ secrets.PRODUCTION_HOST }}:5001"
-          echo "🌐 Frontend: http://${{ secrets.PRODUCTION_HOST }}:3000"
-          echo "📊 Health Check Backend: http://${{ secrets.PRODUCTION_HOST }}:5001/api/v1/health"
-          echo "📊 Health Check Frontend: http://${{ secrets.PRODUCTION_HOST }}:3000/api/health"
