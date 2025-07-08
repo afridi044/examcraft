@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://20.198.228.71:5001/api/v1}
     container_name: examcraft-frontend
     ports:
       - "3000:3000"
@@ -11,6 +13,7 @@ services:
       - HOSTNAME=localhost
       - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://20.198.228.71:5001/api/v1}
       
     restart: unless-stopped
     healthcheck:

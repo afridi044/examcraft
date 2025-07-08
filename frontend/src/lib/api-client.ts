@@ -9,10 +9,26 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-// Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://20.198.228.71:5001/api/v1';
+// Dynamic backend URL configuration
+const getBackendUrl = (): string => {
+  // 1. Check for explicit environment variable
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL;
+  }
 
-console
+  // 2. Development fallback
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:5001/api/v1';
+  }
+
+  // 3. Production fallback (your VM IP)
+  return 'http://20.198.228.71:5001/api/v1';
+};
+
+// Configuration
+const API_BASE_URL = getBackendUrl();
+
+console.log('🌐 API Base URL:', API_BASE_URL);
 
 // HTTP Client with error handling
 class APIClient {
@@ -35,11 +51,11 @@ class APIClient {
         baseURL: this.baseURL,
         endpoint
       });
-      
+
       // Get JWT token from localStorage
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       console.log('🔑 Token for request:', token ? `${token.substring(0, 50)}...` : 'No token');
-      
+
       const config: RequestInit = {
         headers: {
           'Content-Type': 'application/json',
@@ -52,19 +68,19 @@ class APIClient {
       console.log('📋 Request config headers:', config.headers);
 
       const response = await fetch(url, config);
-      
+
       console.log('📡 API Response:', {
         status: response.status,
         statusText: response.statusText,
         ok: response.ok,
         url
       });
-      
+
       if (!response.ok) {
         // Handle 401 errors with automatic token refresh
         if (response.status === 401 && endpoint !== '/auth/refresh' && typeof window !== 'undefined') {
           console.log('🔄 Token expired, attempting refresh...');
-          
+
           const refreshToken = localStorage.getItem('refresh_token');
           if (refreshToken) {
             try {
@@ -83,7 +99,7 @@ class APIClient {
                   if (refreshData.refresh_token) {
                     localStorage.setItem('refresh_token', refreshData.refresh_token);
                   }
-                  
+
                   console.log('✅ Token refreshed successfully, retrying request...');
                   // Retry the original request with new token
                   const newToken = localStorage.getItem('access_token');
@@ -94,12 +110,12 @@ class APIClient {
                       'Authorization': `Bearer ${newToken}`,
                     },
                   };
-                  
+
                   const retryResponse = await fetch(url, retryConfig);
                   if (retryResponse.ok) {
                     const retryData = await retryResponse.json();
                     console.log('✅ Retry successful:', retryData);
-                    
+
                     // Handle the response format as before
                     if (retryData.data !== undefined) {
                       return retryData.success ? {
@@ -125,25 +141,25 @@ class APIClient {
               console.error('❌ Token refresh failed:', refreshError);
             }
           }
-          
+
           // If refresh failed, clear tokens
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('examcraft-user');
-          
+
           return {
             data: null,
             error: 'Session expired. Please sign in again.',
             success: false,
           };
         }
-        
+
         const errorData = await response.json().catch(() => ({}));
         console.error('❌ API Error Response:', errorData);
-        
+
         // Handle NestJS error response format
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
+
         if (errorData.message) {
           // NestJS error format: { statusCode, message, error }
           errorMessage = errorData.message;
@@ -151,7 +167,7 @@ class APIClient {
           // Fallback to error field
           errorMessage = errorData.error;
         }
-        
+
         return {
           data: null,
           error: errorMessage,
@@ -162,7 +178,7 @@ class APIClient {
       // Parse the response - handle both wrapped and direct response formats
       const backendResponse = await response.json() as any;
       console.log('✅ API Success Response:', backendResponse);
-      
+
       // Check if response is wrapped in ApiResponse format (has 'data' field)
       // Dashboard endpoints use ApiResponse<T>, Auth endpoints return data directly
       if (backendResponse.data !== undefined) {
