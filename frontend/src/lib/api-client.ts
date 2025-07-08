@@ -9,26 +9,26 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-// Dynamic backend URL configuration
+// Backend URL Configuration
+// Update these URLs based on your deployment environment
+const BACKEND_CONFIG = {
+  development: 'http://localhost:5001/api/v1',
+  production: 'http://20.198.228.71:5001/api/v1'
+};
+
+// Simple backend URL selection
 const getBackendUrl = (): string => {
-  // 1. Check for explicit environment variable
-  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
-    return process.env.NEXT_PUBLIC_BACKEND_URL;
-  }
-
-  // 2. Development fallback
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:5001/api/v1';
-  }
-
-  // 3. Production fallback (your VM IP)
-  return 'http://20.198.228.71:5001/api/v1';
+  // Use production URL for deployment, development URL for local development
+  return process.env.NODE_ENV === 'development'
+    ? BACKEND_CONFIG.development
+    : BACKEND_CONFIG.production;
 };
 
 // Configuration
 const API_BASE_URL = getBackendUrl();
 
 console.log('🌐 API Base URL:', API_BASE_URL);
+console.log('🔧 Environment:', process.env.NODE_ENV);
 
 // HTTP Client with error handling
 class APIClient {
