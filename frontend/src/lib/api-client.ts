@@ -9,26 +9,10 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-// Backend URL Configuration
-// Update these URLs based on your deployment environment
-const BACKEND_CONFIG = {
-  development: 'http://localhost:5001/api/v1',
-  production: 'http://20.198.228.71:5001/api/v1'
-};
-
-// Simple backend URL selection
-const getBackendUrl = (): string => {
-  // Use production URL for deployment, development URL for local development
-  return process.env.NODE_ENV === 'development'
-    ? BACKEND_CONFIG.development
-    : BACKEND_CONFIG.production;
-};
-
 // Configuration
-const API_BASE_URL = getBackendUrl();
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://20.198.228.71:5001/api/v1';
 
-console.log('🌐 API Base URL:', API_BASE_URL);
-console.log('🔧 Environment:', process.env.NODE_ENV);
+console
 
 // HTTP Client with error handling
 class APIClient {
