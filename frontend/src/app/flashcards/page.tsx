@@ -30,7 +30,7 @@ function FlashcardsPageContent() {
 
   // Scroll to top when navigating
   useScrollToTop();
-  
+
   // Get topicId from URL
   const selectedTopicId = searchParams.get("topic");
 
@@ -38,7 +38,7 @@ function FlashcardsPageContent() {
   const {
     isLoadingFlashcards,
     stats,
-  } = useFlashcardData(userId, selectedTopicId);
+  } = useFlashcardData(selectedTopicId);
 
   // Redirect to landing page if not authenticated and not loading
   useEffect(() => {

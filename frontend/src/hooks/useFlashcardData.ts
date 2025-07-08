@@ -1,14 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useUserFlashcards } from "@/hooks/useBackendFlashcards";
 import { calculateFlashcardStats, FLASHCARD_3D_STYLES } from "@/lib/utils/flashcards";
 
-export function useFlashcardData(userId: string | undefined, selectedTopicId: string | null = null) {
-  
+export function useFlashcardData(selectedTopicId: string | null = null) {
+
   const {
     data: flashcards,
     isLoading: isLoadingFlashcards,
     refetch: refetchFlashcards,
-  } = useUserFlashcards(userId || "");
+  } = useUserFlashcards();
 
   // Calculate stats using utility function
   const stats = useMemo(() => {
@@ -34,8 +34,6 @@ export function useFlashcardData(userId: string | undefined, selectedTopicId: st
 
   // Consolidated event listeners for data refetching
   useEffect(() => {
-    if (!userId) return;
-
     const handleRefetch = () => {
       setTimeout(() => refetchFlashcards(), 100);
     };
@@ -80,7 +78,7 @@ export function useFlashcardData(userId: string | undefined, selectedTopicId: st
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, [userId, refetchFlashcards]);
+  }, [refetchFlashcards]);
 
   // Scroll to top when topic changes
   useEffect(() => {
