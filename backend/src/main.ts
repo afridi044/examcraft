@@ -10,7 +10,8 @@ async function bootstrap() {
   // Enable CORS for frontend communication
   app.enableCors({
     origin: [
-      'http://localhost:3000', // Frontend development server
+      'http://localhost:3000',
+      'http://20.198.228.71:3000',  // Frontend development server
       'http://localhost:3001', // Alternative frontend port
       'http://127.0.0.1:3000',
       'http://127.0.0.1:3001',

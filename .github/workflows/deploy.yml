@@ -1,0 +1,35 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+  PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+  PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+
+      - name: Deploy to azure vm
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            echo "Deploying to production server..."
+            # Ensure the directory exists
+            cd /home/seed/examcraft
+
+            chmod +x /home/seed/examcraft/deploy.sh
+            /home/seed/examcraft/deploy.sh
+

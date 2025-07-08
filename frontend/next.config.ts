@@ -15,12 +15,6 @@ const nextConfig: NextConfig = {
   // Docker optimization: Enable standalone output for minimal production builds
   output: "standalone",
 
-  // DEVELOPMENT PERFORMANCE OPTIMIZATIONS
-  ...(process.env.NODE_ENV === "development" &&
-    {
-      // Skip type checking in dev for speed (handled by main config above)
-    }),
-
   // Performance optimizations
   experimental: {
     // Enable optimized package imports for better bundle size
