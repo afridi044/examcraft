@@ -4,7 +4,9 @@
 import { ApiResponse } from '@/types';
 
 // Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://20.198.228.71:5001/api/v1';
+
+console
 
 // HTTP Client with error handling
 class APIClient {
