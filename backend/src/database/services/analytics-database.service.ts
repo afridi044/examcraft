@@ -10,7 +10,7 @@ import {
 
 @Injectable()
 export class AnalyticsDatabaseService extends BaseDatabaseService {
-  
+
   async getDashboardStats(
     userId: string,
   ): Promise<ApiResponse<DashboardStats>> {
@@ -117,9 +117,9 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(limit)) as {
-        data: RecentActivityQueryResult[] | null;
-        error: any;
-      };
+          data: RecentActivityQueryResult[] | null;
+          error: any;
+        };
 
       if (quizError) {
         return this.handleError(quizError, 'getRecentActivity');
@@ -170,9 +170,9 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         `,
         )
         .eq('user_id', userId)) as {
-        data: TopicProgressQueryResult[] | null;
-        error: any;
-      };
+          data: TopicProgressQueryResult[] | null;
+          error: any;
+        };
 
       if (error) {
         return this.handleError(error, 'getTopicProgress');
@@ -311,7 +311,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     const averageScore =
       quizScorePercentages.length > 0
         ? quizScorePercentages.reduce((sum, score) => sum + score, 0) /
-          quizScorePercentages.length
+        quizScorePercentages.length
         : 0;
 
     this.logger.log(
@@ -404,6 +404,73 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       return this.handleSuccess(result);
     } catch (error) {
       return this.handleError(error, 'getAllDashboardData');
+    }
+  }
+
+  // =============================================
+  // LAB EXAM TEMPLATE FUNCTION - TOPICS
+  // =============================================
+  // This function fetches all topics from the database
+  async getLabExamData(filters?: {
+    limit?: number;
+  }): Promise<ApiResponse<any[]>> {
+    try {
+      this.logger.log(`🧪 Getting topics data for lab exam`);
+
+      // MODIFIED: Fetch all topics from the topics table
+      let query = this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select(`
+          topic_id,
+          name,
+          description,
+          parent_topic_id
+        `)
+        .order('name', { ascending: true });
+
+      // Add filters if provided
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      const { data, error } = await query;
+
+      if (error) return this.handleError(error, 'getLabExamData');
+
+      this.logger.log(`✅ Retrieved ${data?.length || 0} topics`);
+      return this.handleSuccess(data || []);
+    } catch (error) {
+      return this.handleError(error, 'getLabExamData');
+    }
+  }
+
+  // =============================================
+  // LAB EXAM TEMPLATE FUNCTION - CREATE TOPIC
+  // =============================================
+  // This function creates a new topic in the database
+  async createLabExamData(topicData: {
+    name: string;
+    description?: string;
+  }): Promise<ApiResponse<any>> {
+    try {
+      this.logger.log(`🧪 Creating new topic: ${topicData.name}`);
+
+      // MODIFIED: Insert new topic into topics table
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .insert({
+          name: topicData.name,
+          description: topicData.description || null,
+        })
+        .select()
+        .single();
+
+      if (error) return this.handleError(error, 'createLabExamData');
+
+      this.logger.log(`✅ Created new topic: ${data.name}`);
+      return this.handleSuccess(data);
+    } catch (error) {
+      return this.handleError(error, 'createLabExamData');
     }
   }
 }

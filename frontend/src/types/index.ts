@@ -9,6 +9,16 @@
 export type { ComponentProps } from "react";
 
 // =============================================
+// API Response Types
+// =============================================
+
+export interface ApiResponse<T> {
+  data: T | null;
+  error: string | null;
+  success: boolean;
+}
+
+// =============================================
 // Quiz-Specific Types (Frontend Extensions)
 // =============================================
 

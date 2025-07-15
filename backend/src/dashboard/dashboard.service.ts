@@ -11,7 +11,7 @@ import {
 export class DashboardService {
   private readonly logger = new Logger(DashboardService.name);
 
-  constructor(private databaseService: DatabaseService) {}
+  constructor(private databaseService: DatabaseService) { }
 
   /**
    * Get dashboard statistics for a user
@@ -58,5 +58,31 @@ export class DashboardService {
   > {
     this.logger.log(`🚀 Getting all dashboard data for user: ${userId}`);
     return this.databaseService.getAllDashboardData(userId);
+  }
+
+  // =============================================
+  // LAB EXAM TEMPLATE SERVICE METHOD - TOPICS
+  // =============================================
+  // This method fetches all topics from the database
+
+  async getLabExamData(
+    filters?: {
+      limit?: number;
+    },
+  ): Promise<ApiResponse<any[]>> {
+    this.logger.log(`🧪 Getting topics data`, filters);
+    return this.databaseService.getLabExamData(filters);
+  }
+
+  // =============================================
+  // LAB EXAM TEMPLATE SERVICE METHOD - CREATE TOPIC
+  // =============================================
+  // This method creates a new topic in the database
+
+  async createLabExamData(
+    topicData: { name: string; description?: string },
+  ): Promise<ApiResponse<any>> {
+    this.logger.log(`🧪 Creating new topic: ${topicData.name}`);
+    return this.databaseService.createLabExamData(topicData);
   }
 }

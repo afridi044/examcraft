@@ -281,4 +281,17 @@ export class DatabaseService implements OnModuleInit {
   async getAllDashboardData(userId: string) {
     return this.analyticsService.getAllDashboardData(userId);
   }
+
+  // =============================================
+  // LAB EXAM TEMPLATE - Delegate to AnalyticsDatabaseService
+  // =============================================
+  async getLabExamData(filters?: {
+    limit?: number;
+  }) {
+    return this.analyticsService.getLabExamData(filters);
+  }
+
+  async createLabExamData(topicData: { name: string; description?: string }) {
+    return this.analyticsService.createLabExamData(topicData);
+  }
 }

@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Query, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Param, Query, Body, Logger } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiBody,
 } from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import {
@@ -21,7 +22,7 @@ import { AuthUser } from '../auth/strategies/jwt.strategy';
 export class DashboardController {
   private readonly logger = new Logger(DashboardController.name);
 
-  constructor(private dashboardService: DashboardService) {}
+  constructor(private dashboardService: DashboardService) { }
 
   @Get('stats')
   @ApiOperation({ summary: 'Get dashboard statistics for authenticated user' })
@@ -104,5 +105,63 @@ export class DashboardController {
       error: result.error,
     });
     return result;
+  }
+
+  // =============================================
+  // LAB EXAM TEMPLATE ENDPOINT - TOPICS
+  // =============================================
+  // This endpoint fetches all topics from the database
+
+  @Get('lab-exam')
+  @ApiOperation({ summary: 'Get all topics for lab exam' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Number of topics to return',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Topics retrieved successfully',
+  })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getLabExamData(
+    @Query('limit') limit?: string,
+  ): Promise<CustomApiResponse<any[]>> {
+    const filters = {
+      limit: limit ? parseInt(limit, 10) : undefined,
+    };
+
+    this.logger.log(`🧪 Topics data requested`, filters);
+    return this.dashboardService.getLabExamData(filters);
+  }
+
+  // =============================================
+  // LAB EXAM TEMPLATE ENDPOINT - CREATE TOPIC
+  // =============================================
+  // This endpoint creates a new topic in the database
+
+  @Post('lab-exam')
+  @ApiOperation({ summary: 'Create a new topic' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Topic name' },
+        description: { type: 'string', description: 'Topic description (optional)' },
+      },
+      required: ['name'],
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Topic created successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async createLabExamData(
+    @Body() topicData: { name: string; description?: string },
+  ): Promise<CustomApiResponse<any>> {
+    this.logger.log(`🧪 Creating new topic: ${topicData.name}`);
+    return this.dashboardService.createLabExamData(topicData);
   }
 }
