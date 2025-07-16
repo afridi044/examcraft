@@ -419,12 +419,15 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
 
       // MODIFIED: Fetch all topics from the topics table
       let query = this.supabase
-        .from(TABLE_NAMES.TOPICS)
+        .from('test' as any)
         .select(`
-          topic_id,
           name,
           description,
-          parent_topic_id
+          age,
+          is_active,
+          price,
+          category,
+          created_at
         `)
         .order('name', { ascending: true });
 
@@ -451,23 +454,33 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
   async createLabExamData(topicData: {
     name: string;
     description?: string;
+    age?: number;
+    is_active?: boolean;
+    price?: number;
+    category?: string;
+    created_at?: string;
   }): Promise<ApiResponse<any>> {
     try {
       this.logger.log(`🧪 Creating new topic: ${topicData.name}`);
 
       // MODIFIED: Insert new topic into topics table
       const { data, error } = await this.supabase
-        .from(TABLE_NAMES.TOPICS)
+        .from('test' as any)
         .insert({
           name: topicData.name,
           description: topicData.description || null,
+          age: topicData.age || null,
+          is_active: topicData.is_active || true,
+          price: topicData.price || null,
+          category: topicData.category || null,
+          created_at: topicData.created_at || new Date().toISOString(),
         })
         .select()
         .single();
 
       if (error) return this.handleError(error, 'createLabExamData');
 
-      this.logger.log(`✅ Created new topic: ${data.name}`);
+      this.logger.log(`✅ Created new topic: ${topicData.name}`);
       return this.handleSuccess(data);
     } catch (error) {
       return this.handleError(error, 'createLabExamData');

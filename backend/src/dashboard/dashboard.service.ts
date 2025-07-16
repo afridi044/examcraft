@@ -80,9 +80,18 @@ export class DashboardService {
   // This method creates a new topic in the database
 
   async createLabExamData(
-    topicData: { name: string; description?: string },
+    topicData: {
+      name: string;
+      description?: string;
+      age?: number;
+      is_active?: boolean;
+      price?: number;
+      category?: string;
+      created_at?: string
+    },
   ): Promise<ApiResponse<any>> {
     this.logger.log(`🧪 Creating new topic: ${topicData.name}`);
-    return this.databaseService.createLabExamData(topicData);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return await this.databaseService.createLabExamData(topicData);
   }
 }

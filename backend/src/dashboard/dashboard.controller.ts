@@ -146,8 +146,12 @@ export class DashboardController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', description: 'Topic name' },
-        description: { type: 'string', description: 'Topic description (optional)' },
+        name: { type: 'string' },
+        description: { type: 'string' },
+        is_active: { type: 'boolean' },
+        price: { type: 'number' },
+        category: { type: 'string' },
+        created_at: { type: 'string' },
       },
       required: ['name'],
     },
@@ -159,7 +163,7 @@ export class DashboardController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async createLabExamData(
-    @Body() topicData: { name: string; description?: string },
+    @Body() topicData: { name: string; description?: string; is_active?: boolean; price?: number; category?: string; created_at?: string },
   ): Promise<CustomApiResponse<any>> {
     this.logger.log(`🧪 Creating new topic: ${topicData.name}`);
     return this.dashboardService.createLabExamData(topicData);

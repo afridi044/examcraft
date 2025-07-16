@@ -12,15 +12,22 @@ interface LabExamFilters {
 }
 
 interface TopicData {
-    topic_id: string;
     name: string;
     description: string | null;
-    parent_topic_id: string | null;
+    age: number | null;
+    is_active: boolean;
+    price: number | null;
+    category: string | null;
+    created_at: string;
 }
 
 interface CreateTopicData {
     name: string;
-    description?: string;
+    description?: string | null;
+    age?: number;
+    is_active?: boolean | null;
+    price?: number | null;
+    category?: string | null;
 }
 
 export const useLabExamData = (filters?: LabExamFilters) => {
