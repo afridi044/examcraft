@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { NumericFormat } from "react-number-format";
 import { motion, AnimatePresence } from "framer-motion";
-import Select from "react-select";
+import ReactSelect from "react-select";
 import Confetti from "react-confetti";
 import { useInView } from "react-intersection-observer";
 
@@ -26,11 +26,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendTopics } from "@/hooks/useBackendTopics";
 import { useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
+import { PageLoading } from "@/components/ui/loading";
 import { toast } from "react-hot-toast";
+import { SuccessScreen } from "@/components/ui/SuccessScreen";
 
 interface FlashcardForm {
   topic_id: string;
@@ -256,20 +259,11 @@ function CreateFlashcardContent() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative">
-              <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-500/50">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-600/30 rounded-2xl blur-xl"></div>
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-              Loading Flashcard Creator...
-            </h2>
-            <p className="text-gray-400">Preparing your learning tools</p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Flashcard Creator"
+          subtitle="Preparing your learning tools"
+          variant="flashcard"
+        />
       </DashboardLayout>
     );
   }
@@ -278,74 +272,47 @@ function CreateFlashcardContent() {
   if (generatedFlashcards) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
-          <div className="text-center space-y-4 sm:space-y-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-center space-x-3">
-                <div className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30">
-                  <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-                </div>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent px-4">
-                Flashcards Generated Successfully!
-              </h1>
-              <p className="text-gray-400 max-w-2xl mx-auto px-4 text-sm sm:text-base">
-                Your AI-powered flashcards have been created and are ready for study.
-              </p>
-            </div>
-
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 max-w-2xl mx-auto">
-              <div className="space-y-4 sm:space-y-6">
-                <div className="text-center space-y-3">
-                  <h2 className="text-xl sm:text-2xl font-bold text-white">
-                    {generatedFlashcards.topic_name}
-                  </h2>
-                  <div className="flex items-center justify-center space-x-4 sm:space-x-6 text-gray-400 text-sm sm:text-base">
-                    <div className="flex items-center space-x-2">
-                      <Layers className="h-4 w-4" />
-                      <span>{generatedFlashcards.generated_count} Flashcards</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Brain className="h-4 w-4" />
-                      <span>AI Generated</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Button
-                    onClick={() => router.push("/flashcards")}
-                    className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-medium py-3 text-base sm:text-lg min-h-[44px]"
-                  >
-                    <Zap className="h-5 w-5 mr-2" />
-                    Start Studying Now
-                  </Button>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button
-                      onClick={() => router.push("/dashboard")}
-                      variant="outline"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[44px]"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Return to</span> Dashboard
-                    </Button>
-
-                    <Button
-                      onClick={resetForm}
-                      variant="outline"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[44px]"
-                    >
-                      <Layers className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Create</span> More
-                      <span className="hidden sm:inline"> Flashcards</span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
+        <SuccessScreen
+          title="Flashcards Generated Successfully!"
+          subtitle="Your AI-powered flashcards have been created and are ready for study."
+          icon={<Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-lg" />}
+          iconColor="blue"
+          details={{
+            title: generatedFlashcards.topic_name,
+            stats: [
+              {
+                icon: <Layers className="h-4 w-4" />,
+                label: "Flashcards",
+                value: form.num_flashcards.toString(),
+                color: "text-blue-400"
+              },
+              {
+                icon: <Brain className="h-4 w-4" />,
+                label: "AI Generated",
+                value: "",
+                color: "text-purple-400"
+              }
+            ]
+          }}
+          primaryAction={{
+            label: "Start Studying Now",
+            onClick: () => router.push("/flashcards"),
+            icon: <Zap className="h-5 w-5" />
+          }}
+          secondaryActions={[
+            {
+              label: "Dashboard",
+              onClick: () => router.push("/dashboard"),
+              icon: <Users className="h-4 w-4" />
+            },
+            {
+              label: "Create More",
+              onClick: resetForm,
+              icon: <Layers className="h-4 w-4" />
+            }
+          ]}
+          showConfetti={showConfetti}
+        />
       </DashboardLayout>
     );
   }
@@ -431,7 +398,7 @@ function CreateFlashcardContent() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
-                        <Select
+                        <ReactSelect
                           id="topic"
                           options={topicOptions}
                           value={topicOptions.find((option: any) => option.value === form.topic_id) || null}
@@ -444,7 +411,21 @@ function CreateFlashcardContent() {
                           isSearchable
                           className="react-select-container"
                           classNamePrefix="react-select"
-                        />
+                        >
+                          <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200">
+                            <SelectValue placeholder="Choose a topic..." />
+                          </SelectTrigger>
+                          <SelectContent className="bg-gray-700/50 border-gray-600 text-white">
+                            {topicOptions.map((option: any) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                <div className="flex items-center space-x-2">
+                                  {option.icon}
+                                  <span>{option.label}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </ReactSelect>
                       </div>
 
                       <div className="space-y-2">
@@ -703,22 +684,11 @@ function CreateFlashcardContent() {
 function CreateFlashcardLoading() {
   return (
     <DashboardLayout>
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-500/50">
-              <Loader2 className="h-8 w-8 animate-spin text-white" />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-600/30 rounded-2xl blur-xl"></div>
-          </div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-            Loading Create Flashcard...
-          </h2>
-          <p className="text-gray-400">
-            Preparing your flashcard creation workspace
-          </p>
-        </div>
-      </div>
+      <PageLoading
+        title="Loading Create Flashcard"
+        subtitle="Preparing your flashcard creation workspace"
+        variant="flashcard"
+      />
     </DashboardLayout>
   );
 }

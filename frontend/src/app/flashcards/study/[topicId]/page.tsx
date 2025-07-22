@@ -8,6 +8,7 @@ import { flashcardService } from "@/lib/services/flashcard.service";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { PageLoading } from "@/components/ui/loading";
 import {
   ArrowLeft,
   CheckCircle,
@@ -339,21 +340,11 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   if (showMainLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="relative">
-              <div className="h-12 w-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <Brain className="h-6 w-6 text-white animate-pulse" />
-              </div>
-            </div>
-            <h2 className="text-lg font-semibold text-white mb-1">
-              {isAuthLoading ? 'Authenticating...' : 'Loading Study Session...'}
-            </h2>
-            <p className="text-sm text-gray-400">
-              {isAuthLoading ? 'Verifying your account' : 'Preparing your flashcards for study'}
-            </p>
-          </div>
-        </div>
+        <PageLoading
+          title={isAuthLoading ? 'Authenticating' : 'Loading Study Session'}
+          subtitle={isAuthLoading ? 'Verifying your account' : 'Preparing your flashcards for study'}
+          variant="flashcard"
+        />
       </DashboardLayout>
     );
   }

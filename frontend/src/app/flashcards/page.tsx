@@ -3,7 +3,6 @@
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import {
-  Loader2,
   Plus,
   Play,
   BookOpen,
@@ -19,6 +18,7 @@ import { EmptyState } from "@/components/features/flashcards/EmptyState";
 import { useFlashcardData } from "@/hooks/useFlashcardData";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { CustomHeader } from "@/components/features/dashboard/CustomHeader";
+import { PageLoading } from "@/components/ui/loading";
 
 function FlashcardsPageContent() {
   const router = useRouter();
@@ -77,12 +77,11 @@ function FlashcardsPageContent() {
   if (showFullLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">Loading flashcards...</p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Flashcards"
+          subtitle="Preparing your study materials"
+          variant="flashcard"
+        />
       </DashboardLayout>
     );
   }
@@ -202,12 +201,11 @@ export default function FlashcardsPage() {
     <Suspense
       fallback={
         <DashboardLayout>
-          <div className="flex items-center justify-center min-h-[50vh]">
-            <div className="text-center">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">Loading flashcards...</p>
-            </div>
-          </div>
+          <PageLoading
+            title="Loading Flashcards"
+            subtitle="Preparing your study materials"
+            variant="flashcard"
+          />
         </DashboardLayout>
       }
     >

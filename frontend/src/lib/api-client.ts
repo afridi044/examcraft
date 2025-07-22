@@ -134,8 +134,9 @@ class APIClient {
           errorMessage = errorData.error;
         }
 
-        // Transform 401 errors to user-friendly message
-        if (response.status === 401) {
+        // Let the backend's actual error message come through
+        // Only override for non-auth endpoints where we know it's a session issue
+        if (response.status === 401 && !isAuthEndpoint) {
           errorMessage = 'Session expired. Please sign in again.';
         }
 

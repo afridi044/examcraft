@@ -18,6 +18,7 @@ import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useBackendQuizReview, useInvalidateBackendQuiz, useUpdateQuizFlashcardStatus } from "@/hooks/useBackendQuiz";
 import { formatTime, getDifficultyColor, getDifficultyLabel } from "@/lib/utils/quiz-review";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
+import { PageLoading } from "@/components/ui/loading";
 import type { QuizReviewData } from "@/types";
 import { flashcardService } from "@/lib/services";
 import toast from "react-hot-toast";
@@ -118,20 +119,11 @@ export default function QuizReviewPage() {
   if (showFullLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative">
-              <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-500/50">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-600/30 rounded-2xl blur-xl"></div>
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-              Loading Quiz Review...
-            </h2>
-            <p className="text-gray-400">Preparing your quiz analysis</p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Quiz Review"
+          subtitle="Preparing your quiz analysis"
+          variant="quiz"
+        />
       </DashboardLayout>
     );
   }

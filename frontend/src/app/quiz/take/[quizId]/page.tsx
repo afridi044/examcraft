@@ -12,6 +12,8 @@ import { useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
 import { useBackendQuizWithQuestions } from "@/hooks/useBackendQuiz";
 import { QuizTakingQuestionCard } from "@/components/features/quiz/QuizTakingQuestionCard";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
+import { PageLoading } from "@/components/ui/loading";
+import { QuizResultsScreen } from "@/components/ui/QuizResultsScreen";
 
 import { quizService } from "@/lib/services";
 import {
@@ -23,6 +25,9 @@ import {
   Trophy,
   BookOpen,
   Loader2,
+  Star,
+  Target,
+  CheckCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -62,11 +67,6 @@ export default function TakeQuizPage() {
       router.push("/auth/signin");
     }
   }, [userLoading, currentUser, router, setSignOutMessage]);
-
-  // Don't render anything while redirecting
-  if (!userLoading && !currentUser) {
-    return null;
-  }
 
   // Only invalidate data if it's stale or on explicit user action
   // Removed automatic invalidation on mount for better performance
@@ -143,10 +143,15 @@ export default function TakeQuizPage() {
 
   // OPTIMIZED: Memoized time formatting
   const formatTime = useCallback((seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }, []);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   const handleAnswerSelect = useCallback(
     (optionId: string, textAnswer?: string) => {
@@ -270,20 +275,11 @@ export default function TakeQuizPage() {
   if (showFullLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative">
-              <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-500/50">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-600/30 rounded-2xl blur-xl"></div>
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-              Loading Quiz...
-            </h2>
-            <p className="text-gray-400">Preparing your quiz questions</p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Quiz..."
+          subtitle="Preparing your quiz questions"
+          variant="quiz"
+        />
       </DashboardLayout>
     );
   }
@@ -316,64 +312,29 @@ export default function TakeQuizPage() {
   if (quizResult) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
-          <div className="text-center space-y-4 sm:space-y-6">
-            <div className="flex items-center justify-center space-x-3">
-              <Trophy className="h-10 w-10 sm:h-12 sm:w-12 text-yellow-500" />
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                Quiz Completed!
-              </h1>
-            </div>
-
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-6 lg:p-8">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                <div className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-green-400">
-                    {quizResult.percentage}%
-                  </div>
-                  <div className="text-gray-400 text-sm">Score</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-blue-400">
-                    {quizResult.correct_answers}
-                  </div>
-                  <div className="text-gray-400 text-sm">Correct</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-purple-400">
-                    {quizResult.total_questions}
-                  </div>
-                  <div className="text-gray-400 text-sm">Total</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-orange-400">
-                    {quizResult.time_taken}
-                  </div>
-                  <div className="text-gray-400 text-sm">Time</div>
-                </div>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex justify-center">
-                  <Button
-                    onClick={() => router.push(`/quiz/review/${quizId}`)}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-6 py-3 font-medium shadow-lg shadow-blue-500/20"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    View Detailed Review
-                  </Button>
-                </div>
-                <Button
-                  onClick={() => router.push("/quiz/create")}
-                  variant="outline"
-                  className="w-full border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[48px]"
-                >
-                  Create Another Quiz
-                </Button>
-              </div>
-            </Card>
-          </div>
-        </div>
+        <QuizResultsScreen
+          score={quizResult.percentage}
+          correctAnswers={quizResult.correct_answers}
+          totalQuestions={quizResult.total_questions}
+          timeTaken={quizResult.time_taken}
+          primaryAction={{
+            label: "View Detailed Review",
+            onClick: () => router.push(`/quiz/review/${quizId}`),
+            icon: <BookOpen className="h-5 w-5" />
+          }}
+          secondaryActions={[
+            {
+              label: "Create Another Quiz",
+              onClick: () => router.push("/quiz/create"),
+              icon: <BookOpen className="h-4 w-4" />
+            },
+            {
+              label: "Back to Quizzes",
+              onClick: () => router.push("/dashboard/quiz-history"),
+              icon: <ArrowLeft className="h-4 w-4" />
+            }
+          ]}
+        />
       </DashboardLayout>
     );
   }

@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { ButtonLoading } from "@/components/ui/loading";
 
 interface FormButtonProps {
   onClick: () => void;
@@ -70,15 +71,8 @@ export function FormButton({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="flex items-center space-x-2"
             >
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              >
-                {loadingIcon}
-              </motion.div>
-              <span>{loadingText}</span>
+              <ButtonLoading size="md" text={loadingText} />
             </motion.div>
           ) : (
             <motion.div 

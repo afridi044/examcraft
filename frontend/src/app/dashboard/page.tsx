@@ -8,7 +8,6 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate, getActivityIcon } from "@/lib/utils/dashboard";
 import { 
-  Loader2, 
   Clock, 
   BarChart3, 
   BookOpen, 
@@ -26,6 +25,7 @@ import { StatCard } from "@/components/features/dashboard/StatCard";
 import { QuickActionCard } from "@/components/features/dashboard/QuickActionCard";
 import { RecentActivityItem } from "@/components/features/dashboard/RecentActivityItem";
 import { TopicProgressCard } from "@/components/features/dashboard/TopicProgressCard";
+import { PageLoading } from "@/components/ui/loading";
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
@@ -104,19 +104,11 @@ export default function DashboardPage() {
   if (showLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative mb-8">
-              <div className="h-16 w-16 bg-slate-800/60 border border-slate-700/60 rounded-2xl flex items-center justify-center mx-auto shadow-xl">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-100 mb-2">
-              Loading Dashboard
-            </h2>
-            <p className="text-gray-400">Preparing your learning insights...</p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Dashboard"
+          subtitle="Preparing your learning insights..."
+          variant="dashboard"
+        />
       </DashboardLayout>
     );
   }

@@ -76,61 +76,64 @@ export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
         animate={{ y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
       >
-        <div className="h-full max-w-[1400px] mx-auto px-3 sm:px-6 flex items-center justify-between gap-x-2 sm:gap-x-6">
-          {/* Sidebar Toggle Button - only on mobile/tablet */}
-          <button
-            className="mr-2 p-2 rounded-md bg-white/10 hover:bg-white/20 transition-all duration-300"
-            onClick={() => setIsSidebarOpen(true)}
-            aria-label="Open sidebar"
-          >
-            <Menu className="h-6 w-6 text-white" />
-          </button>
-          {/* Premium Logo - only on desktop */}
-          <Link href="/dashboard" className="hidden lg:flex items-center space-x-2 sm:space-x-3 group">
-            <div className="relative">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white drop-shadow-md" />
-              </div>
-              <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent tracking-tight">
-                ExamCraft
-              </span>
-              <span className="text-xs bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent font-medium -mt-1 hidden sm:block">
-                AI-Powered Learning
-              </span>
-            </div>
-          </Link>
-
-          {/* Premium Search Bar */}
-          <form
-            onSubmit={handleSearch}
-            className="hidden lg:flex flex-1 max-w-2xl mx-8"
-          >
-            <div className="relative w-full group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-600/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <div className="h-full max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between">
+          {/* Left Section */}
+          <div className="flex items-center gap-x-4">
+            {/* Sidebar Toggle Button */}
+            <button
+              className="p-2 rounded-md bg-white/10 hover:bg-white/20 transition-all duration-300"
+              onClick={() => setIsSidebarOpen(true)}
+              aria-label="Open sidebar"
+            >
+              <Menu className="h-6 w-6 text-white" />
+            </button>
+            
+            {/* Premium Logo */}
+            <Link href="/dashboard" className="hidden lg:flex items-center space-x-3 group">
               <div className="relative">
-                <Input
-                  type="search"
-                  placeholder="Search quizzes, exams, flashcards, or ask AI..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-12 pl-12 pr-4 bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl font-medium transition-all duration-300 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                  <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-slate-700/60 border border-slate-600/60 text-slate-400 text-xs rounded-md shadow-sm">
-                    ⌘K
-                  </kbd>
-                  <Sparkles className="h-3 w-3 text-blue-400/70 ml-1 hidden sm:block" />
+                <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 via-purple-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-white drop-shadow-md" />
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent tracking-tight">
+                  ExamCraft
+                </span>
+                <span className="text-xs bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent font-medium -mt-1 hidden sm:block">
+                  AI-Powered Learning
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Center Section - Search Bar */}
+          <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative w-full group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-600/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative">
+                  <Input
+                    type="search"
+                    placeholder="Search quizzes, exams, flashcards, or ask AI..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-12 pl-12 pr-4 bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl font-medium transition-all duration-300 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
+                  />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                    <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-slate-700/60 border border-slate-600/60 text-slate-400 text-xs rounded-md shadow-sm">
+                      ⌘K
+                    </kbd>
+                    <Sparkles className="h-3 w-3 text-blue-400/70 ml-1 hidden sm:block" />
+                  </div>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          {/* Premium Right Section */}
-          <div className="flex items-center gap-x-2 sm:gap-x-3">
+          {/* Right Section */}
+          <div className="flex items-center gap-x-3">
             {/* Search for mobile/tablet */}
             <Button
               variant="ghost"
@@ -143,17 +146,7 @@ export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
               <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
             </Button>
 
-            {/* Premium Upgrade Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hidden sm:flex items-center gap-2 relative overflow-hidden bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 hover:from-amber-500/25 hover:via-orange-500/25 hover:to-rose-500/25 border border-amber-500/40 text-amber-300 hover:text-white transition-all duration-300 rounded-xl h-10 px-4 group shadow-lg shadow-amber-900/10"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <Crown className="h-4 w-4 group-hover:scale-110 transition-transform drop-shadow" />
-              <span className="font-medium hidden lg:inline relative z-10">Pro</span>
-              <Sparkles className="h-3 w-3 text-amber-400 animate-pulse" />
-            </Button>
+
 
             {/* Notifications */}
             <Button

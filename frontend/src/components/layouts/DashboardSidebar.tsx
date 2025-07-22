@@ -217,15 +217,14 @@ export function SimpleSidebar({
                             </p>
                             <div className="space-y-3">
                                 <Link href="/auth/signup" className="block" onClick={onClose}>
-                                    <Button className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white font-bold rounded-xl shadow-xl flex items-center justify-center text-base">
+                                    <Button className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-gray-200 font-semibold rounded-xl shadow-md hover:shadow-blue-600/20 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center text-base">
                                         <UserPlus className="w-4 h-4 mr-2" />
                                         Sign Up
                                     </Button>
                                 </Link>
                                 <Link href="/auth/signin" className="block" onClick={onClose}>
                                     <Button
-                                        variant="outline"
-                                        className="w-full h-12 text-blue-500 border-blue-400/50 bg-transparent hover:bg-blue-400/10 hover:border-blue-400 rounded-xl font-medium flex items-center justify-center text-base"
+                                        className="w-full h-12 bg-gradient-to-r from-gray-700 to-slate-800 hover:from-gray-800 hover:to-slate-900 text-gray-200 font-semibold rounded-xl shadow-md hover:shadow-gray-600/20 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center text-base"
                                     >
                                         <LogIn className="w-4 h-4 mr-2" />
                                         Sign In

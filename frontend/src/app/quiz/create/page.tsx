@@ -14,9 +14,10 @@ import { quizService } from "@/lib/services";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { FormButton } from "@/components/ui/form-components";
+import { PageLoading } from "@/components/ui/loading";
+import { SuccessScreen } from "@/components/ui/SuccessScreen";
 import {
   Brain,
-  Loader2,
   Sparkles,
   BookOpen,
   Target,
@@ -25,6 +26,7 @@ import {
   FileText,
   Zap,
   Star,
+  Loader2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import Confetti from "react-confetti";
@@ -196,20 +198,11 @@ export default function CreateQuizPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative">
-              <div className="h-16 w-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-purple-500/50">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/30 to-pink-500/30 rounded-2xl blur-xl"></div>
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-              Loading Quiz Creator...
-            </h2>
-            <p className="text-gray-400">Preparing your AI-powered quiz generator</p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Quiz Creator..."
+          subtitle="Preparing your AI-powered quiz generator"
+          variant="quiz"
+        />
       </DashboardLayout>
     );
   }
@@ -227,92 +220,49 @@ export default function CreateQuizPage() {
             colors={['#a21caf', '#f472b6', '#6366f1', '#f59e42', '#10b981']}
           />
         )}
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-10 space-y-4 sm:space-y-6">
-          <motion.div
-            ref={headerRef}
-            initial={{ opacity: 0, y: 30 }}
-            animate={headerInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="text-center space-y-2"
-          >
-            <motion.div
-              className="flex items-center justify-center space-x-3"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <motion.div
-                className="h-12 w-12 sm:h-16 sm:w-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/30"
-                whileHover={{
-                  boxShadow: "0 20px 25px -5px rgba(16, 185, 129, 0.4)",
-                  rotate: [0, -10, 10, 0]
-                }}
-                transition={{ duration: 0.6 }}
-              >
-                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-              </motion.div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                Quiz Generated Successfully!
-              </h1>
-            </motion.div>
-            <motion.p
-              className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
-              initial={{ opacity: 0 }}
-              animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              Your AI-powered quiz has been created and is ready to take.
-            </motion.p>
-          </motion.div>
-
-          <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 max-w-2xl mx-auto">
-            <div className="space-y-4 sm:space-y-6">
-              <div className="text-center space-y-3">
-                <h2 className="text-xl sm:text-2xl font-bold text-white">
-                  {generatedQuiz.title}
-                </h2>
-                <div className="flex items-center justify-center space-x-4 sm:space-x-6 text-gray-400 text-sm sm:text-base">
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4" />
-                    <span>{generatedQuiz.num_questions} Questions</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4" />
-                    <span>~{Math.ceil(generatedQuiz.num_questions * 1.5)} min</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <Button
-                  onClick={() => router.push(`/quiz/take/${generatedQuiz.quiz_id}`)}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-medium py-3 text-base sm:text-lg min-h-[44px] shadow-lg hover:shadow-green-500/25 transition-all duration-200"
-                >
-                  <Zap className="h-5 w-5 mr-2" />
-                  Take Quiz Now
-                </Button>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button
-                    onClick={navigateToDashboard}
-                    variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[44px]"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Return to</span> Dashboard
-                  </Button>
-                  <Button
-                    onClick={resetForm}
-                    variant="outline"
-                    className="border-gray-600 text-gray-300 hover:bg-gray-700/50 min-h-[44px]"
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Create</span> More
-                    <span className="hidden sm:inline"> Quizzes</span>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
+        
+        {/* Compact Premium Success Screen */}
+        <SuccessScreen
+          title="Quiz Generated Successfully!"
+          subtitle="Your AI-powered quiz has been created and is ready to take."
+          icon={<Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-white drop-shadow-lg" />}
+          iconColor="green"
+          details={{
+            title: generatedQuiz.title,
+            stats: [
+              {
+                icon: <FileText className="h-4 w-4" />,
+                label: "Questions",
+                value: generatedQuiz.num_questions.toString(),
+                color: "text-green-400"
+              },
+              {
+                icon: <Clock className="h-4 w-4" />,
+                label: "min",
+                value: `~${Math.ceil(generatedQuiz.num_questions * 1.5)}`,
+                color: "text-blue-400"
+              }
+            ]
+          }}
+          primaryAction={{
+            label: "Take Quiz Now",
+            onClick: () => router.push(`/quiz/take/${generatedQuiz.quiz_id}`),
+            icon: <Zap className="h-5 w-5" />
+          }}
+          secondaryActions={[
+            {
+              label: "Dashboard",
+              onClick: navigateToDashboard,
+              icon: <Users className="h-4 w-4" />
+            },
+            {
+              label: "Create More",
+              onClick: resetForm,
+              icon: <Brain className="h-4 w-4" />
+            }
+          ]}
+          showConfetti={showConfetti}
+        />
       </DashboardLayout>
     );
   }

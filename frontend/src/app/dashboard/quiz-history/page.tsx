@@ -33,6 +33,7 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { DashboardSearchBar } from "@/components/ui/dashboard-search-bar";
 import { FilterDropdown, FilterOption } from "@/components/ui/filter-dropdown";
 import { SortDropdown, SortOption } from "@/components/ui/sort-dropdown";
+import { PageLoading } from "@/components/ui/loading";
 
 export default function QuizHistoryPage() {
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
@@ -184,22 +185,11 @@ export default function QuizHistoryPage() {
   if (showLoadingScreen) {
     return (
       <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="relative">
-              <div className="h-16 w-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-500/50">
-                <Loader2 className="h-8 w-8 animate-spin text-white" />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/30 to-purple-600/30 rounded-2xl blur-xl"></div>
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-              Loading Quiz History...
-            </h2>
-            <p className="text-gray-400">
-              Preparing your quiz performance data
-            </p>
-          </div>
-        </div>
+        <PageLoading
+          title="Loading Quiz History"
+          subtitle="Preparing your quiz performance data"
+          variant="dashboard"
+        />
       </DashboardLayout>
     );
   }

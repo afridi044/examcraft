@@ -382,15 +382,14 @@ export default function Home() {
               <div className="flex items-center space-x-3 ml-6">
                 <Link href="/auth/signin">
                   <Button
-                    variant="outline"
-                    className="border-2 border-blue-400/50 text-blue-400 bg-transparent hover:bg-blue-400/10 hover:border-blue-400 transition-all duration-300 font-medium"
+                    className="bg-gradient-to-r from-gray-700 to-slate-800 hover:from-gray-800 hover:to-slate-900 text-gray-200 font-semibold shadow-md hover:shadow-gray-600/20 transition-all duration-300 transform hover:-translate-y-0.5"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
                     Sign In
                   </Button>
                 </Link>
                 <Link href="/auth/signup">
-                  <Button className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-black font-bold shadow-lg hover:shadow-blue-500/25 transition-all duration-300">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-gray-200 font-semibold shadow-md hover:shadow-blue-600/20 transition-all duration-300 transform hover:-translate-y-0.5">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Sign Up
                   </Button>
@@ -432,9 +431,9 @@ export default function Home() {
                 >
                   <Button
                     size="lg"
-                    className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-white text-base md:text-lg px-6 py-4 rounded-xl font-bold shadow-xl gap-2"
+                    className="w-full flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-gray-200 text-base md:text-lg px-6 py-4 rounded-xl font-semibold shadow-md hover:shadow-blue-600/20 transition-all duration-300 transform hover:-translate-y-0.5 gap-2"
                   >
-                    <Crown className="w-5 h-5 mr-2 !text-white" style={{ stroke: 'white' }} />
+                    <Crown className="w-5 h-5 mr-2 !text-gray-200" style={{ stroke: 'rgb(229 231 235)' }} />
                     <span className="relative z-10">Start Free Trial</span>
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
@@ -447,8 +446,7 @@ export default function Home() {
                 >
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="w-full flex items-center justify-center border-2 border-blue-400/50 text-blue-400 bg-transparent hover:bg-blue-400/10 hover:border-blue-400 text-base md:text-lg px-6 py-4 rounded-xl font-bold backdrop-blur-sm transition-all duration-300 gap-2"
+                    className="w-full flex items-center justify-center bg-gradient-to-r from-gray-700 to-slate-800 hover:from-gray-800 hover:to-slate-900 text-gray-200 text-base md:text-lg px-6 py-4 rounded-xl font-semibold shadow-md hover:shadow-gray-600/20 transition-all duration-300 transform hover:-translate-y-0.5 gap-2"
                   >
                     <Play className="w-5 h-5 mr-2" />
                     <span>Watch Demo</span>
@@ -716,9 +714,9 @@ export default function Home() {
                   <Link href="/auth/signup" className="w-full md:w-auto">
                     <Button
                       size="lg"
-                      className="w-full md:w-auto flex items-center justify-center bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-black text-base md:text-lg px-6 md:px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-blue-500/40 transition-all duration-300 gap-2"
+                      className="w-full md:w-auto flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 hover:to-purple-800 text-gray-200 text-base md:text-lg px-6 md:px-8 py-4 rounded-xl font-semibold shadow-md hover:shadow-blue-600/20 transition-all duration-300 transform hover:-translate-y-0.5 gap-2"
                     >
-                      <UserPlus className="w-5 h-5 mr-2 !text-white" style={{ stroke: 'white' }} />
+                      <UserPlus className="w-5 h-5 mr-2 !text-gray-200" style={{ stroke: 'rgb(229 231 235)' }} />
                       <span className="relative z-10">Sign Up</span>
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
@@ -733,8 +731,7 @@ export default function Home() {
                   <Link href="/auth/signin" className="w-full md:w-auto">
                     <Button
                       size="lg"
-                      variant="outline"
-                      className="w-full md:w-auto flex items-center justify-center border-2 border-blue-400/50 text-blue-400 bg-transparent hover:bg-blue-400/10 hover:border-blue-400 text-base md:text-lg px-4 md:px-8 py-3 md:py-4 rounded-xl font-bold backdrop-blur-sm transition-all duration-300 gap-2"
+                      className="w-full md:w-auto flex items-center justify-center bg-gradient-to-r from-gray-700 to-slate-800 hover:from-gray-800 hover:to-slate-900 text-gray-200 text-base md:text-lg px-4 md:px-8 py-3 md:py-4 rounded-xl font-semibold shadow-md hover:shadow-gray-600/20 transition-all duration-300 transform hover:-translate-y-0.5 gap-2"
                     >
                       <LogIn className="w-5 h-5 mr-2" />
                       <span className="relative z-10">Sign In</span>
