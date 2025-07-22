@@ -10,7 +10,10 @@ interface ApiResponse<T> {
 }
 
 // Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://20.198.228.71:5001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
+  (process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:5001/api/v1' 
+    : 'http://20.198.228.71:5001/api/v1');
 
 console.log('🌐 API Base URL:', API_BASE_URL);
 
