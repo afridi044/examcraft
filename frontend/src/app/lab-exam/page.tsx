@@ -1,24 +1,38 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLabExamData } from '@/hooks/useLabExamData';
+import { useFlashcardSearch } from '@/hooks/useFlashcardSearch';
 
-// =============================================
-// SIMPLE REUSABLE TABLE COMPONENT
-// =============================================
+
+interface FlashcardData {
+    flashcard_id: string;
+    question: string;
+    answer: string;
+    topic_id: string | null;
+    topic?: {
+        name: string;
+        description: string | null;
+    };
+    mastery_status: string;
+    created_at: string;
+    updated_at: string;
+}
+
 interface TableColumn {
     key: string;
     label: string;
     width?: string;
-    format?: (value: any) => string;
+    format?: (value: unknown) => string;
 }
 
 interface SimpleTableProps {
     title: string;
     columns: TableColumn[];
-    data: any[];
+    data: FlashcardData[];
     emptyMessage: string;
 }
+
+//table
 
 const SimpleTable: React.FC<SimpleTableProps> = ({
     title,
@@ -79,7 +93,7 @@ const SimpleTable: React.FC<SimpleTableProps> = ({
                         </thead>
                         <tbody>
                             {data.map((item, index) => (
-                                <tr key={item.id || `item-${index}`}>
+                                <tr key={item.flashcard_id || `item-${index}`}>
                                     {columns.map((column) => (
                                         <td
                                             key={column.key}
@@ -91,7 +105,7 @@ const SimpleTable: React.FC<SimpleTableProps> = ({
                                                 whiteSpace: 'nowrap'
                                             }}
                                         >
-                                            {formatValue(column, item[column.key])}
+                                            {formatValue(column, (item as Record<string, unknown>)[column.key])}
                                         </td>
                                     ))}
                                 </tr>
@@ -110,141 +124,70 @@ const SimpleTable: React.FC<SimpleTableProps> = ({
     );
 };
 
-// =============================================
-// SIMPLE REUSABLE FORM COMPONENT
-// =============================================
-interface FormField {
-    name: string;
-    label: string;
+//search box
+interface SearchBoxProps {
+    value: string;
+    onChange: (value: string) => void;
     placeholder?: string;
-    required?: boolean;
+    isLoading?: boolean;
 }
 
-interface SimpleFormProps {
-    title: string;
-    fields: FormField[];
-    onSubmit: (data: Record<string, string>) => Promise<void>;
-    submitButtonText: string;
-}
-
-const SimpleForm: React.FC<SimpleFormProps> = ({
-    title,
-    fields,
-    onSubmit,
-    submitButtonText
+const SearchBox: React.FC<SearchBoxProps> = ({
+    value,
+    onChange,
+    placeholder = "Search flashcards...",
+    isLoading = false
 }) => {
-    const [formData, setFormData] = useState<Record<string, string>>({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
-        try {
-            await onSubmit(formData);
-            setFormData({}); // Reset form
-        } catch (error) {
-            console.error('Form submission error:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleInputChange = (fieldName: string, value: string) => {
-        setFormData(prev => ({ ...prev, [fieldName]: value }));
-    };
-
     return (
-        <div className="border border-gray-300 rounded-md mb-5">
-            <h2 className="text-lg font-bold p-4 m-0 border-b border-gray-300">
-                {title}
-            </h2>
-
-            <form onSubmit={handleSubmit} className="p-4">
-                {fields.map((field) => (
-                    <div key={field.name} className="mb-4">
-                        <label className="block mb-2 font-bold">
-                            {field.label} {field.required && '*'}
-                        </label>
-                        <input
-                            type="text"
-                            value={formData[field.name] || ''}
-                            onChange={(e) => handleInputChange(field.name, e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                            placeholder={field.placeholder}
-                            required={field.required}
-                        />
-                    </div>
-                ))}
-
-                <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-blue-500 text-white px-5 py-2 border-none rounded-md cursor-pointer text-sm disabled:opacity-70 disabled:cursor-not-allowed hover:bg-blue-600"
-                >
-                    {isSubmitting ? 'Creating...' : submitButtonText}
-                </button>
-            </form>
+        <div className="mb-5">
+            <div className="relative">
+                <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full p-3 pl-10 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isLoading}
+                />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    {isLoading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    ) : (
+                        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    )}
+                </div>
+            </div>
+            {value && (
+                <p className="mt-2 text-sm text-gray-600">
+                    {isLoading ? 'Searching...' : `Searching for: "${value}"`}
+                </p>
+            )}
         </div>
     );
 };
 
-// =============================================
-// LAB EXAM TEST PAGE
-// =============================================
-// Page to view test records and create new test records
+
 
 export default function LabExamPage() {
+    const [searchQuery, setSearchQuery] = useState('');
     const [filters, setFilters] = useState({
+        query: '',
         limit: 50,
     });
 
-    const { data, isLoading, error, createTopic } = useLabExamData(filters);
+    const { data, isLoading, error } = useFlashcardSearch(filters);
 
-    // Define your fields - just add/modify this array
-    const formFields = [
-        { name: 'name', label: 'Name', required: true, placeholder: 'Enter name' },
-        { name: 'description', label: 'Description', placeholder: 'Enter description' },
-        { name: 'age', label: 'Age', placeholder: 'Enter age' },
-        { name: 'price', label: 'Price', placeholder: 'Enter price' },
-        { name: 'category', label: 'Category', placeholder: 'Enter category' },
-    ];
-
-    const handleCreateTest = async (formData: Record<string, string>) => {
-        if (!formData.name.trim()) {
-            alert('Name is required');
-            return;
-        }
-
-        const result = await createTopic({
-            name: formData.name.trim(),
-            description: formData.description?.trim() || undefined,
-            age: formData.age ? parseInt(formData.age) : undefined,
-            is_active: true, // default value
-            price: formData.price ? parseFloat(formData.price) : undefined,
-            category: formData.category?.trim() || undefined,
-        });
-
-        if (result.success) {
-            alert('Test record created successfully!');
-        } else {
-            alert(`Failed to create test record: ${result.error}`);
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="p-5 font-sans">
-                <h1 className="text-2xl font-bold mb-5">Test Records Management</h1>
-                <p>Loading...</p>
-            </div>
-        );
-    }
+   
+    React.useEffect(() => {
+        setFilters(prev => ({ ...prev, query: searchQuery }));
+    }, [searchQuery]);
 
     if (error) {
         return (
             <div className="p-5 font-sans">
-                <h1 className="text-2xl font-bold mb-5">Test Records Management</h1>
+                <h1 className="text-2xl font-bold mb-5">Flashcard Search</h1>
                 <p className="text-red-500">Error: {error}</p>
             </div>
         );
@@ -252,30 +195,50 @@ export default function LabExamPage() {
 
     return (
         <div className="p-5 font-sans bg-white text-black">
-            <h1 className="text-2xl font-bold mb-5">Test Records Management</h1>
+            <h1 className="text-2xl font-bold mb-5">Flashcard Search</h1>
 
-            {/* Simple Reusable Form Component */}
-            <SimpleForm
-                title="Create New Test Record"
-                fields={formFields}
-                onSubmit={handleCreateTest}
-                submitButtonText="Create Test Record"
+            
+            <SearchBox
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Enter keywords to search flashcards..."
+                isLoading={isLoading}
             />
 
-            {/* Test Records Table */}
+            
             <SimpleTable
-                title="All Test Records"
+                title={searchQuery ? `Search Results for "${searchQuery}"` : "Flashcard Search Results"}
                 columns={[
-                    { key: 'name', label: 'Name', width: '200px' },
-                    { key: 'description', label: 'Description', width: '300px' },
-                    { key: 'age', label: 'Age', width: '100px' },
-                    { key: 'is_active', label: 'Active', width: '100px' },
-                    { key: 'price', label: 'Price', width: '100px' },
-                    { key: 'category', label: 'Category', width: '150px' },
-                    { key: 'created_at', label: 'Created', width: '150px' },
+                    { key: 'question', label: 'Question', width: '300px' },
+                    { key: 'answer', label: 'Answer', width: '300px' },
+                    { 
+                        key: 'topic', 
+                        label: 'Topic', 
+                        width: '150px',
+                        format: (value) => value?.name || 'N/A'
+                    },
+                    { 
+                        key: 'mastery_status', 
+                        label: 'Status', 
+                        width: '100px',
+                        format: (value) => {
+                            const statusMap: Record<string, string> = {
+                                'learning': 'Learning',
+                                'under_review': 'Review',
+                                'mastered': 'Mastered'
+                            };
+                            return statusMap[value] || value;
+                        }
+                    },
+                    { 
+                        key: 'created_at', 
+                        label: 'Created', 
+                        width: '120px',
+                        format: (value) => new Date(value).toLocaleDateString()
+                    },
                 ]}
                 data={data || []}
-                emptyMessage="No test records found"
+                emptyMessage={searchQuery ? `No flashcards found matching "${searchQuery}"` : "Enter a search query to find flashcards"}
             />
         </div>
     );

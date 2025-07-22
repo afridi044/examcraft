@@ -106,6 +106,8 @@ export class FlashcardsService {
     return this.databaseService.getUserFlashcards(userId);
   }
 
+  
+
   async generateAiFlashcards(dto: GenerateAiFlashcardsDto, userId: string): Promise<
     ApiResponse<{
       flashcards: any[];
@@ -644,5 +646,31 @@ export class FlashcardsService {
 
   async deleteFlashcard(flashcardId: string, userId: string): Promise<ApiResponse<boolean>> {
     return this.databaseService.deleteFlashcard(flashcardId, userId);
+  }
+
+
+  async searchFlashcards(userId: string, query: string, limit: number = 50): Promise<ApiResponse<FlashcardRow[]>> {
+    try {
+      
+      if (!query || query.trim().length === 0) {
+        return {
+          success: false,
+          data: null,
+          error: 'Search query is required',
+        };
+      }
+
+      const result = await this.databaseService.searchFlashcards(userId, query.trim(), limit);
+      
+      
+      return result;
+    } catch (error) {
+      this.logger.error('searchFlashcards failed:', error);
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Failed to search flashcards',
+      };
+    }
   }
 }

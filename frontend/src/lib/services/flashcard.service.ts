@@ -51,6 +51,9 @@ export const flashcardService = {
     return apiClient.get('/flashcards/user');
   },
 
+ 
+  
+
   /**
    * Get due flashcards for review
    */
@@ -134,4 +137,14 @@ export const flashcardService = {
   async deleteFlashcard(flashcardId: string): Promise<any> {
     return apiClient.delete(`/flashcards/${flashcardId}`);
   },
+
+
+  async searchFlashcards(query: string, limit?: number): Promise<any> {
+    const params = new URLSearchParams();
+    params.append('query', query);
+    if (limit) params.append('limit', limit.toString());
+    
+    return apiClient.get(`/flashcards/search?${params.toString()}`);
+  },
+  
 }; 

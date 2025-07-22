@@ -304,4 +304,32 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
       return this.handleError(error, 'getFlashcardsDueForReview');
     }
   }
+
+  async searchFlashcards(
+    userId: string,
+    query: string,
+    limit: number = 50,
+  ): Promise<ApiResponse<FlashcardRow[]>> {
+    try {
+
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.FLASHCARDS)
+        .select(
+          `
+          *,
+          topic:topics(*)
+        `,
+        )
+        .eq('user_id', userId)
+        .ilike('question', `%${query}%`)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) return this.handleError(error, 'searchFlashcards');
+      
+      return this.handleSuccess(data || []);
+    } catch (error) {
+      return this.handleError(error, 'searchFlashcards');
+    }
+  }
 }

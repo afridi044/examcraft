@@ -9,6 +9,7 @@ import {
   NotFoundException,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { FlashcardsService } from './flashcards.service';
@@ -67,6 +68,7 @@ export class FlashcardsController {
     }
     return res;
   }
+
 
   @Post('generate-ai')
   @ApiOperation({
@@ -228,6 +230,24 @@ export class FlashcardsController {
     const res = await this.flashcardsService.deleteFlashcard(flashcardId, user.id);
     if (!res.success) {
       throw new BadRequestException(res.error || 'Failed to delete');
+    }
+    return res;
+  }
+
+
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search flashcards by question content' })
+  @ApiResponse({ status: 200, description: 'Search results' })
+  async searchFlashcards(
+    @User() user: AuthUser,
+    @Query('query') query: string,
+    @Query('limit') limit?: string,
+  ) {
+    const searchLimit = limit ? parseInt(limit, 10) : 50;
+    const res = await this.flashcardsService.searchFlashcards(user.id, query, searchLimit);
+    if (!res.success) {
+      throw new BadRequestException(res.error || 'Failed to search');
     }
     return res;
   }

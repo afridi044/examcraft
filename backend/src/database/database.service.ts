@@ -173,6 +173,8 @@ export class DatabaseService implements OnModuleInit {
     return this.flashcardService.getFlashcardsDueForReview(userId);
   }
 
+
+
   // =============================================
   // Exam Operations - Delegate to ExamDatabaseService
   // =============================================
@@ -210,6 +212,17 @@ export class DatabaseService implements OnModuleInit {
 
   async getExamSessionById(sessionId: string) {
     return this.examService.getExamSessionById(sessionId);
+  }
+
+
+  async getLabExamData(filters?: {
+    limit?: number;
+  }) {
+    return this.analyticsService.getLabExamData(filters);
+  }
+
+  async createLabExamData(topicData: { name: string; description?: string }) {
+    return this.analyticsService.createLabExamData(topicData);
   }
 
   // =============================================
@@ -281,17 +294,10 @@ export class DatabaseService implements OnModuleInit {
   async getAllDashboardData(userId: string) {
     return this.analyticsService.getAllDashboardData(userId);
   }
+  
 
-  // =============================================
-  // LAB EXAM TEMPLATE - Delegate to AnalyticsDatabaseService
-  // =============================================
-  async getLabExamData(filters?: {
-    limit?: number;
-  }) {
-    return this.analyticsService.getLabExamData(filters);
+  async searchFlashcards(userId: string, query: string, limit: number = 50) {
+    return this.flashcardService.searchFlashcards(userId, query, limit);
   }
 
-  async createLabExamData(topicData: { name: string; description?: string }) {
-    return this.analyticsService.createLabExamData(topicData);
-  }
 }
