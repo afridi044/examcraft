@@ -52,7 +52,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigationItems = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
     { name: "Quizes", href: "/dashboard/quiz-history", icon: BookOpen },
-    { name: "Create Exam", href: "/exam/create", icon: Target },
     { name: "Flashcards", href: "/flashcards", icon: Brain },
     { name: "Your Library", href: "/library", icon: FolderOpen },
     { name: "Settings", href: "/settings", icon: Settings },

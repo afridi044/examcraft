@@ -9,18 +9,22 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   // Enable CORS for frontend communication
+  const corsOrigins = [
+    'http://localhost:3000',
+    'http://20.198.228.71:3000',  // Frontend development server
+    'http://localhost:3001', // Alternative frontend port
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    // VM-specific origins - hardcoded for deployment
+    'http://20.198.228.71:3001', // Additional frontend port for VM
+  ];
+
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://20.198.228.71:3000',  // Frontend development server
-      'http://localhost:3001', // Alternative frontend port
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-    ],
+    origin: corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
-    });
+  });
 
   // Enable cookie parsing
   app.use(cookieParser());

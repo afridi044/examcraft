@@ -30,6 +30,23 @@ export class AuthService {
     });
   }
 
+  /**
+   * Get standardized cookie options for authentication cookies
+   */
+  private getCookieOptions(maxAge?: number) {
+    // VM-specific configuration - hardcoded for deployment
+    const isVM = process.env.NODE_ENV === 'production';
+    const vmIP = '20.198.228.71';
+    
+    return {
+      httpOnly: true,
+      secure: false, // Disable secure for HTTP deployment
+      sameSite: 'lax' as const, // Use 'lax' for cross-domain compatibility
+      maxAge: maxAge || 15 * 60 * 1000, // 15 minutes default
+      domain: isVM ? vmIP : undefined, // Set domain for VM deployment
+    };
+  }
+
   async signIn(signInDto: SignInDto, res: any): Promise<AuthResponseDto> {
     try {
       const { email, password } = signInDto;
@@ -76,19 +93,8 @@ export class AuthService {
       }
 
       // Set HTTP-only cookies for secure token storage
-      res.cookie('access_token', authData.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-      });
-
-      res.cookie('refresh_token', authData.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      res.cookie('access_token', authData.session.access_token, this.getCookieOptions());
+      res.cookie('refresh_token', authData.session.refresh_token, this.getCookieOptions(7 * 24 * 60 * 60 * 1000)); // 7 days
 
       return {
         success: true,
@@ -188,19 +194,8 @@ export class AuthService {
       }
 
       // Set HTTP-only cookies for secure token storage
-      res.cookie('access_token', signInData.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-      });
-
-      res.cookie('refresh_token', signInData.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      res.cookie('access_token', signInData.session.access_token, this.getCookieOptions());
+      res.cookie('refresh_token', signInData.session.refresh_token, this.getCookieOptions(7 * 24 * 60 * 60 * 1000)); // 7 days
 
       return {
         success: true,
@@ -227,16 +222,11 @@ export class AuthService {
 
   signOut(res: any): AuthResponseDto {
     // Clear authentication cookies with same options used when setting them
-    res.clearCookie('access_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
-    res.clearCookie('refresh_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
+    const cookieOptions = { ...this.getCookieOptions() };
+    delete (cookieOptions as any).maxAge; // Remove maxAge for clearCookie
+    
+    res.clearCookie('access_token', cookieOptions);
+    res.clearCookie('refresh_token', cookieOptions);
     
     return {
       success: true,
@@ -273,19 +263,8 @@ export class AuthService {
       const user = userResponse.data;
 
       // Set new HTTP-only cookies
-      res.cookie('access_token', data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000, // 15 minutes
-      });
-
-      res.cookie('refresh_token', data.session.refresh_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      res.cookie('access_token', data.session.access_token, this.getCookieOptions());
+      res.cookie('refresh_token', data.session.refresh_token, this.getCookieOptions(7 * 24 * 60 * 60 * 1000)); // 7 days
 
       return {
         success: true,
