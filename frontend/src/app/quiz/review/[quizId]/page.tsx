@@ -23,7 +23,7 @@ import { flashcardService } from "@/lib/services";
 import toast from "react-hot-toast";
 
 export default function QuizReviewPage() {
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const router = useRouter();
   const params = useParams();
   // Flashcard status is displayed from backend data with creation functionality
@@ -51,12 +51,18 @@ export default function QuizReviewPage() {
     }
   }, [reviewData?.questions]);
 
-  // FIXED: Redirect to landing page if not authenticated and not loading
+  // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
     if (!userLoading && !currentUser) {
-      router.push("/");
+      setSignOutMessage();
+      router.push("/auth/signin");
     }
-  }, [userLoading, currentUser]); // Removed router from dependencies to prevent unnecessary re-runs
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   // Improved loading logic - wait for all required data
   const showFullLoadingScreen = userLoading || loading || !currentUser?.id || !reviewData;

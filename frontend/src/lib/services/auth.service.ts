@@ -55,15 +55,8 @@ export const authService = {
       const response = await apiClient.post<AuthResponse>('/auth/signin', input);
       
       if (response.success && response.data) {
-        // Store JWT tokens if available
-        if (response.data.access_token) {
-          localStorage.setItem('access_token', response.data.access_token);
-        }
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
-        }
-        
-        // API call succeeded, return the auth response
+        // Cookies are automatically set by the backend
+        // No need to manually store tokens
         return response.data;
       } else {
         // API call failed, return error response
@@ -91,15 +84,8 @@ export const authService = {
       const response = await apiClient.post<AuthResponse>('/auth/signup', input);
       
       if (response.success && response.data) {
-        // Store JWT tokens if available
-        if (response.data.access_token) {
-          localStorage.setItem('access_token', response.data.access_token);
-        }
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
-        }
-        
-        // API call succeeded, return the auth response
+        // Cookies are automatically set by the backend
+        // No need to manually store tokens
         return response.data;
       } else {
         // API call failed, return error response
@@ -126,9 +112,8 @@ export const authService = {
     try {
       const response = await apiClient.post<AuthResponse>('/auth/signout');
       
-      // Clear JWT tokens regardless of response status
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      // Cookies are automatically cleared by the backend
+      // No need to manually clear tokens
       
       if (response.success && response.data) {
         // API call succeeded, return the auth response
@@ -142,10 +127,6 @@ export const authService = {
         };
       }
     } catch (error: unknown) {
-      // Clear tokens even on error
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      
       const errorMessage = error instanceof Error ? error.message : 'Network error';
       return {
         success: false,
@@ -156,37 +137,18 @@ export const authService = {
   },
 
   /**
-   * Refresh access token using refresh token
+   * Refresh access token using refresh token from cookies
    */
   async refreshToken(): Promise<AuthResponse> {
     try {
-      const refreshToken = localStorage.getItem('refresh_token');
-      if (!refreshToken) {
-        return {
-          success: false,
-          message: 'No refresh token available',
-          error: 'Please sign in again'
-        };
-      }
-
-      const response = await apiClient.post<AuthResponse>('/auth/refresh', {
-        refresh_token: refreshToken
-      });
+      // Refresh token is automatically sent from cookies
+      const response = await apiClient.post<AuthResponse>('/auth/refresh', {});
 
       if (response.success && response.data) {
-        // Store new tokens
-        if (response.data.access_token) {
-          localStorage.setItem('access_token', response.data.access_token);
-        }
-        if (response.data.refresh_token) {
-          localStorage.setItem('refresh_token', response.data.refresh_token);
-        }
+        // New tokens are automatically set in cookies by the backend
         return response.data;
       } else {
-        // Refresh failed, clear tokens
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('examcraft-user');
+        // Refresh failed
         return {
           success: false,
           message: 'Token refresh failed',
@@ -194,11 +156,6 @@ export const authService = {
         };
       }
     } catch (error: unknown) {
-      // Refresh failed, clear all tokens
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('examcraft-user');
-      
       const errorMessage = error instanceof Error ? error.message : 'Network error';
       return {
         success: false,
@@ -210,37 +167,29 @@ export const authService = {
 
   /**
    * Check if stored token exists
+   * Note: With cookies, we can't check this client-side
+   * The backend will handle token validation
    */
   hasStoredToken(): boolean {
-    return !!localStorage.getItem('access_token');
+    // With cookies, we can't check token existence client-side
+    // The backend will validate the token from cookies
+    return true; // Assume token exists, backend will validate
   },
 
   /**
-   * Check if user is authenticated by validating the stored JWT token
+   * Check if user is authenticated by validating the token from cookies
    */
   async validateToken(): Promise<{ success: boolean; user?: AuthUser; error?: string }> {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        return { success: false, error: 'No token found' };
-      }
-
-      // Call the protected /auth/me endpoint to validate the token
+      // Call the protected /auth/me endpoint to validate the token from cookies
       const response = await apiClient.get<{ user: AuthUser }>('/auth/me');
       
       if (response.success && response.data?.user) {
         return { success: true, user: response.data.user };
       } else {
-        // Token is invalid, clear it
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
         return { success: false, error: 'Invalid token' };
       }
     } catch (error: unknown) {
-      // Token validation failed, clear tokens
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      
       const errorMessage = error instanceof Error ? error.message : 'Token validation failed';
       return { success: false, error: errorMessage };
     }
@@ -248,44 +197,36 @@ export const authService = {
 
   /**
    * Get stored access token
+   * Note: With cookies, we can't access tokens client-side
    */
   getStoredToken(): string | null {
-    return typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    // With HTTP-only cookies, we can't access tokens client-side
+    // This is a security feature
+    return null;
   },
 
   /**
    * Check if the current token is expired or will expire soon
+   * Note: With cookies, we can't check this client-side
    */
   isTokenExpired(): boolean {
-    const token = this.getStoredToken();
-    if (!token) return true;
-
-    try {
-      // Decode JWT payload (without verification - just to check expiration)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const expiry = payload.exp * 1000; // Convert to milliseconds
-      const now = Date.now();
-      const buffer = 5 * 60 * 1000; // 5 minute buffer
-
-      return expiry - buffer < now;
-    } catch (error) {
-      console.error('Error checking token expiration:', error);
-      return true; // Assume expired if we can't parse
-    }
+    // With HTTP-only cookies, we can't access tokens client-side
+    // The backend will handle token expiration and refresh
+    return false; // Assume not expired, backend will handle
   },
 
   /**
    * Proactively refresh token if it's about to expire
+   * Note: With cookies, the backend handles this automatically
    */
   async ensureValidToken(): Promise<boolean> {
-    if (!this.hasStoredToken()) return false;
-    
-    if (this.isTokenExpired()) {
-      console.log('🔄 Token expiring soon, refreshing proactively...');
-      const result = await this.refreshToken();
-      return result.success;
+    // With cookies, the backend handles token refresh automatically
+    // We just need to make a request and the backend will refresh if needed
+    try {
+      const response = await apiClient.get('/auth/me');
+      return response.success;
+    } catch {
+      return false;
     }
-    
-    return true;
   },
 };

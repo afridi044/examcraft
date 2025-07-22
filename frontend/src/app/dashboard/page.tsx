@@ -42,7 +42,7 @@ const DEFAULT_STATS = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
 
   // Use individual backend-powered dashboard hooks (JWT-secured)
   const statsQuery = useBackendDashboardStats();
@@ -87,12 +87,18 @@ export default function DashboardPage() {
   const safeRecentActivity = useMemo(() => recentActivity, [recentActivity]);
   const safeTopicProgress = useMemo(() => topicProgress, [topicProgress]);
 
-  // Redirect logic
+  // EARLY REDIRECT: Check authentication immediately before showing any content
   useEffect(() => {
     if (!userLoading && !currentUser) {
+      setSignOutMessage();
       router.push("/auth/signin");
     }
-  }, [userLoading, currentUser, router]);
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   // Professional loading screen
   if (showLoadingScreen) {

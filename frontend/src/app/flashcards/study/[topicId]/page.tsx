@@ -49,7 +49,7 @@ interface SessionStats {
 
 export default function StudySessionPage({ params }: StudySessionPageProps) {
   const router = useRouter();
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const updateProgress = useUpdateProgress();
   const invalidateFlashcards = useInvalidateFlashcards();
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
@@ -78,12 +78,18 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
     cardsRemaining: 0,
   });
 
-  // Redirect if not authenticated
+  // EARLY REDIRECT: Check authentication immediately before showing any content
   useEffect(() => {
     if (!userLoading && !currentUser) {
-      router.push("/");
+      setSignOutMessage();
+      router.push("/auth/signin");
     }
-  }, [userLoading, currentUser, router]);
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   // Invalidate flashcard cache when component unmounts (user navigates away)
   useEffect(() => {

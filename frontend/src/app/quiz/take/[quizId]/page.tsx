@@ -47,7 +47,7 @@ export default function TakeQuizPage() {
   const router = useRouter();
   const params = useParams();
   const quizId = params.quizId as string;
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const invalidateBackendQuiz = useInvalidateBackendQuiz();
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
   const invalidateFlashcards = useInvalidateFlashcards();
@@ -55,12 +55,18 @@ export default function TakeQuizPage() {
   // Memoize userId to prevent unnecessary re-renders
   const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
 
-  // FIXED: Redirect to landing page if not authenticated and not loading
+  // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
     if (!userLoading && !currentUser) {
-      router.push("/");
+      setSignOutMessage();
+      router.push("/auth/signin");
     }
-  }, [userLoading, currentUser]); // Removed router from dependencies to prevent unnecessary re-runs
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   // Only invalidate data if it's stale or on explicit user action
   // Removed automatic invalidation on mount for better performance

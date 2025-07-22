@@ -61,7 +61,7 @@ const DIFFICULTY_LEVELS = [
 
 export default function CreateQuizPage() {
   const router = useRouter();
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const { data: topics = [], isLoading: topicsLoading } = useBackendTopics() as { data: Array<{ topic_id: string; name: string }>, isLoading: boolean };
 
   // Intersection observer for scroll animations
@@ -90,11 +90,18 @@ export default function CreateQuizPage() {
   }, []);
 
   // Redirect if not authenticated
+  // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
     if (!userLoading && !currentUser) {
-      router.push("/");
+      setSignOutMessage();
+      router.push("/auth/signin");
     }
-  }, [userLoading, currentUser, router]);
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   // Simple loading check
   const isLoading = userLoading || topicsLoading;

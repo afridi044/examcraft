@@ -39,16 +39,14 @@ class APIClient {
         endpoint
       });
 
-      // Get JWT token from localStorage
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      console.log('🔑 Token for request:', token ? `${token.substring(0, 50)}...` : 'No token');
-
+      // With cookies, tokens are automatically sent with requests
+      // No need to manually add Authorization header
       const config: RequestInit = {
         headers: {
           'Content-Type': 'application/json',
-          ...(token && { 'Authorization': `Bearer ${token}` }),
           ...options.headers,
         },
+        credentials: 'include', // Include cookies in requests
         ...options,
       };
 
@@ -65,74 +63,55 @@ class APIClient {
 
       if (!response.ok) {
         // Handle 401 errors with automatic token refresh
-        if (response.status === 401 && endpoint !== '/auth/refresh' && typeof window !== 'undefined') {
+        // Skip token refresh for authentication endpoints (signin, signup, refresh)
+        const isAuthEndpoint = endpoint.startsWith('/auth/');
+        if (response.status === 401 && !isAuthEndpoint && typeof window !== 'undefined') {
           console.log('🔄 Token expired, attempting refresh...');
 
-          const refreshToken = localStorage.getItem('refresh_token');
-          if (refreshToken) {
-            try {
-              // Attempt to refresh token
-              const refreshResponse = await fetch(`${this.baseURL}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh_token: refreshToken }),
+          try {
+            // Attempt to refresh token using cookies
+            const refreshResponse = await fetch(`${this.baseURL}/auth/refresh`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include', // Include cookies
+            });
+
+            if (refreshResponse.ok) {
+              console.log('✅ Token refreshed successfully, retrying request...');
+              
+              // Retry the original request with new cookies
+              const retryResponse = await fetch(url, {
+                ...config,
+                credentials: 'include', // Include cookies
               });
+              
+              if (retryResponse.ok) {
+                const retryData = await retryResponse.json();
+                console.log('✅ Retry successful:', retryData);
 
-              if (refreshResponse.ok) {
-                const refreshData = await refreshResponse.json();
-                if (refreshData.success && refreshData.access_token) {
-                  // Store new tokens
-                  localStorage.setItem('access_token', refreshData.access_token);
-                  if (refreshData.refresh_token) {
-                    localStorage.setItem('refresh_token', refreshData.refresh_token);
-                  }
-
-                  console.log('✅ Token refreshed successfully, retrying request...');
-                  // Retry the original request with new token
-                  const newToken = localStorage.getItem('access_token');
-                  const retryConfig: RequestInit = {
-                    ...config,
-                    headers: {
-                      ...config.headers,
-                      'Authorization': `Bearer ${newToken}`,
-                    },
+                // Handle the response format as before
+                if (retryData.data !== undefined) {
+                  return retryData.success ? {
+                    data: retryData.data,
+                    error: null,
+                    success: true,
+                  } : {
+                    data: null,
+                    error: retryData.error || 'Backend operation failed',
+                    success: false,
                   };
-
-                  const retryResponse = await fetch(url, retryConfig);
-                  if (retryResponse.ok) {
-                    const retryData = await retryResponse.json();
-                    console.log('✅ Retry successful:', retryData);
-
-                    // Handle the response format as before
-                    if (retryData.data !== undefined) {
-                      return retryData.success ? {
-                        data: retryData.data,
-                        error: null,
-                        success: true,
-                      } : {
-                        data: null,
-                        error: retryData.error || 'Backend operation failed',
-                        success: false,
-                      };
-                    } else {
-                      return {
-                        data: retryData,
-                        error: null,
-                        success: true,
-                      };
-                    }
-                  }
+                } else {
+                  return {
+                    data: retryData,
+                    error: null,
+                    success: true,
+                  };
                 }
               }
-            } catch (refreshError) {
-              console.error('❌ Token refresh failed:', refreshError);
             }
+          } catch (refreshError) {
+            console.log('❌ Token refresh failed:', refreshError);
           }
-
-          // If refresh failed, clear tokens
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('examcraft-user');
 
           return {
             data: null,
@@ -141,18 +120,23 @@ class APIClient {
           };
         }
 
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ API Error Response:', errorData);
+        const errorData = await response.json().catch(() => ({})) as Record<string, unknown>;
+        console.log('❌ API Error Response:', errorData);
 
         // Handle NestJS error response format
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
 
-        if (errorData.message) {
+        if (errorData.message && typeof errorData.message === 'string') {
           // NestJS error format: { statusCode, message, error }
           errorMessage = errorData.message;
-        } else if (errorData.error) {
+        } else if (errorData.error && typeof errorData.error === 'string') {
           // Fallback to error field
           errorMessage = errorData.error;
+        }
+
+        // Transform 401 errors to user-friendly message
+        if (response.status === 401) {
+          errorMessage = 'Session expired. Please sign in again.';
         }
 
         return {
@@ -163,36 +147,36 @@ class APIClient {
       }
 
       // Parse the response - handle both wrapped and direct response formats
-      const backendResponse = await response.json() as any;
+      const backendResponse = await response.json() as Record<string, unknown>;
       console.log('✅ API Success Response:', backendResponse);
 
       // Check if response is wrapped in ApiResponse format (has 'data' field)
       // Dashboard endpoints use ApiResponse<T>, Auth endpoints return data directly
-      if (backendResponse.data !== undefined) {
+      if ('data' in backendResponse && backendResponse.data !== undefined) {
         // Wrapped format: ApiResponse<T> - unwrap it
         if (backendResponse.success) {
           return {
-            data: backendResponse.data,
+            data: backendResponse.data as T,
             error: null,
             success: true,
           };
         } else {
           return {
             data: null,
-            error: backendResponse.error || 'Backend operation failed',
+            error: (backendResponse.error as string) || 'Backend operation failed',
             success: false,
           };
         }
       } else {
         // Direct format: AuthResponseDto or similar - return as-is
         return {
-          data: backendResponse,
+          data: backendResponse as T,
           error: null,
           success: true,
         };
       }
     } catch (error) {
-      console.error('❌ API Request Failed:', error);
+      console.log('❌ API Request Failed:', error);
       return {
         data: null,
         error: error instanceof Error ? error.message : 'Network error occurred',
@@ -206,21 +190,21 @@ class APIClient {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: data ? JSON.stringify(data) : undefined,

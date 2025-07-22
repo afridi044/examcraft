@@ -30,7 +30,7 @@ export class AuthService {
     });
   }
 
-  async signIn(signInDto: SignInDto): Promise<AuthResponseDto> {
+  async signIn(signInDto: SignInDto, res: any): Promise<AuthResponseDto> {
     try {
       const { email, password } = signInDto;
 
@@ -70,49 +70,25 @@ export class AuthService {
 
       const user = userResponse.data;
 
-      // For sign-in, user should already exist in database
-      // TEMPORARY FIX: If user doesn't exist but is authenticated, create them
+      // For sign-in, user must exist in database
       if (!user) {
-        console.log('⚠️ TEMPORARY FIX: Creating missing user record...');
-
-        // Parse name from metadata or use defaults
-        const fullName = authData.user.user_metadata?.full_name || 'User';
-        const nameParts = fullName.split(' ');
-        const firstName = nameParts[0] || 'User';
-        const lastName = nameParts.slice(1).join(' ') || '';
-
-        const createUserResponse = await this.databaseService.createUser({
-          supabase_auth_id: authData.user.id,
-          email: authData.user.email || email,
-          first_name: firstName,
-          last_name: lastName,
-        });
-
-        if (!createUserResponse.success) {
-          throw new UnauthorizedException(
-            `Failed to create user record: ${createUserResponse.error}`,
-          );
-        }
-
-        console.log('✅ User record created successfully');
-        // Use the newly created user
-        const newUser = createUserResponse.data;
-
-        return {
-          success: true,
-          user: {
-            id: newUser!.user_id,
-            auth_id: authData.user.id,
-            email: newUser!.email,
-            first_name: newUser!.first_name,
-            last_name: newUser!.last_name,
-            full_name: `${newUser!.first_name} ${newUser!.last_name}`.trim(),
-          },
-          access_token: authData.session.access_token, // Return Supabase JWT
-          refresh_token: authData.session.refresh_token,
-          message: 'Sign in successful (user record created)',
-        };
+        throw new UnauthorizedException('User not found in database. Please sign up first.');
       }
+
+      // Set HTTP-only cookies for secure token storage
+      res.cookie('access_token', authData.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
+
+      res.cookie('refresh_token', authData.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
       return {
         success: true,
@@ -124,8 +100,6 @@ export class AuthService {
           last_name: user.last_name,
           full_name: `${user.first_name} ${user.last_name}`.trim(),
         },
-        access_token: authData.session.access_token, // Return Supabase JWT
-        refresh_token: authData.session.refresh_token,
         message: 'Sign in successful',
       };
     } catch (error) {
@@ -141,7 +115,7 @@ export class AuthService {
     }
   }
 
-  async signUp(signUpDto: SignUpDto): Promise<AuthResponseDto> {
+  async signUp(signUpDto: SignUpDto, res: any): Promise<AuthResponseDto> {
     try {
       const { email, password, full_name, institution, field_of_study } = signUpDto;
 
@@ -213,17 +187,32 @@ export class AuthService {
         };
       }
 
+      // Set HTTP-only cookies for secure token storage
+      res.cookie('access_token', signInData.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
+
+      res.cookie('refresh_token', signInData.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
       return {
         success: true,
         user: {
           id: createUserResponse.data.user_id,
           auth_id: authData.user.id,
           email: createUserResponse.data.email,
+          first_name: createUserResponse.data.first_name,
+          last_name: createUserResponse.data.last_name,
           full_name:
             `${createUserResponse.data.first_name} ${createUserResponse.data.last_name}`.trim(),
         },
-        access_token: signInData.session.access_token,
-        refresh_token: signInData.session.refresh_token,
         message: 'Account created successfully',
       };
     } catch (error) {
@@ -236,16 +225,26 @@ export class AuthService {
     }
   }
 
-  async signOut(): Promise<AuthResponseDto> {
-    // Note: In a stateless backend, sign out is typically handled by the frontend
-    // by removing the token. This endpoint is mainly for logging purposes.
+  signOut(res: any): AuthResponseDto {
+    // Clear authentication cookies with same options used when setting them
+    res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+    
     return {
       success: true,
       message: 'Signed out successfully',
     };
   }
 
-  async refreshToken(refreshToken: string): Promise<AuthResponseDto> {
+  async refreshToken(refreshToken: string, res: any): Promise<AuthResponseDto> {
     try {
       if (!refreshToken) {
         throw new UnauthorizedException('Refresh token is required');
@@ -273,6 +272,21 @@ export class AuthService {
 
       const user = userResponse.data;
 
+      // Set new HTTP-only cookies
+      res.cookie('access_token', data.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
+
+      res.cookie('refresh_token', data.session.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
       return {
         success: true,
         user: {
@@ -281,8 +295,6 @@ export class AuthService {
           email: user.email,
           full_name: `${user.first_name} ${user.last_name}`.trim(),
         },
-        access_token: data.session.access_token,
-        refresh_token: data.session.refresh_token,
         message: 'Token refreshed successfully',
       };
     } catch (error) {

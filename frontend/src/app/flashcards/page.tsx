@@ -23,7 +23,7 @@ import { CustomHeader } from "@/components/features/dashboard/CustomHeader";
 function FlashcardsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
 
   // Memoize userId to prevent unnecessary re-renders
   const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
@@ -40,12 +40,18 @@ function FlashcardsPageContent() {
     stats,
   } = useFlashcardData(selectedTopicId);
 
-  // Redirect to landing page if not authenticated and not loading
+  // EARLY REDIRECT: Check authentication immediately before showing any content
   useEffect(() => {
     if (!userLoading && !currentUser) {
-      router.push("/");
+      setSignOutMessage();
+      router.push("/auth/signin");
     }
-  }, [userLoading, currentUser, router]);
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   const handleCreateFlashcard = (topicId?: string) => {
     if (topicId) {

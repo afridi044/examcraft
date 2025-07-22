@@ -36,7 +36,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, signOut, router }) => 
 
   const handleSignOut = async () => {
     setIsUserMenuOpen(false);
-    router.push("/");
     await signOut();
   };
 

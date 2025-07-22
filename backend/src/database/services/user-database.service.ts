@@ -76,13 +76,12 @@ export class UserDatabaseService extends BaseDatabaseService {
   }
 
   async createUser(
-    input: Omit<TablesInsert<'users'>, 'password_hash'> & {
-      password_hash?: string;
-    },
+    input: Omit<TablesInsert<'users'>, 'password_hash'>,
   ): Promise<ApiResponse<UserRow>> {
     try {
       // Use admin client to bypass RLS policies for user creation
-      const payload = { password_hash: '', ...input } as TablesInsert<'users'>;
+      // Don't include password_hash since we use Supabase Auth
+      const payload = input as TablesInsert<'users'>;
 
       const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.USERS)

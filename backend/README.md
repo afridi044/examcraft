@@ -83,8 +83,13 @@ OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 FRONTEND_URL=http://localhost:3000
 
 # JWT Configuration
+SUPABASE_JWT_SECRET=your_supabase_jwt_secret_here
 JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRES_IN=24h
+
+# Cookie Configuration (Production - Optional)
+# Only needed if you have a custom domain in production
+# COOKIE_DOMAIN=your_domain.com
 
 # Rate Limiting
 THROTTLE_TTL=60000

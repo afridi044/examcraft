@@ -1,4 +1,6 @@
-import { Controller, Post, Body, HttpStatus, HttpCode, Get } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, HttpCode, Get, Res, Req } from '@nestjs/common';
+import { Request } from 'express';
+import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { SignInDto, SignUpDto, AuthResponseDto } from './dto/auth.dto';
@@ -22,8 +24,8 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
-  async signIn(@Body() signInDto: SignInDto): Promise<AuthResponseDto> {
-    return await this.authService.signIn(signInDto);
+  async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponseDto> {
+    return await this.authService.signIn(signInDto, res);
   }
 
   @Public()
@@ -39,8 +41,8 @@ export class AuthController {
     status: 400,
     description: 'Invalid input data or user already exists',
   })
-  async signUp(@Body() signUpDto: SignUpDto): Promise<AuthResponseDto> {
-    return await this.authService.signUp(signUpDto);
+  async signUp(@Body() signUpDto: SignUpDto, @Res({ passthrough: true }) res: Response): Promise<AuthResponseDto> {
+    return await this.authService.signUp(signUpDto, res);
   }
 
   @Public()
@@ -52,8 +54,8 @@ export class AuthController {
     description: 'User signed out successfully',
     type: AuthResponseDto,
   })
-  async signOut(): Promise<AuthResponseDto> {
-    return await this.authService.signOut();
+  async signOut(@Res({ passthrough: true }) res: Response): Promise<AuthResponseDto> {
+    return await this.authService.signOut(res);
   }
 
   @Post('refresh')
@@ -66,8 +68,9 @@ export class AuthController {
     type: AuthResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid refresh token' })
-  async refreshToken(@Body() refreshDto: { refresh_token: string }): Promise<AuthResponseDto> {
-    return await this.authService.refreshToken(refreshDto.refresh_token);
+  async refreshToken(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<AuthResponseDto> {
+    const refreshToken = req.cookies?.refresh_token;
+    return await this.authService.refreshToken(refreshToken, res);
   }
 
   @Get('me')

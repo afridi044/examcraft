@@ -45,7 +45,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   const handleSignOut = async () => {
-    router.push("/");
     await signOut();
   };
 

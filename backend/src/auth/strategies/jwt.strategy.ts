@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '../../database/database.service';
+import { Request } from 'express';
 
 export interface JwtPayload {
   sub: string; // Supabase user ID
@@ -42,7 +43,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req: Request) => {
+        // First try to get token from Authorization header (for backward compatibility)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          return authHeader.substring(7);
+        }
+        
+        // Then try to get token from cookies
+        const token = req.cookies?.access_token;
+        return token || null;
+      },
       ignoreExpiration: false,
       secretOrKey: supabaseJwtSecret,
       // ✅ Now using the CORRECT Supabase issuer format

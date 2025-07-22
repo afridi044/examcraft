@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
@@ -13,9 +13,21 @@ import { BookOpen, Eye, EyeOff, Loader2 } from "lucide-react";
 export const SignInForm = memo(function SignInForm() {
   const router = useRouter();
   // Use the production backend auth hook
-  const { signIn, loading } = useBackendAuth();
+  const { signIn } = useBackendAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customMessage, setCustomMessage] = useState<string | null>(null);
+  
+  // Check for sign-out message on component mount
+  useEffect(() => {
+    const signOutMessage = sessionStorage.getItem('signOutMessage');
+    if (signOutMessage) {
+      setCustomMessage(signOutMessage);
+      sessionStorage.removeItem('signOutMessage'); // Clear after reading
+    }
+  }, []);
+
   // Use lazy initial state for better performance
   const [formData, setFormData] = useState(() => ({
     email: "",
@@ -43,19 +55,27 @@ export const SignInForm = memo(function SignInForm() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       setError("");
+      setIsSubmitting(true);
 
       if (!formData.email || !formData.password) {
         setError("Please fill in all fields");
+        setIsSubmitting(false);
         return;
       }
 
-      const result = await signIn(formData.email, formData.password);
+      try {
+        const result = await signIn(formData.email, formData.password);
 
-      if (result.data?.success) {
-        console.log('✅ Sign in successful, redirecting to main dashboard');
-        router.push("/dashboard");
-      } else {
-        setError(result.error || "Sign in failed");
+        if (result.data?.success) {
+          console.log('✅ Sign in successful, redirecting to main dashboard');
+          router.push("/dashboard");
+        } else {
+          setError(result.error || "Sign in failed");
+          setIsSubmitting(false);
+        }
+      } catch (error) {
+        setError("Sign in failed");
+        setIsSubmitting(false);
       }
     },
     [formData.email, formData.password, signIn, router]
@@ -77,7 +97,7 @@ export const SignInForm = memo(function SignInForm() {
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
           <p className="text-gray-400">
-            Sign in to continue your learning journey
+            {customMessage || "Sign in to continue your learning journey"}
           </p>
         </div>
 
@@ -142,9 +162,9 @@ export const SignInForm = memo(function SignInForm() {
             <Button
               type="submit"
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Signing In...

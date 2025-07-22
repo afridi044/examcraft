@@ -64,14 +64,14 @@ export const SignUpForm = memo(function SignUpForm() {
       return;
     }
 
-    const { error } = await signUp(formData.email, formData.password, {
+    const result = await signUp(formData.email, formData.password, {
       full_name: `${formData.first_name} ${formData.last_name}`.trim(),
       institution: formData.institution.trim() || undefined,
       field_of_study: formData.field_of_study.trim() || undefined,
     });
 
-    if (error) {
-      setError(error);
+    if (result.error) {
+      setError(result.error);
     } else {
       setSuccess(
         "Account created successfully! Please check your email to verify your account, then you can sign in."

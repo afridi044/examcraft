@@ -35,7 +35,7 @@ import { FilterDropdown, FilterOption } from "@/components/ui/filter-dropdown";
 import { SortDropdown, SortOption } from "@/components/ui/sort-dropdown";
 
 export default function QuizHistoryPage() {
-  const { user: currentUser, loading: userLoading } = useBackendAuth();
+  const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const deleteQuizMutation = useDeleteBackendQuiz();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -72,12 +72,18 @@ export default function QuizHistoryPage() {
   // Use the database user_id
   const userId = currentUser?.id || "";
 
-  // FIXED: Redirect to landing page if not authenticated and not loading
+  // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
     if (!userLoading && !currentUser) {
-      router.push("/");
+      setSignOutMessage();
+      router.push("/auth/signin");
     }
-  }, [userLoading, currentUser]); // Removed router from dependencies to prevent unnecessary re-runs
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
 
   // Refresh quiz attempts when user returns to page to ensure real-time updates
   useEffect(() => {

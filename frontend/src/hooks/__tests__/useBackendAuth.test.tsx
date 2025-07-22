@@ -1,18 +1,7 @@
 import { renderHook, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useBackendAuth } from '../useBackendAuth';
 import { authService } from '@/lib/services/auth.service';
-
-// Mock localStorage
-const localStorageMock = (() => {
-    let store: Record<string, string> = {};
-    return {
-        getItem: (key: string) => store[key] || null,
-        setItem: (key: string, value: string) => { store[key] = value; },
-        removeItem: (key: string) => { delete store[key]; },
-        clear: () => { store = {}; },
-    };
-})();
-Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 // Mock the auth service
 jest.mock('@/lib/services/auth.service', () => ({
@@ -26,16 +15,51 @@ jest.mock('@/lib/services/auth.service', () => ({
 }));
 const mockedAuthService = authService as jest.Mocked<typeof authService>;
 
+// Mock Next.js router
+jest.mock('next/navigation', () => ({
+    useRouter: () => ({
+        push: jest.fn(),
+        replace: jest.fn(),
+        back: jest.fn(),
+    }),
+}));
+
+// Create a wrapper component for testing
+const createWrapper = () => {
+    const queryClient = new QueryClient({
+        defaultOptions: {
+            queries: {
+                retry: false,
+            },
+        },
+    });
+    
+    return ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}>
+            {children}
+        </QueryClientProvider>
+    );
+};
+
 describe('useBackendAuth', () => {
+    let Wrapper: ReturnType<typeof createWrapper>;
+
     beforeEach(() => {
         jest.clearAllMocks();
-        window.localStorage.clear();
+        Wrapper = createWrapper();
     });
 
     it('should have initial state', async () => {
+        // Mock to return false so useEffect completes quickly
         mockedAuthService.hasStoredToken.mockReturnValue(false);
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => { }); // let useEffect run
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        // Test the final state after useEffect completes
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
+        
         expect(result.current.user).toBeNull();
         expect(result.current.loading).toBe(false);
         expect(result.current.signingOut).toBe(false);
@@ -44,142 +68,226 @@ describe('useBackendAuth', () => {
 
     it('should set loading to false if no stored token', async () => {
         mockedAuthService.hasStoredToken.mockReturnValue(false);
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => { }); // let useEffect run
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            // Wait for the useEffect to complete
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
+        
         expect(result.current.loading).toBe(false);
-        expect(result.current.user).toBeNull();
-        expect(result.current.isAuthenticated).toBe(false);
     });
 
     it('should set user and isAuthenticated if token is valid', async () => {
         mockedAuthService.hasStoredToken.mockReturnValue(true);
-        const user = { id: '1', auth_id: 'auth1', email: 'test@example.com' };
-        mockedAuthService.validateToken.mockResolvedValue({ success: true, user });
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => { });
-        expect(result.current.loading).toBe(false);
-        expect(result.current.user).toEqual(user);
+        mockedAuthService.validateToken.mockResolvedValue({
+            success: true,
+            user: { id: '1', email: 'test@example.com' }
+        });
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
+        
+        expect(result.current.user).toEqual({ id: '1', email: 'test@example.com' });
         expect(result.current.isAuthenticated).toBe(true);
+        expect(result.current.loading).toBe(false);
     });
 
-    it('should clear localStorage and set loading to false if token is invalid', async () => {
+    it('should set loading to false if token is invalid', async () => {
         mockedAuthService.hasStoredToken.mockReturnValue(true);
-        mockedAuthService.validateToken.mockResolvedValue({ success: false });
-        window.localStorage.setItem('examcraft-user', 'something');
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => { });
+        mockedAuthService.validateToken.mockResolvedValue({
+            success: false,
+            user: null
+        });
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
+        
+        expect(result.current.user).toBeNull();
+        expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.loading).toBe(false);
-        expect(window.localStorage.getItem('examcraft-user')).toBeNull();
     });
 
     it('should handle error during token validation', async () => {
         mockedAuthService.hasStoredToken.mockReturnValue(true);
-        mockedAuthService.validateToken.mockRejectedValue(new Error('fail'));
-        window.localStorage.setItem('examcraft-user', 'something');
-        window.localStorage.setItem('access_token', 'token');
-        window.localStorage.setItem('refresh_token', 'token');
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => { });
+        mockedAuthService.validateToken.mockRejectedValue(new Error('Network error'));
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 0));
+        });
+        
+        expect(result.current.user).toBeNull();
+        expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.loading).toBe(false);
-        expect(window.localStorage.getItem('examcraft-user')).toBeNull();
-        expect(window.localStorage.getItem('access_token')).toBeNull();
-        expect(window.localStorage.getItem('refresh_token')).toBeNull();
     });
 
     it('signIn: should set user and isAuthenticated on success', async () => {
-        const user = { id: '1', auth_id: 'auth1', email: 'test@example.com' };
-        mockedAuthService.signIn.mockResolvedValue({ success: true, user, message: 'Success' });
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => {
-            const res = await result.current.signIn('test@example.com', 'pw');
-            expect(res.data?.user).toEqual(user);
-            expect(res.error).toBeNull();
+        mockedAuthService.signIn.mockResolvedValue({
+            success: true,
+            user: { id: '1', email: 'test@example.com' }
         });
-        expect(result.current.user).toEqual(user);
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            const response = await result.current.signIn('test@example.com', 'password');
+            expect(response.data?.success).toBe(true);
+        });
+        
+        expect(result.current.user).toEqual({ id: '1', email: 'test@example.com' });
         expect(result.current.isAuthenticated).toBe(true);
         expect(result.current.loading).toBe(false);
-        expect(window.localStorage.getItem('examcraft-user')).toBe(JSON.stringify(user));
     });
 
     it('signIn: should handle error', async () => {
-        mockedAuthService.signIn.mockResolvedValue({ success: false, error: 'fail', message: 'Sign in failed' });
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => {
-            const res = await result.current.signIn('test@example.com', 'pw');
-            expect(res.data).toBeNull();
-            expect(res.error).toBe('fail');
+        mockedAuthService.signIn.mockResolvedValue({
+            success: false,
+            error: 'Invalid credentials'
         });
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            const response = await result.current.signIn('test@example.com', 'password');
+            expect(response.error).toBe('Invalid credentials');
+        });
+        
         expect(result.current.user).toBeNull();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.loading).toBe(false);
     });
 
     it('signUp: should set user and isAuthenticated on success', async () => {
-        const user = { id: '1', email: 'test@example.com' };
-        mockedAuthService.signUp.mockResolvedValue({ success: true, user });
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => {
-            const res = await result.current.signUp('test@example.com', 'pw', { full_name: 'Test' });
-            expect(res.data.user).toEqual(user);
-            expect(res.error).toBeNull();
+        mockedAuthService.signUp.mockResolvedValue({
+            success: true,
+            user: { id: '1', email: 'test@example.com' }
         });
-        expect(result.current.user).toEqual(user);
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            const response = await result.current.signUp('test@example.com', 'password');
+            expect(response.data?.success).toBe(true);
+        });
+        
+        expect(result.current.user).toEqual({ id: '1', email: 'test@example.com' });
         expect(result.current.isAuthenticated).toBe(true);
         expect(result.current.loading).toBe(false);
-        expect(window.localStorage.getItem('examcraft-user')).toBe(JSON.stringify(user));
     });
 
     it('signUp: should handle error', async () => {
-        mockedAuthService.signUp.mockResolvedValue({ success: false, error: 'fail' });
-        const { result } = renderHook(() => useBackendAuth());
-        await act(async () => {
-            const res = await result.current.signUp('test@example.com', 'pw');
-            expect(res.data).toBeNull();
-            expect(res.error).toBe('fail');
+        mockedAuthService.signUp.mockResolvedValue({
+            success: false,
+            error: 'Email already exists'
         });
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            const response = await result.current.signUp('test@example.com', 'password');
+            expect(response.error).toBe('Email already exists');
+        });
+        
         expect(result.current.user).toBeNull();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.loading).toBe(false);
     });
 
-    it('signOut: should clear user and localStorage', async () => {
-        mockedAuthService.signOut.mockResolvedValue({});
-        window.localStorage.setItem('examcraft-user', JSON.stringify({ id: '1' }));
-        const { result } = renderHook(() => useBackendAuth());
+    it('signOut: should clear user state', async () => {
+        mockedAuthService.signOut.mockResolvedValue({ success: true, message: 'Signed out' });
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
         await act(async () => {
             await result.current.signOut();
         });
+        
         expect(result.current.user).toBeNull();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.loading).toBe(false);
         expect(result.current.signingOut).toBe(false);
-        expect(window.localStorage.getItem('examcraft-user')).toBeNull();
     });
 
     it('signOut: should handle error', async () => {
         mockedAuthService.signOut.mockRejectedValue(new Error('fail'));
-        const { result } = renderHook(() => useBackendAuth());
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
         await act(async () => {
             const res = await result.current.signOut();
             expect(res.error).toBe('fail');
         });
+        
         expect(result.current.signingOut).toBe(false);
     });
 
-    it('clearAuthState: should clear all auth state and localStorage', async () => {
-        window.localStorage.setItem('examcraft-user', 'something');
-        window.localStorage.setItem('access_token', 'token');
-        window.localStorage.setItem('refresh_token', 'token');
-        const { result } = renderHook(() => useBackendAuth());
+    it('clearAuthState: should clear all auth state', async () => {
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
         await act(async () => {
             await result.current.clearAuthState();
         });
+        
         expect(result.current.user).toBeNull();
         expect(result.current.isAuthenticated).toBe(false);
         expect(result.current.loading).toBe(false);
         expect(result.current.signingOut).toBe(false);
-        expect(window.localStorage.getItem('examcraft-user')).toBeNull();
-        expect(window.localStorage.getItem('access_token')).toBeNull();
-        expect(window.localStorage.getItem('refresh_token')).toBeNull();
+    });
+
+    it('should call authService methods correctly', async () => {
+        mockedAuthService.hasStoredToken.mockReturnValue(true);
+        mockedAuthService.validateToken.mockResolvedValue({ success: true, user: { id: '1', email: 'test@example.com' } });
+        
+        renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        await act(async () => { });
+        
+        expect(mockedAuthService.hasStoredToken).toHaveBeenCalled();
+        expect(mockedAuthService.validateToken).toHaveBeenCalled();
+    });
+
+    it('should handle signIn with authService correctly', async () => {
+        mockedAuthService.signIn.mockResolvedValue({
+            success: true,
+            user: { id: '1', email: 'test@example.com' }
+        });
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            await result.current.signIn('test@example.com', 'password');
+        });
+        
+        expect(mockedAuthService.signIn).toHaveBeenCalledWith({
+            email: 'test@example.com',
+            password: 'password'
+        });
+    });
+
+    it('should handle signUp with authService correctly', async () => {
+        mockedAuthService.signUp.mockResolvedValue({
+            success: true,
+            user: { id: '1', email: 'test@example.com' }
+        });
+        
+        const { result } = renderHook(() => useBackendAuth(), { wrapper: Wrapper });
+        
+        await act(async () => {
+            await result.current.signUp('test@example.com', 'password', {
+                full_name: 'Test User'
+            });
+        });
+        
+        expect(mockedAuthService.signUp).toHaveBeenCalledWith({
+            email: 'test@example.com',
+            password: 'password',
+            full_name: 'Test User'
+        });
     });
 }); 
