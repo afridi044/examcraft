@@ -352,7 +352,7 @@ export default function SearchPage() {
               {/* Results Grid */}
               <div className="space-y-6 sm:space-y-8">
                 {/* Quiz Results */}
-                {filteredResults().quizzes.length > 0 && (
+                {filteredResults().quizzes.length > 0 ? (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -430,10 +430,47 @@ export default function SearchPage() {
                       ))}
                     </div>
                   </motion.div>
+                ) : activeTab === "quizzes" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="text-center py-12 sm:py-20 px-4"
+                  >
+                    <Card className="bg-slate-900/80 border-slate-800/80 p-6 sm:p-8 max-w-md mx-auto">
+                      <div className="relative inline-block mb-6">
+                        <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto" />
+                        <div className="absolute -top-2 -right-2">
+                          <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
+                        </div>
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-100 mb-3">No quiz results found</h3>
+                      <p className="text-sm sm:text-base text-gray-400 mb-6">
+                        Try adjusting your search terms or browse other content types
+                      </p>
+                      <div className="space-y-3">
+                        <Button 
+                          onClick={() => setActiveTab("all")}
+                          className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                        >
+                          <Target className="h-4 w-4 mr-2" />
+                          View All Results
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => router.push('/quiz/create')}
+                          className="w-full bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 text-gray-300 hover:text-white"
+                        >
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          Create Quiz
+                        </Button>
+                      </div>
+                    </Card>
+                  </motion.div>
                 )}
 
                 {/* Flashcard Results */}
-                {filteredResults().flashcards.length > 0 && (
+                {filteredResults().flashcards.length > 0 ? (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -521,6 +558,43 @@ export default function SearchPage() {
                       ))}
                     </div>
                   </motion.div>
+                ) : activeTab === "flashcards" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                    className="text-center py-12 sm:py-20 px-4"
+                  >
+                    <Card className="bg-slate-900/80 border-slate-800/80 p-6 sm:p-8 max-w-md mx-auto">
+                      <div className="relative inline-block mb-6">
+                        <Brain className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto" />
+                        <div className="absolute -top-2 -right-2">
+                          <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6 text-yellow-400" />
+                        </div>
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-100 mb-3">No flashcard results found</h3>
+                      <p className="text-sm sm:text-base text-gray-400 mb-6">
+                        Try adjusting your search terms or browse other content types
+                      </p>
+                      <div className="space-y-3">
+                        <Button 
+                          onClick={() => setActiveTab("all")}
+                          className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                        >
+                          <Target className="h-4 w-4 mr-2" />
+                          View All Results
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => router.push('/flashcards/create')}
+                          className="w-full bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/50 text-gray-300 hover:text-white"
+                        >
+                          <Brain className="h-4 w-4 mr-2" />
+                          Create Flashcards
+                        </Button>
+                      </div>
+                    </Card>
+                  </motion.div>
                 )}
 
                 {/* No Results */}
@@ -541,23 +615,13 @@ export default function SearchPage() {
                       <p className="text-sm sm:text-base text-gray-400 mb-6">
                         Try adjusting your search terms or browse our content library
                       </p>
-                      <div className="space-y-3">
-                        <Button 
-                          onClick={() => router.push('/dashboard')}
-                          className="bg-blue-600 hover:bg-blue-700 text-white w-full"
-                        >
-                          <BookOpen className="h-4 w-4 mr-2" />
-                          Browse Dashboard
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          onClick={() => router.push('/flashcards')}
-                          className="w-full"
-                        >
-                          <Brain className="h-4 w-4 mr-2" />
-                          View Flashcards
-                        </Button>
-                      </div>
+                      <Button 
+                        onClick={() => router.push('/dashboard')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                      >
+                        <BookOpen className="h-4 w-4 mr-2" />
+                        Browse Dashboard
+                      </Button>
                     </Card>
                   </motion.div>
                 )}
