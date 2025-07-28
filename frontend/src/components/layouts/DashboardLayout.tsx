@@ -84,7 +84,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-900">
       {/* Top Navigation Bar */}
-      <TopNavbar setIsSidebarOpen={setIsSidebarOpen} isSidebarOpen={isSidebarOpen} />
+      <TopNavbar 
+        setIsSidebarOpen={setIsSidebarOpen} 
+        isSidebarOpen={isSidebarOpen} 
+        hideSearchBar={pathname === '/search'}
+      />
 
       {/* Sidebar */}
       <DashboardSidebar
