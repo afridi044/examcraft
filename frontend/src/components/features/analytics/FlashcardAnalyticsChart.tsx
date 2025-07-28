@@ -123,7 +123,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
             {/* Pie Chart */}
             <div>
               <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
+                <PieChart style={{ background: 'transparent' }}>
                   <Pie
                     data={masteryData}
                     cx="50%"
@@ -200,7 +200,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
             <p className="text-sm text-gray-400 mb-4">Your daily flashcard creation activity</p>
           </div>
           <ResponsiveContainer width="100%" height={150}>
-            <BarChart data={reviewData}>
+            <BarChart data={reviewData} style={{ background: 'transparent' }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="date" 

@@ -80,7 +80,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="w-full h-full flex flex-col"
+      className="w-full h-full flex flex-col bg-transparent"
     >
       {/* Header with Legend */}
       <div className="mb-6">

@@ -11,13 +11,12 @@ async function bootstrap() {
   // Enable CORS for frontend communication
   const corsOrigins = [
     'http://localhost:3000',
-    'http://20.198.228.71:3000',  // Frontend development server
     'http://localhost:3001', // Alternative frontend port
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
     // VM-specific origins - hardcoded for deployment
-    'http://20.198.228.71:3001', // Additional frontend port for VM
-    'http://20.244.0.22:3000', // Additional frontend port for VM
+    'http://20.244.0.22:3000', // VM frontend
+    'http://20.244.0.22:3001' // VM frontend alternative port
   ];
 
   app.enableCors({

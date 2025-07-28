@@ -89,7 +89,7 @@ export function AccuracyBreakdownChart({ data }: AccuracyBreakdownChartProps) {
             {/* Bar Chart */}
             <div>
               <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={difficultyData}>
+                <BarChart data={difficultyData} style={{ background: 'transparent' }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     dataKey="name" 
@@ -127,7 +127,7 @@ export function AccuracyBreakdownChart({ data }: AccuracyBreakdownChartProps) {
             {/* Pie Chart */}
             <div>
               <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
+                <PieChart style={{ background: 'transparent' }}>
                   <Pie
                     data={difficultyData}
                     cx="50%"

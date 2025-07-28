@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
             </p>
             <Button 
               onClick={handleRefresh}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 transition-colors"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Try Again
@@ -123,8 +123,7 @@ export default function AnalyticsPage() {
           >
             <Button 
               onClick={handleRefresh}
-              variant="outline"
-              className="border-slate-600 text-slate-300 hover:bg-slate-800"
+              className="bg-slate-800 border border-slate-700 text-slate-200 hover:bg-slate-700 hover:border-slate-600 transition-colors"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh Data
@@ -141,7 +140,7 @@ export default function AnalyticsPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="grid grid-cols-2 lg:grid-cols-4 gap-4"
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 p-4 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-4 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center">
                 <div className="p-2 bg-blue-500/20 rounded-lg mr-3">
                   <Activity className="h-5 w-5 text-blue-400" />
@@ -153,7 +152,7 @@ export default function AnalyticsPage() {
               </div>
             </Card>
 
-            <Card className="bg-slate-800/40 border-slate-700/60 p-4 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-4 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center">
                 <div className="p-2 bg-purple-500/20 rounded-lg mr-3">
                   <Target className="h-5 w-5 text-purple-400" />
@@ -165,7 +164,7 @@ export default function AnalyticsPage() {
               </div>
             </Card>
 
-            <Card className="bg-slate-800/40 border-slate-700/60 p-4 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-4 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center">
                 <div className="p-2 bg-yellow-500/20 rounded-lg mr-3">
                   <Clock className="h-5 w-5 text-yellow-400" />
@@ -177,7 +176,7 @@ export default function AnalyticsPage() {
               </div>
             </Card>
 
-            <Card className="bg-slate-800/40 border-slate-700/60 p-4 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-4 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center">
                 <div className="p-2 bg-green-500/20 rounded-lg mr-3">
                   <Calendar className="h-5 w-5 text-green-400" />
@@ -196,7 +195,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 p-6 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-6 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center mb-6">
                 <div className="p-2 bg-blue-500/20 rounded-lg mr-4">
                   <TrendingUp className="h-5 w-5 text-blue-400" />
@@ -220,7 +219,7 @@ export default function AnalyticsPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="self-stretch"
             >
-              <Card className="bg-slate-800/40 border-slate-700/60 p-6 hover:bg-slate-800/60 transition-colors h-full">
+              <Card className="bg-slate-900/80 border-slate-800/80 p-6 hover:bg-slate-900/60 transition-colors h-full">
                 <div className="flex items-center mb-6">
                   <div className="p-2 bg-green-500/20 rounded-lg mr-4">
                     <Calendar className="h-5 w-5 text-green-400" />
@@ -240,7 +239,7 @@ export default function AnalyticsPage() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="self-stretch"
             >
-              <Card className="bg-slate-800/40 border-slate-700/60 p-6 hover:bg-slate-800/60 transition-colors h-full">
+              <Card className="bg-slate-900/80 border-slate-800/80 p-6 hover:bg-slate-900/60 transition-colors h-full">
                 <div className="flex items-center mb-6">
                   <div className="p-2 bg-purple-500/20 rounded-lg mr-4">
                     <Target className="h-5 w-5 text-purple-400" />
@@ -261,7 +260,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 p-6 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-6 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center mb-6">
                 <div className="p-2 bg-orange-500/20 rounded-lg mr-4">
                   <BarChart3 className="h-5 w-5 text-orange-400" />
@@ -280,7 +279,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 p-6 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-6 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center mb-6">
                 <div className="p-2 bg-yellow-500/20 rounded-lg mr-4">
                   <BookOpen className="h-5 w-5 text-yellow-400" />
@@ -300,7 +299,7 @@ export default function AnalyticsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 p-6 hover:bg-slate-800/60 transition-colors">
+            <Card className="bg-slate-900/80 border-slate-800/80 p-6 hover:bg-slate-900/60 transition-colors">
               <div className="flex items-center mb-6">
                 <div className="p-2 bg-amber-500/20 rounded-lg mr-4">
                   <Trophy className="h-5 w-5 text-amber-400" />

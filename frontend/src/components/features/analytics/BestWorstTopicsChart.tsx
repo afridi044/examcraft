@@ -101,7 +101,7 @@ export function BestWorstTopicsChart({ data }: BestWorstTopicsChartProps) {
             <p className="text-sm text-gray-400 mb-4">Your strongest subject areas</p>
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={bestData}>
+            <BarChart data={bestData} style={{ background: 'transparent' }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="name" 
@@ -155,7 +155,7 @@ export function BestWorstTopicsChart({ data }: BestWorstTopicsChartProps) {
             <p className="text-sm text-gray-400 mb-4">Topics that need more attention</p>
           </div>
           <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={worstData}>
+            <BarChart data={worstData} style={{ background: 'transparent' }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="name" 

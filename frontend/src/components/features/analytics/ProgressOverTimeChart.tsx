@@ -70,7 +70,7 @@ export function ProgressOverTimeChart({ data }: ProgressOverTimeChartProps) {
             <p className="text-sm text-gray-400 mb-4">Daily learning activity and performance</p>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <AreaChart data={chartData}>
+            <AreaChart data={chartData} style={{ background: 'transparent' }}>
               <defs>
                 <linearGradient id="questionsGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
@@ -138,7 +138,7 @@ export function ProgressOverTimeChart({ data }: ProgressOverTimeChartProps) {
             <p className="text-sm text-gray-400 mb-4">Time efficiency in answering questions</p>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={chartData}>
+            <LineChart data={chartData} style={{ background: 'transparent' }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis 
                 dataKey="date" 

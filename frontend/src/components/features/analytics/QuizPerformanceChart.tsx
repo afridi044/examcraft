@@ -88,7 +88,7 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
           <p className="text-sm text-gray-400 mb-4">Your quiz scores over time</p>
         </div>
         <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData}>
+          <LineChart data={chartData} style={{ background: 'transparent' }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 
               dataKey="date" 
