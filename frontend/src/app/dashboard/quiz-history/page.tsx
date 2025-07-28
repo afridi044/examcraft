@@ -70,9 +70,6 @@ export default function QuizHistoryPage() {
     { id: "score_asc", label: "Score (Low → High)", icon: Trophy },
   ];
 
-  // Use the database user_id
-  const userId = currentUser?.id || "";
-
   // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
     if (!userLoading && !currentUser) {
@@ -108,7 +105,7 @@ export default function QuizHistoryPage() {
   } = useBackendUserQuizAttempts();
 
   // Simplified loading state
-  const showLoadingScreen = userLoading || (userId && loadingAttempts && !quizAttempts);
+  const showLoadingScreen = userLoading || (currentUser && loadingAttempts && !quizAttempts);
 
   // Safe data
   const safeQuizAttempts = quizAttempts || [];

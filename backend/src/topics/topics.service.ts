@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateTopicInput, ApiResponse } from '../types/shared.types';
 import type { Tables } from '../types/supabase.generated';
@@ -7,7 +7,6 @@ type TopicRow = Tables<'topics'>;
 
 @Injectable()
 export class TopicsService {
-  private readonly logger = new Logger(TopicsService.name);
   constructor(private readonly db: DatabaseService) {}
 
   getAllTopics(): Promise<ApiResponse<TopicRow[]>> {

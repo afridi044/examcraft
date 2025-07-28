@@ -19,17 +19,9 @@ import {
 import { QuizService } from './quiz.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { GenerateQuizDto } from './dto/generate-quiz.dto';
+import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import { User } from '../auth/decorators/user.decorator';
 import { AuthUser } from '../auth/strategies/jwt.strategy';
-
-interface SubmitAnswerDto {
-  question_id: string;
-  quiz_id: string;
-  selected_option_id?: string;
-  text_answer?: string;
-  is_correct?: boolean;
-  time_taken_seconds: number;
-}
 
 @ApiTags('Quiz')
 @Controller('quiz')

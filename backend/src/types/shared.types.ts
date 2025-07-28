@@ -173,20 +173,6 @@ export type TableName = (typeof TABLE_NAMES)[keyof typeof TABLE_NAMES];
 // Legacy Aliases (for backward compatibility during migration)
 // =============================================
 
-// Row types
-export type User = UserRow;
-export type Topic = TopicRow;
-export type Question = QuestionRow;
-export type QuestionOption = QuestionOptionRow;
-export type Quiz = QuizRow;
-export type QuizQuestion = QuizQuestionRow;
-export type Exam = ExamRow;
-export type ExamQuestion = ExamQuestionRow;
-export type ExamSession = ExamSessionRow;
-export type UserAnswer = UserAnswerRow;
-export type Flashcard = FlashcardRow;
-export type Explanation = ExplanationRow;
-
 // Input types (legacy naming)
 export type CreateUserInput = Omit<UserInsert, 'password_hash'> & { password_hash?: string };
 export type CreateTopicInput = TopicInsert;

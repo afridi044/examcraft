@@ -66,7 +66,7 @@ export default function QuizReviewPage() {
   }
 
   // Improved loading logic - wait for all required data
-  const showFullLoadingScreen = userLoading || loading || !currentUser?.id || !reviewData;
+  const showFullLoadingScreen = userLoading || loading || !currentUser || !reviewData;
 
   // Flashcard creation function with optimistic updates
   const createFlashcard = async (questionId: string): Promise<void> => {

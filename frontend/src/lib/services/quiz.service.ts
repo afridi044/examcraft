@@ -53,13 +53,6 @@ export const quizService = {
   },
 
   /**
-   * Get quizzes for a user
-   */
-  async getUserQuizzes(userId: string): Promise<ApiResponse<Quiz[]>> {
-    return apiClient.get<Quiz[]>(`/quiz/user/${userId}`);
-  },
-
-  /**
    * Get user's quiz attempts - SECURE: Uses JWT token, no userId parameter
    */
   async getUserAttempts(): Promise<ApiResponse<QuizAttempt[]>> {

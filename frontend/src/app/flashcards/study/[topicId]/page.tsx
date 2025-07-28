@@ -96,11 +96,11 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
   useEffect(() => {
     return () => {
       // Refetch flashcards when user leaves the study page
-      if (currentUser?.id) {
+      if (currentUser) {
         setTimeout(() => refetchFlashcards(), 100);
       }
     };
-  }, [currentUser?.id, refetchFlashcards]);
+  }, [currentUser, refetchFlashcards]);
 
   // Extract topic ID from params
   useEffect(() => {
@@ -133,7 +133,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
     let mounted = true;
     
     const initializeStudySession = async () => {
-      if (!currentUser?.id || !topicId || session) {
+      if (!currentUser || !topicId || session) {
         return;
       }
 
@@ -141,7 +141,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
         setIsInitializing(true);
         setInitError(null);
         
-        console.log('🚀 Initializing study session:', { userId: currentUser.id, topicId });
+        console.log('🚀 Initializing study session:', { topicId });
         
         const response = await flashcardService.startStudySession({
           topicId,
@@ -182,14 +182,14 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
       }
     };
 
-    if (currentUser?.id && topicId && !session) {
+    if (currentUser && topicId && !session) {
       initializeStudySession();
     }
 
     return () => {
       mounted = false;
     };
-  }, [currentUser?.id, topicId, session]);
+  }, [currentUser, topicId, session]);
 
   // Show buttons with delay after flipping to answer
   useEffect(() => {
@@ -252,10 +252,8 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
       // Navigate to completion if last card
       if (isLastCard) {
         // Comprehensive cache invalidation for real-time updates
-        if (currentUser?.id) {
-          invalidateFlashcards(currentUser.id, { includeExistence: true });
-          invalidateBackendDashboard(currentUser.id);
-        }
+        invalidateFlashcards({ includeExistence: true });
+        invalidateBackendDashboard();
         router.push(`/flashcards/study/${topicId}/complete`);
       }
     } catch (error) {
@@ -268,7 +266,7 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
 
   // Restart session
   const handleRestart = async () => {
-    if (!currentUser?.id || !topicId) return;
+    if (!currentUser || !topicId) return;
 
     try {
       setIsInitializing(true);

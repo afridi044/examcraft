@@ -4,31 +4,29 @@ import type { ApiResponse, User, CreateUserInput, UpdateUserInput } from '@/type
 
 export const userService = {
   /**
-   * Get current authenticated user
+   * Get current user profile
    */
-  async getCurrentUser(authId?: string): Promise<ApiResponse<User>> {
-    const params = authId ? `?authId=${encodeURIComponent(authId)}` : '';
-    return apiClient.get<User>(`/users/current${params}`);
+  async getCurrentUser(): Promise<ApiResponse<User>> {
+    return apiClient.get<{ user: User }>('/auth/me');
   },
 
   /**
-   * Get user by ID
+   * Update current user profile
    */
-  async getUserById(userId: string): Promise<ApiResponse<User>> {
-    return apiClient.get<User>(`/users/${userId}`);
-  },
-
-  /**
-   * Create new user
-   */
-  async createUser(input: CreateUserInput): Promise<ApiResponse<User>> {
-    return apiClient.post<User>('/users', input);
-  },
-
-  /**
-   * Update user
-   */
-  async updateUser(userId: string, input: UpdateUserInput): Promise<ApiResponse<User>> {
-    return apiClient.patch<User>(`/users/${userId}`, input);
+  async updateCurrentUser(input: UpdateUserInput): Promise<ApiResponse<User>> {
+    const response = await apiClient.patch<{ user: User }>('/auth/me', input);
+    
+    // Transform the response to match expected format
+    // Backend returns { success: true, user: User }
+    // Frontend expects { success: true, data: User }
+    if (response.success && response.data) {
+      return {
+        success: true,
+        data: response.data.user,
+        error: null,
+      };
+    }
+    
+    return response;
   },
 }; 

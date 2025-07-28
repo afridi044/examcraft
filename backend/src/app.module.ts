@@ -6,6 +6,7 @@ import { QuizModule } from './quiz/quiz.module';
 import { FlashcardsModule } from './flashcards/flashcards.module';
 import { DatabaseModule } from './database/database.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { AuthModule } from './auth/auth.module';
 import { TopicsModule } from './topics/topics.module';
 import { QuestionsModule } from './questions/questions.module';
@@ -27,6 +28,7 @@ import configuration from './config/configuration';
     FlashcardsModule,
     DatabaseModule,
     DashboardModule,
+    AnalyticsModule,
     AuthModule,
     TopicsModule,
     QuestionsModule,

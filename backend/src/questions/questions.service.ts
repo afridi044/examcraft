@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import {
   ApiResponse,
@@ -9,8 +9,6 @@ import {
 
 @Injectable()
 export class QuestionsService {
-  private readonly logger = new Logger(QuestionsService.name);
-
   constructor(private readonly db: DatabaseService) {}
 
   getQuestions(filters?: {

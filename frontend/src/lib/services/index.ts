@@ -5,6 +5,7 @@ export { healthService } from './health.service';
 export { quizService } from './quiz.service';
 export { flashcardService } from './flashcard.service';
 export { dashboardService } from './dashboard.service';
+export { analyticsService } from './analytics.service';
 export { authService } from './auth.service';
 export { userService } from './user.service';
 export { topicService } from './topic.service';

@@ -52,7 +52,7 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
   }, []);
 
   const handleDelete = useCallback(async () => {
-    if (!currentUser?.id) {
+    if (!currentUser) {
       toast.error("Please log in to delete flashcards");
       return;
     }
@@ -70,7 +70,7 @@ export function FlashCard({ flashcard, index }: FlashCardProps) {
         error instanceof Error ? error.message : "Failed to delete flashcard"
       );
     }
-  }, [flashcard.flashcard_id, currentUser?.id, deleteFlashcard]);
+  }, [flashcard.flashcard_id, currentUser, deleteFlashcard]);
 
   // Calculate dynamic height based on current content (question or answer)
   const getContentLength = (text: string) => text.length;

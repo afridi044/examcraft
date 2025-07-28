@@ -104,7 +104,7 @@ export function CreateFlashcardModal({
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!currentUser?.id) {
+    if (!currentUser) {
       toast.error("Please log in to create flashcards");
       return;
     }
@@ -123,7 +123,6 @@ export function CreateFlashcardModal({
       await createFlashcardMutation.mutateAsync({
         question: manualForm.question.trim(),
         answer: manualForm.answer.trim(),
-        user_id: currentUser.id,
         topic_id: manualForm.topic_id || undefined,
         custom_topic: manualForm.custom_topic.trim() || undefined,
       });
@@ -140,7 +139,7 @@ export function CreateFlashcardModal({
   const handleAISubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!currentUser?.id) {
+    if (!currentUser) {
       toast.error("Please log in to generate flashcards");
       return;
     }
@@ -163,7 +162,6 @@ export function CreateFlashcardModal({
         : aiForm.custom_topic;
 
       await generateAIFlashcardsMutation.mutateAsync({
-        userId: currentUser.id,
         topicId: aiForm.topic_id || undefined,
         topic: aiForm.topic_id
           ? topics?.find((t: any) => t.topic_id === aiForm.topic_id)?.name || ""

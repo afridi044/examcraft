@@ -60,20 +60,7 @@ export class UserDatabaseService extends BaseDatabaseService {
     }
   }
 
-  async getUserById(userId: string): Promise<ApiResponse<UserRow>> {
-    try {
-      const { data, error } = await this.supabaseAdmin
-        .from(TABLE_NAMES.USERS)
-        .select('*')
-        .eq('user_id', userId)
-        .single();
 
-      if (error) return this.handleError(error, 'getUserById');
-      return this.handleSuccess(data);
-    } catch (error) {
-      return this.handleError(error, 'getUserById');
-    }
-  }
 
   async createUser(
     input: Omit<TablesInsert<'users'>, 'password_hash'>,

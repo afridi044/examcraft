@@ -155,33 +155,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     }
   }
 
-  async getFlashcardsByMastery(
-    userId: string,
-    masteryStatus: 'learning' | 'under_review' | 'mastered',
-  ): Promise<ApiResponse<FlashcardRow[]>> {
-    try {
-      this.logger.log(
-        `📚 Getting flashcards by mastery status: ${masteryStatus} for user: ${userId}`,
-      );
 
-      const { data, error } = await this.supabase
-        .from(TABLE_NAMES.FLASHCARDS)
-        .select(
-          `
-          *,
-          topic:topics(*)
-        `,
-        )
-        .eq('user_id', userId)
-        .eq('mastery_status', masteryStatus)
-        .order('created_at', { ascending: false });
-
-      if (error) return this.handleError(error, 'getFlashcardsByMastery');
-      return this.handleSuccess(data || []);
-    } catch (error) {
-      return this.handleError(error, 'getFlashcardsByMastery');
-    }
-  }
 
   async getFlashcardsByTopic(
     userId: string,

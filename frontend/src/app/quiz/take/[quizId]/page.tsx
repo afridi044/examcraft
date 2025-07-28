@@ -57,9 +57,6 @@ export default function TakeQuizPage() {
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
   const invalidateFlashcards = useInvalidateFlashcards();
 
-  // Memoize userId to prevent unnecessary re-renders
-  const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
-
   // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
     if (!userLoading && !currentUser) {
@@ -238,12 +235,10 @@ export default function TakeQuizPage() {
       await Promise.all(submitPromises);
 
       // Invalidate caches to ensure fresh data on navigation
-      if (userId) {
-        invalidateBackendQuiz(userId, quizId);
-        invalidateBackendDashboard(userId);
-        // Also invalidate flashcards since quiz answers might affect flashcard existence
-        invalidateFlashcards(userId, { includeExistence: true });
-      }
+      invalidateBackendQuiz(quizId);
+      invalidateBackendDashboard();
+      // Also invalidate flashcards since quiz answers might affect flashcard existence
+      invalidateFlashcards({ includeExistence: true });
 
       const result: QuizResult = {
         score,

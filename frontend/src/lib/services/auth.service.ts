@@ -21,6 +21,11 @@ export interface AuthUser {
   first_name?: string;
   last_name?: string;
   full_name?: string; // Keep for backward compatibility
+  institution?: string;
+  field_of_study?: string;
+  created_at: string;
+  updated_at: string;
+  last_login?: string;
 }
 
 export interface AuthResponse {
@@ -227,6 +232,33 @@ export const authService = {
       return response.success;
     } catch {
       return false;
+    }
+  },
+
+  /**
+   * Get current user profile
+   */
+  async getCurrentUser(): Promise<{ success: boolean; data?: AuthUser; error?: string }> {
+    try {
+      const response = await apiClient.get<{ user: AuthUser }>('/auth/me');
+      
+      if (response.success && response.data?.user) {
+        return {
+          success: true,
+          data: response.data.user,
+        };
+      } else {
+        return {
+          success: false,
+          error: response.error || 'Failed to get current user',
+        };
+      }
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Network error';
+      return {
+        success: false,
+        error: errorMessage,
+      };
     }
   },
 };

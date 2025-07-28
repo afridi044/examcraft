@@ -25,9 +25,6 @@ function FlashcardsPageContent() {
   const searchParams = useSearchParams();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
 
-  // Memoize userId to prevent unnecessary re-renders
-  const userId = useMemo(() => currentUser?.id || "", [currentUser?.id]);
-
   // Scroll to top when navigating
   useScrollToTop();
 

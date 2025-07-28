@@ -17,6 +17,7 @@ async function bootstrap() {
     'http://127.0.0.1:3001',
     // VM-specific origins - hardcoded for deployment
     'http://20.198.228.71:3001', // Additional frontend port for VM
+    'http://20.244.0.22:3000', // Additional frontend port for VM
   ];
 
   app.enableCors({

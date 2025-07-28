@@ -26,14 +26,6 @@ export class UsersController {
     return res;
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get user by ID' })
-  async getById(@Param('id') id: string) {
-    const res = await this.usersService.getById(id);
-    if (!res.success) throw new NotFoundException(res.error);
-    return res;
-  }
-
   @Post()
   @ApiOperation({ summary: 'Create user' })
   async create(@Body() body: CreateUserInput) {

@@ -85,34 +85,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
     }
   }
 
-  async getQuestionWithCorrectAnswer(
-    questionId: string,
-  ): Promise<ApiResponse<{ question: QuestionRow; answer: string }>> {
-    try {
-      // Get question
-      const { data: question, error: qErr } = await this.supabase
-        .from(TABLE_NAMES.QUESTIONS)
-        .select('*')
-        .eq('question_id', questionId)
-        .single<QuestionRow>();
 
-      if (qErr) return this.handleError(qErr, 'getQuestion');
-
-      // Get correct option
-      const { data: option, error: oErr } = await this.supabase
-        .from(TABLE_NAMES.QUESTION_OPTIONS)
-        .select('content')
-        .eq('question_id', questionId)
-        .eq('is_correct', true)
-        .single();
-
-      if (oErr) return this.handleError(oErr, 'getQuestionCorrectOption');
-
-      return this.handleSuccess({ question, answer: option.content });
-    } catch (error) {
-      return this.handleError(error, 'getQuestionWithCorrectAnswer');
-    }
-  }
 
   async getQuestionById(questionId: string): Promise<ApiResponse<any>> {
     try {

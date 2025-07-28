@@ -113,45 +113,7 @@ describe('quizService', () => {
     });
   });
 
-  describe('getUserQuizzes', () => {
-    const userId = 'user123';
-
-    it('returns user quizzes on success', async () => {
-      const mockResponse = [
-        { id: 'quiz1', title: 'Quiz 1' },
-        { id: 'quiz2', title: 'Quiz 2' }
-      ];
-
-      mockedApiClient.get.mockResolvedValueOnce({
-        data: mockResponse,
-        error: null,
-        success: true
-      });
-
-      const result = await quizService.getUserQuizzes(userId);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockResponse);
-      expect(mockedApiClient.get).toHaveBeenCalledWith(`/quiz/user/${userId}`);
-    });
-
-    it('handles empty quiz list', async () => {
-      mockedApiClient.get.mockResolvedValueOnce({
-        data: [],
-        error: null,
-        success: true
-      });
-
-      const result = await quizService.getUserQuizzes(userId);
-
-      expect(result.success).toBe(true);
-      expect(result.data).toEqual([]);
-    });
-  });
-
   describe('getUserAttempts', () => {
-    const userId = 'user123';
-
     it('returns user attempts on success', async () => {
       const mockResponse = [
         { id: 'attempt1', quiz_id: 'quiz1', score: 80 },
@@ -164,7 +126,7 @@ describe('quizService', () => {
         success: true
       });
 
-      const result = await quizService.getUserAttempts(userId);
+      const result = await quizService.getUserAttempts();
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);
@@ -174,7 +136,6 @@ describe('quizService', () => {
 
   describe('submitAnswer', () => {
     const input = {
-      userId: 'user123',
       questionId: 'question1',
       selectedOptionId: 'option1',
       isCorrect: true,
@@ -185,7 +146,6 @@ describe('quizService', () => {
     it('submits answer successfully', async () => {
       const mockResponse = {
         id: 'answer1',
-        user_id: 'user123',
         question_id: 'question1',
         is_correct: true
       };
@@ -226,12 +186,10 @@ describe('quizService', () => {
 
   describe('getQuizReview', () => {
     const quizId = 'quiz123';
-    const userId = 'user123';
 
     it('returns quiz review data on success', async () => {
       const mockResponse = {
         quiz_id: quizId,
-        user_id: userId,
         score: 85,
         total_questions: 10,
         correct_answers: 8
@@ -243,7 +201,7 @@ describe('quizService', () => {
         success: true
       });
 
-      const result = await quizService.getQuizReview(quizId, userId);
+      const result = await quizService.getQuizReview(quizId);
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual(mockResponse);

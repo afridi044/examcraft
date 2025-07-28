@@ -372,6 +372,25 @@ export function useBackendAuth() {
     }
   }, [queryClient]);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await authService.getCurrentUser();
+      if (response.success && response.data) {
+        setState(prev => ({
+          ...prev,
+          user: response.data,
+          isAuthenticated: true,
+        }));
+        return { error: null };
+      } else {
+        return { error: response.error || 'Failed to refresh user data' };
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh user data';
+      return { error: errorMessage };
+    }
+  }, []);
+
   return {
     user: state.user,
     loading: state.loading,
@@ -382,5 +401,6 @@ export function useBackendAuth() {
     signOut,
     clearAuthState,
     setSignOutMessage,
+    refreshUser,
   };
 }

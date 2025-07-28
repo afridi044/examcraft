@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { GenerateQuizDto } from './dto/generate-quiz.dto';
+import { SubmitAnswerDto } from './dto/submit-answer.dto';
 import {
   QuizWithQuestions,
   ApiResponse,
@@ -13,15 +14,6 @@ import {
   UpdateQuizInput,
   QuizRow,
 } from '../types/shared.types';
-
-interface SubmitAnswerDto {
-  question_id: string;
-  quiz_id: string;
-  selected_option_id?: string;
-  text_answer?: string;
-  is_correct?: boolean;
-  time_taken_seconds: number;
-}
 
 @Injectable()
 export class QuizService {

@@ -1,8 +1,9 @@
-import { Controller, Post, Body, HttpStatus, HttpCode, Get, Res, Req } from '@nestjs/common';
+import { Controller, Post, Body, HttpStatus, HttpCode, Get, Res, Req, Patch, BadRequestException } from '@nestjs/common';
 import { Request } from 'express';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { UsersService } from '../users/users.service';
 import { SignInDto, SignUpDto, AuthResponseDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
 import { User } from './decorators/user.decorator';
@@ -11,7 +12,10 @@ import { AuthUser } from './strategies/jwt.strategy';
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Public()
   @Post('signin')
@@ -97,6 +101,46 @@ export class AuthController {
       success: true,
       user: formattedUser,
       message: 'Current user retrieved successfully',
+    };
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Update current user profile (Session Protected)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user profile updated successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized - No user session found' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  async updateCurrentUser(@User() user: any, @Body() updateData: any) {
+    const result = await this.usersService.update(user.id, updateData);
+    
+    if (!result.success) {
+      throw new BadRequestException(result.error);
+    }
+
+    // Format the updated user object
+    const updatedUser = result.data;
+    
+    if (!updatedUser) {
+      throw new BadRequestException('Failed to update user profile');
+    }
+
+    const formattedUser = {
+      id: updatedUser.user_id,
+      auth_id: user.authId,
+      email: updatedUser.email,
+      first_name: updatedUser.first_name,
+      last_name: updatedUser.last_name,
+      full_name: `${updatedUser.first_name} ${updatedUser.last_name}`.trim(),
+      institution: updatedUser.institution,
+      field_of_study: updatedUser.field_of_study,
+    };
+
+    return {
+      success: true,
+      user: formattedUser,
+      message: 'Current user updated successfully',
     };
   }
 }

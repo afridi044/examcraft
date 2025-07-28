@@ -68,9 +68,7 @@ export class DatabaseService implements OnModuleInit {
     return this.userService.getUserByAuthId(authUserId);
   }
 
-  async getUserById(userId: string) {
-    return this.userService.getUserById(userId);
-  }
+
 
   async createUser(input: any) {
     return this.userService.createUser(input);
@@ -153,9 +151,7 @@ export class DatabaseService implements OnModuleInit {
     return this.flashcardService.updateFlashcard(flashcardId, updateData);
   }
 
-  async getFlashcardsByMastery(userId: string, masteryStatus: any) {
-    return this.flashcardService.getFlashcardsByMastery(userId, masteryStatus);
-  }
+
 
   async getFlashcardsByTopic(userId: string, topicId: string) {
     return this.flashcardService.getFlashcardsByTopic(userId, topicId);
@@ -231,9 +227,7 @@ export class DatabaseService implements OnModuleInit {
     return this.questionService.createExplanation(input);
   }
 
-  async getQuestionWithCorrectAnswer(questionId: string) {
-    return this.questionService.getQuestionWithCorrectAnswer(questionId);
-  }
+
 
   async getQuestionById(questionId: string) {
     return this.questionService.getQuestionById(questionId);
@@ -280,5 +274,32 @@ export class DatabaseService implements OnModuleInit {
 
   async getAllDashboardData(userId: string) {
     return this.analyticsService.getAllDashboardData(userId);
+  }
+
+  // =============================================
+  // Advanced Analytics Operations - Delegate to AnalyticsDatabaseService
+  // =============================================
+  async getUserProgressOverTime(userId: string, dateRange?: { from: Date; to: Date }) {
+    return this.analyticsService.getUserProgressOverTime(userId, dateRange);
+  }
+
+  async getUserActivityHeatmap(userId: string, year?: number) {
+    return this.analyticsService.getUserActivityHeatmap(userId, year);
+  }
+
+  async getUserAccuracyBreakdown(userId: string) {
+    return this.analyticsService.getUserAccuracyBreakdown(userId);
+  }
+
+  async getUserQuizPerformanceTrend(userId: string) {
+    return this.analyticsService.getUserQuizPerformanceTrend(userId);
+  }
+
+  async getUserFlashcardAnalytics(userId: string) {
+    return this.analyticsService.getUserFlashcardAnalytics(userId);
+  }
+
+  async getUserBestWorstTopics(userId: string) {
+    return this.analyticsService.getUserBestWorstTopics(userId);
   }
 }

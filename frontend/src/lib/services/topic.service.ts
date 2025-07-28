@@ -44,10 +44,10 @@ export const topicService = {
   },
 
   /**
-   * Get topics with user progress (uses dashboard service)
+   * Get topics with progress for current user
    */
-  async getTopicsWithProgress(userId: string): Promise<ApiResponse<TopicWithProgress[]>> {
-    // This might need to be implemented in the backend or use dashboard endpoint
-    return apiClient.get<TopicWithProgress[]>(`/dashboard/progress/${userId}`);
+  async getTopicsWithProgress(): Promise<ApiResponse<TopicWithProgress[]>> {
+    // Backend determines user from JWT token
+    return apiClient.get<TopicWithProgress[]>('/dashboard/progress');
   },
 }; 
