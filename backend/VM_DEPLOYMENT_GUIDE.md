@@ -16,7 +16,7 @@ The VM-specific configuration is now **hardcoded** in the source code. No additi
 
 ### What's Hardcoded
 
-- **Cookie domain**: `20.198.228.71` (your VM IP)
+- **Cookie domain**: `20.244.0.22` (your VM IP)
 - **Secure flag**: Disabled for HTTP deployment
 - **SameSite**: Set to `'lax'` for cross-domain compatibility
 - **CORS origins**: Includes all necessary VM URLs
@@ -62,7 +62,7 @@ NODE_ENV=production
 
 ### Common Issues
 
-1. **Wrong IP address** - The code is hardcoded for `20.198.228.71`
+1. **Wrong IP address** - The code is hardcoded for `20.244.0.22`
 2. **Port mismatch** - Ensure frontend and backend ports are correct
 3. **Environment not set** - Make sure `NODE_ENV=production` is set
 

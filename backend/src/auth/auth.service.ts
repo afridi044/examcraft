@@ -36,7 +36,7 @@ export class AuthService {
   private getCookieOptions(maxAge?: number) {
     // VM-specific configuration - hardcoded for deployment
     const isVM = process.env.NODE_ENV === 'production';
-    const vmIP = '20.198.228.71';
+    const vmIP = '20.244.0.22';
     
     return {
       httpOnly: true,
