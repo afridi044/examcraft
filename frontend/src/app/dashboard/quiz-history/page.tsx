@@ -24,6 +24,7 @@ import {
   getScoreColors,
   calculateQuizStats,
   filterAndSortAttempts,
+  formatQuizTime,
 } from "@/lib/utils/quiz-history";
 import type { QuizAttempt } from "@/types";
 import { StatCard } from "@/components/features/dashboard/StatCard";
@@ -264,14 +265,11 @@ export default function QuizHistoryPage() {
               className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
             >
               <StatCard
-                value={stats.completedQuizzes > 0 ? stats.averageTime.toFixed(1) : "--"}
+                value={stats.completedQuizzes > 0 ? formatQuizTime(stats.averageTime) : "--"}
                 label="Avg Time"
                 rightIcon={<Clock className="h-6 w-6 text-white" />}
                 cardClass="bg-gradient-to-br from-[#F2A900] to-[#b97b16] border-none"
                 textClass="text-white"
-                sublabel="min"
-                sublabelClass="text-white/80 ml-1"
-                inlineSublabel
               />
             </motion.div>
           </motion.div>

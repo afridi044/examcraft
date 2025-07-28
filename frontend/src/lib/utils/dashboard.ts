@@ -1,12 +1,25 @@
-import { BookOpen, Target, Brain, TrendingUp, Calendar, BarChart3 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { LucideIcon, BookOpen, Target, Brain, Clock, BarChart3, Plus, Star, Sparkles, Trophy, Flame, Activity, Rocket, TrendingUp, Calendar } from "lucide-react";
 
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+export const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+  if (diffInHours < 1) {
+    const diffInMinutes = Math.floor(diffInHours * 60);
+    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
+  } else if (diffInHours < 24) {
+    const hours = Math.floor(diffInHours);
+    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  } else if (diffInHours < 48) {
+    return 'Yesterday';
+  } else {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  }
 };
 
 export const getActivityIcon = (type: string): LucideIcon => {
@@ -20,6 +33,24 @@ export const getActivityIcon = (type: string): LucideIcon => {
     default:
       return BookOpen;
   }
+};
+
+// Enhanced function to get appropriate icon based on activity title
+export const getActivityIconFromTitle = (title: string): LucideIcon => {
+  const lowerTitle = title.toLowerCase();
+  
+  if (lowerTitle.includes('created') && lowerTitle.includes('quiz')) {
+    return Plus;
+  } else if (lowerTitle.includes('completed') && lowerTitle.includes('quiz')) {
+    return BookOpen;
+  }
+  
+  // Default icon for quiz activities
+  if (lowerTitle.includes('quiz')) {
+    return BookOpen;
+  }
+  
+  return BookOpen;
 };
 
 export const STAT_CARDS_CONFIG = [

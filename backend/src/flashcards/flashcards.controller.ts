@@ -9,8 +9,9 @@ import {
   NotFoundException,
   Patch,
   Delete,
+  Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { FlashcardsService } from './flashcards.service';
 import { CreateFlashcardDto } from './dto/create-flashcard.dto';
 import { CreateFlashcardFromQuestionDto } from './dto/create-from-question.dto';
@@ -64,6 +65,21 @@ export class FlashcardsController {
     const res = await this.flashcardsService.getUserFlashcards(user.id);
     if (!res.success) {
       throw new BadRequestException(res.error || 'Failed');
+    }
+    return res;
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search flashcards for the authenticated user' })
+  @ApiQuery({ name: 'q', description: 'Search query', example: 'JavaScript' })
+  @ApiResponse({
+    status: 200,
+    description: 'Search results retrieved successfully',
+  })
+  async searchFlashcards(@Query('q') query: string, @User() user: AuthUser) {
+    const res = await this.flashcardsService.searchFlashcards(query, user.id);
+    if (!res.success) {
+      throw new BadRequestException(res.error || 'Failed to search flashcards');
     }
     return res;
   }

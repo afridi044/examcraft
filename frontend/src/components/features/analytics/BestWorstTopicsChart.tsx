@@ -7,16 +7,15 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
+  Tooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, TrendingDown } from 'lucide-react';
 
 interface TopicData {
   topic_name: string;
-  total_attempts: number;
-  correct_attempts: number;
+  questions_attempted: number;
   accuracy_percentage: number;
 }
 
@@ -30,13 +29,13 @@ interface BestWorstTopicsChartProps {
 export function BestWorstTopicsChart({ data }: BestWorstTopicsChartProps) {
   if (!data || (!data.bestTopics?.length && !data.worstTopics?.length)) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-slate-700/40 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Trophy className="h-8 w-8 text-gray-400" />
+      <div className="flex items-center justify-center h-48 sm:h-64 text-gray-400">
+        <div className="text-center px-4">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-700/40 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+            <Trophy className="h-8 w-8 sm:h-10 sm:w-10 text-gray-400" />
           </div>
-          <p className="text-lg font-medium text-gray-100 mb-2">No Topic Data</p>
-          <p className="text-gray-400">Start answering questions to see your topic performance</p>
+          <p className="text-lg sm:text-xl font-medium text-gray-100 mb-2">No Topic Data</p>
+          <p className="text-gray-400 text-sm sm:text-base">Start answering questions to see your topic performance</p>
         </div>
       </div>
     );
@@ -44,242 +43,225 @@ export function BestWorstTopicsChart({ data }: BestWorstTopicsChartProps) {
 
   const { bestTopics, worstTopics } = data;
 
-  // Transform data for charts
+  // Transform data for charts with safety checks
   const bestData = bestTopics?.map(item => ({
-    name: item.topic_name,
-    accuracy: item.accuracy_percentage,
-    attempts: item.total_attempts,
-    correct: item.correct_attempts,
-  })) || [];
+    name: item.topic_name || 'Unknown Topic',
+    accuracy: item.accuracy_percentage || 0,
+    attempts: item.questions_attempted || 0,
+    correct: Math.round(((item.accuracy_percentage || 0) / 100) * (item.questions_attempted || 0)),
+  })).filter(item => !isNaN(item.accuracy) && !isNaN(item.attempts)) || [];
 
   const worstData = worstTopics?.map(item => ({
-    name: item.topic_name,
-    accuracy: item.accuracy_percentage,
-    attempts: item.total_attempts,
-    correct: item.correct_attempts,
-  })) || [];
+    name: item.topic_name || 'Unknown Topic',
+    accuracy: item.accuracy_percentage || 0,
+    attempts: item.questions_attempted || 0,
+    correct: Math.round(((item.accuracy_percentage || 0) / 100) * (item.questions_attempted || 0)),
+  })).filter(item => !isNaN(item.accuracy) && !isNaN(item.attempts)) || [];
 
   const bestAverage = bestData.length > 0 
-    ? Math.round(bestData.reduce((sum, item) => sum + item.accuracy, 0) / bestData.length)
+    ? Math.round(bestData.reduce((sum, item) => sum + (item.accuracy || 0), 0) / bestData.length)
     : 0;
   const worstAverage = worstData.length > 0 
-    ? Math.round(worstData.reduce((sum, item) => sum + item.accuracy, 0) / worstData.length)
+    ? Math.round(worstData.reduce((sum, item) => sum + (item.accuracy || 0), 0) / worstData.length)
     : 0;
-  const totalAttempts = [...bestData, ...worstData].reduce((sum, item) => sum + item.attempts, 0);
+  const totalAttempts = [...bestData, ...worstData].reduce((sum, item) => sum + (item.attempts || 0), 0);
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="w-full h-full flex flex-col"
+      className="w-full h-full"
     >
-      {/* Summary Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-green-300 mb-1">Best Average</p>
-          <p className="text-2xl font-bold text-green-400">{bestAverage}%</p>
-        </div>
-        <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-red-300 mb-1">Worst Average</p>
-          <p className="text-2xl font-bold text-red-400">{worstAverage}%</p>
-        </div>
-        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-blue-300 mb-1">Total Attempts</p>
-          <p className="text-2xl font-bold text-blue-400">{totalAttempts}</p>
-        </div>
-      </div>
-
-      {/* Best Topics */}
-      {bestData.length > 0 && (
-        <div className="flex-1 space-y-4">
-          <div>
-            <h4 className="text-lg font-semibold text-gray-100 mb-2 flex items-center">
-              <TrendingUp className="h-5 w-5 text-green-400 mr-2" />
-              Best Performing Topics
-            </h4>
-            <p className="text-sm text-gray-400 mb-4">Your strongest subject areas</p>
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={bestData} style={{ background: 'transparent' }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="name" 
-                stroke="#9ca3af" 
-                fontSize={11}
-                tickLine={false}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                stroke="#9ca3af" 
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                domain={[0, 100]}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1f2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#f9fafb',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                }}
-                labelStyle={{ color: '#9ca3af', fontWeight: '600' }}
-                formatter={(value: any, name: any, props: any) => [
-                  `${value}%`,
-                  `${name} (${props.payload.attempts} attempts)`
-                ]}
-              />
-              <Bar
-                dataKey="accuracy"
-                fill="#10b981"
-                radius={[4, 4, 0, 0]}
-                name="Accuracy %"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Worst Topics */}
-      {worstData.length > 0 && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <h4 className="text-lg font-semibold text-gray-100 mb-2 flex items-center">
-              <TrendingDown className="h-5 w-5 text-red-400 mr-2" />
-              Areas for Improvement
-            </h4>
-            <p className="text-sm text-gray-400 mb-4">Topics that need more attention</p>
-          </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={worstData} style={{ background: 'transparent' }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis 
-                dataKey="name" 
-                stroke="#9ca3af" 
-                fontSize={11}
-                tickLine={false}
-                angle={-45}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                stroke="#9ca3af" 
-                fontSize={11}
-                tickLine={false}
-                axisLine={false}
-                domain={[0, 100]}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1f2937',
-                  border: '1px solid #374151',
-                  borderRadius: '8px',
-                  color: '#f9fafb',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                }}
-                labelStyle={{ color: '#9ca3af', fontWeight: '600' }}
-                formatter={(value: any, name: any, props: any) => [
-                  `${value}%`,
-                  `${name} (${props.payload.attempts} attempts)`
-                ]}
-              />
-              <Bar
-                dataKey="accuracy"
-                fill="#ef4444"
-                radius={[4, 4, 0, 0]}
-                name="Accuracy %"
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* Topic Lists */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Best Topics List */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Best Topics */}
         {bestData.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-gray-100 mb-3 flex items-center">
-              <Trophy className="h-4 w-4 text-yellow-400 mr-2" />
-              Top Performers
-            </h4>
-            <div className="space-y-2">
-              {bestData.slice(0, 5).map((topic, index) => (
-                <motion.div
-                  key={topic.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between p-3 bg-slate-700/40 rounded-lg"
-                >
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 bg-green-500/20 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-xs font-bold text-green-400">{index + 1}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-100 truncate">
-                        {topic.name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {topic.correct}/{topic.attempts} correct
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-green-400">
-                      {topic.accuracy}%
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+          <div className="space-y-3 sm:space-y-4">
+            <div>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-2 flex items-center">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 mr-2" />
+                Best Performing Topics
+              </h4>
+              <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">Your strongest subject areas</p>
+            </div>
+            <div className="-ml-10">
+              <ResponsiveContainer width="100%" height={200} className="h-[180px] sm:h-[200px] md:h-[220px] lg:h-[250px]">
+              <BarChart data={bestData} style={{ background: 'transparent' }} background={{ fill: 'transparent' }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#9ca3af" 
+                  fontSize={10}
+                  tickLine={false}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                  interval={0}
+                  tickFormatter={(value) => {
+                    if (value.length > 10) {
+                      return value.substring(0, 10) + '...';
+                    }
+                    return value;
+                  }}
+                />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 100]}
+                  tickFormatter={(value) => `${value}%`}
+                />
+                <Tooltip 
+                  wrapperStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                  contentStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                  cursor={false}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload || payload.length === 0) return null;
+                    
+                    return (
+                      <div
+                        className="px-3 py-2 text-sm font-medium text-slate-200 z-50"
+                        style={{
+                          backgroundColor: '#0f172a',
+                          background: '#0f172a',
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+                        }}
+                      >
+                        {label && (
+                          <div className="text-slate-300 font-semibold mb-1">
+                            {label}
+                          </div>
+                        )}
+                        {payload.map((entry: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: entry.color || '#10b981' }}
+                              />
+                              <span className="text-slate-300">
+                                Accuracy
+                              </span>
+                            </div>
+                            <span className="text-slate-100 font-bold">
+                              {entry.value}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
+                <Bar 
+                  dataKey="accuracy" 
+                  fill="#10b981" 
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={50}
+                />
+              </BarChart>
+            </ResponsiveContainer>
             </div>
           </div>
         )}
 
-        {/* Worst Topics List */}
+        {/* Worst Topics */}
         {worstData.length > 0 && (
-          <div>
-            <h4 className="text-sm font-semibold text-gray-100 mb-3 flex items-center">
-              <TrendingDown className="h-4 w-4 text-red-400 mr-2" />
-              Need Focus
-            </h4>
-            <div className="space-y-2">
-              {worstData.slice(0, 5).map((topic, index) => (
-                <motion.div
-                  key={topic.name}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between p-3 bg-slate-700/40 rounded-lg"
-                >
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-xs font-bold text-red-400">{index + 1}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-100 truncate">
-                        {topic.name}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {topic.correct}/{topic.attempts} correct
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-red-400">
-                      {topic.accuracy}%
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
+          <div className="space-y-3 sm:space-y-4">
+            <div>
+              <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-2 flex items-center">
+                <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-red-400 mr-2" />
+                Areas for Improvement
+              </h4>
+              <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">Topics that need more practice</p>
+            </div>
+            <div className="-ml-10">
+              <ResponsiveContainer width="100%" height={200} className="h-[180px] sm:h-[200px] md:h-[220px] lg:h-[250px]">
+              <BarChart data={worstData} style={{ background: 'transparent' }} background={{ fill: 'transparent' }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#9ca3af" 
+                  fontSize={10}
+                  tickLine={false}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                  interval={0}
+                  tickFormatter={(value) => {
+                    if (value.length > 10) {
+                      return value.substring(0, 10) + '...';
+                    }
+                    return value;
+                  }}
+                />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={10}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 100]}
+                  tickFormatter={(value) => `${value}%`}
+                />
+                <Tooltip 
+                  wrapperStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                  contentStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                  cursor={false}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload || payload.length === 0) return null;
+                    
+                    return (
+                      <div
+                        className="px-3 py-2 text-sm font-medium text-slate-200 z-50"
+                        style={{
+                          backgroundColor: '#0f172a',
+                          background: '#0f172a',
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+                        }}
+                      >
+                        {label && (
+                          <div className="text-slate-300 font-semibold mb-1">
+                            {label}
+                          </div>
+                        )}
+                        {payload.map((entry: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: entry.color || '#ef4444' }}
+                              />
+                              <span className="text-slate-300">
+                                Accuracy
+                              </span>
+                            </div>
+                            <span className="text-slate-100 font-bold">
+                              {entry.value}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
+                <Bar 
+                  dataKey="accuracy" 
+                  fill="#ef4444" 
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={50}
+                />
+              </BarChart>
+            </ResponsiveContainer>
             </div>
           </div>
         )}
       </div>
+
+
     </motion.div>
   );
 } 

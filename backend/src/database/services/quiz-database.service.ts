@@ -53,6 +53,69 @@ export class QuizDatabaseService extends BaseDatabaseService {
     }
   }
 
+  async searchQuizzes(query: string, userId: string): Promise<ApiResponse<any[]>> {
+    try {
+      this.logger.log(`🔍 Searching quizzes for user: ${userId}, query: ${query}`);
+
+      const searchTerm = `%${query}%`;
+
+      // Search quizzes by title only
+      const { data: quizzes, error } = await this.supabase
+        .from(TABLE_NAMES.QUIZZES)
+        .select(`
+          quiz_id,
+          title,
+          description,
+          created_at,
+          topics(name)
+        `)
+        .eq('user_id', userId)
+        .ilike('title', searchTerm)
+        .order('created_at', { ascending: false });
+
+      // Get quiz attempt information for each quiz
+      if (quizzes && quizzes.length > 0) {
+        const quizIds = quizzes.map(q => q.quiz_id);
+        
+        // Get user answers for these quizzes to determine completion status
+        const { data: userAnswers, error: answersError } = await this.supabase
+          .from(TABLE_NAMES.USER_ANSWERS)
+          .select('quiz_id, created_at')
+          .eq('user_id', userId)
+          .in('quiz_id', quizIds)
+          .not('quiz_id', 'is', null);
+
+        if (!answersError && userAnswers) {
+          // Group answers by quiz_id and find the latest attempt
+          const quizAttempts = userAnswers.reduce((acc, answer) => {
+            const quizId = answer.quiz_id;
+            if (quizId && (!acc[quizId] || new Date(answer.created_at) > new Date(acc[quizId].created_at))) {
+              acc[quizId] = answer;
+            }
+            return acc;
+          }, {} as Record<string, any>);
+
+          // Add completion status to each quiz
+          quizzes.forEach(quiz => {
+            const attempt = quizAttempts[quiz.quiz_id];
+            (quiz as any).has_attempt = !!attempt;
+            (quiz as any).last_attempt_date = attempt?.created_at || null;
+          });
+        }
+      }
+
+      if (error) {
+        this.logger.error('❌ Error searching quizzes:', error);
+        return this.handleError(error, 'searchQuizzes');
+      }
+
+      this.logger.log(`✅ Found ${quizzes?.length || 0} matching quizzes`);
+      return this.handleSuccess(quizzes || []);
+    } catch (error) {
+      return this.handleError(error, 'searchQuizzes');
+    }
+  }
+
   async getQuizWithQuestions(
     quizId: string,
   ): Promise<ApiResponse<QuizWithQuestions>> {

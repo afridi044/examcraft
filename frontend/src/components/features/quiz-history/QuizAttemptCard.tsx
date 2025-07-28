@@ -12,12 +12,14 @@ import {
   Pause,
   BookOpen,
 } from "lucide-react";
-import { formatDate, getStatusBadge, getStatusIconConfig, getScoreColors } from "@/lib/utils/quiz-history";
+  import { formatDate, getStatusBadge, getStatusIconConfig, getScoreColors, formatQuizTime } from "@/lib/utils/quiz-history";
 import type { QuizAttempt } from "@/types";
+
+
 
 interface QuizAttemptCardProps {
   attempt: QuizAttempt;
-  onDelete: (quizId: string, title: string) => void;
+  onDelete: (quizId: string) => void;
   isDeleting: boolean;
 }
 
@@ -118,9 +120,7 @@ export const QuizAttemptCard: React.FC<QuizAttemptCardProps> = ({ attempt, onDel
             <div className="flex items-center space-x-1 sm:space-x-1.5">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>
-                {attempt.time_spent_minutes > 0
-                  ? `${attempt.time_spent_minutes.toFixed(0)}m`
-                  : "0m"}
+                {formatQuizTime(attempt.time_spent_minutes)}
               </span>
             </div>
           </div>

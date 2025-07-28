@@ -106,6 +106,41 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     }
   }
 
+  async searchFlashcards(query: string, userId: string): Promise<ApiResponse<any[]>> {
+    try {
+      this.logger.log(`🔍 Searching flashcards for user: ${userId}, query: ${query}`);
+
+      const searchTerm = `%${query}%`;
+
+      // Search flashcards by question only, including mastery status
+      const { data: flashcards, error } = await this.supabase
+        .from(TABLE_NAMES.FLASHCARDS)
+        .select(`
+          flashcard_id,
+          question,
+          answer,
+          created_at,
+          mastery_status,
+          consecutive_correct,
+          topic_id,
+          topic:topics(name)
+        `)
+        .eq('user_id', userId)
+        .ilike('question', searchTerm)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        this.logger.error('❌ Error searching flashcards:', error);
+        return this.handleError(error, 'searchFlashcards');
+      }
+
+      this.logger.log(`✅ Found ${flashcards?.length || 0} matching flashcards`);
+      return this.handleSuccess(flashcards || []);
+    } catch (error) {
+      return this.handleError(error, 'searchFlashcards');
+    }
+  }
+
   async getFlashcardById(
     flashcardId: string,
   ): Promise<ApiResponse<FlashcardRow>> {

@@ -1,4 +1,31 @@
-import type { QuizAttempt } from "@/types";
+import { QuizAttempt } from "@/types";
+
+// Helper function to format time more precisely for quiz history
+export const formatQuizTime = (timeMinutes: number): string => {
+  if (timeMinutes <= 0) return "0s";
+  
+  // If less than 1 minute, show as seconds (convert back from minutes)
+  if (timeMinutes < 1) {
+    const seconds = Math.round(timeMinutes * 60);
+    return `${seconds}s`;
+  }
+  
+  // If less than 5 minutes, show minutes with 1 decimal place
+  if (timeMinutes < 5) {
+    return `${timeMinutes.toFixed(1)}m`;
+  }
+  
+  // For longer times, show whole minutes
+  const totalMinutes = Math.round(timeMinutes);
+  if (totalMinutes < 60) {
+    return `${totalMinutes}m`;
+  }
+  
+  // For times over 1 hour, show hours and minutes
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+};
 
 // Score color utilities
 export function getScoreColors(score: number) {
@@ -135,7 +162,7 @@ export function calculateQuizStats(attempts: QuizAttempt[] | undefined, searchTe
         ? Math.round(totalScore / (completedQuizzes + incompleteQuizzes))
         : 0,
     averageTime:
-      completedQuizzes > 0 ? Math.round(totalTime / completedQuizzes) : 0,
+      completedQuizzes > 0 ? (totalTime / completedQuizzes) : 0,
     passRate:
       completedQuizzes > 0
         ? Math.round((passedQuizzes / completedQuizzes) * 100)

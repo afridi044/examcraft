@@ -95,49 +95,125 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📋 Getting recent activity for user: ${userId}`);
 
-      // Type definition for recent activity query result
-      interface RecentActivityQueryResult {
-        quiz_id: string;
-        title: string;
-        created_at: string;
-        topics: { name: string }[] | null;
+      // Get activities from quiz sources only - OPTIMIZED VERSION
+      const [quizCreationResult, allUserAnswers, allQuizQuestions] = 
+        await Promise.all([
+          // 1. Quiz Creation Activities
+          this.supabase
+            .from(TABLE_NAMES.QUIZZES)
+            .select(`
+              quiz_id,
+              title,
+              created_at,
+              topics(name)
+            `)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit),
+
+          // 2. All user answers for this user (batch query)
+          this.supabase
+            .from(TABLE_NAMES.USER_ANSWERS)
+            .select(`
+              quiz_id,
+              is_correct,
+              created_at
+            `)
+            .eq('user_id', userId),
+
+          // 3. All quiz questions (batch query)
+          this.supabase
+            .from(TABLE_NAMES.QUIZ_QUESTIONS)
+            .select(`
+              quiz_id,
+              question_id
+            `),
+        ]);
+
+      // Check for errors
+      if (quizCreationResult.error || allUserAnswers.error || allQuizQuestions.error) {
+        return this.handleError(
+          quizCreationResult.error || allUserAnswers.error || allQuizQuestions.error,
+          'getRecentActivity'
+        );
       }
 
-      // Get recent quiz activities
-      const { data: recentQuizzes, error: quizError } = (await this.supabase
-        .from(TABLE_NAMES.QUIZZES)
-        .select(
-          `
-          quiz_id,
-          title,
-          created_at,
-          topics(name)
-        `,
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit)) as {
-        data: RecentActivityQueryResult[] | null;
-        error: any;
-      };
+      // Process quiz completion data efficiently
+      const quizCompletionActivities: RecentActivity[] = [];
+      
+      // Group answers by quiz_id for efficient processing
+      const answersByQuiz = new Map<string, Array<{is_correct: boolean, created_at: string}>>();
+      const questionsByQuiz = new Map<string, number>();
+      
+      // Group answers by quiz
+      (allUserAnswers.data || []).forEach(answer => {
+        if (answer.quiz_id) {
+          if (!answersByQuiz.has(answer.quiz_id)) {
+            answersByQuiz.set(answer.quiz_id, []);
+          }
+          answersByQuiz.get(answer.quiz_id)!.push({
+            is_correct: answer.is_correct || false,
+            created_at: answer.created_at
+          });
+        }
+      });
+      
+      // Group questions by quiz
+      (allQuizQuestions.data || []).forEach(question => {
+        questionsByQuiz.set(question.quiz_id, (questionsByQuiz.get(question.quiz_id) || 0) + 1);
+      });
 
-      if (quizError) {
-        return this.handleError(quizError, 'getRecentActivity');
+      // Process each quiz for completion
+      for (const quiz of quizCreationResult.data || []) {
+        const quizAnswers = answersByQuiz.get(quiz.quiz_id) || [];
+        const questionCount = questionsByQuiz.get(quiz.quiz_id) || 0;
+        
+        // If all questions are answered, it's a completion
+        if (quizAnswers.length >= questionCount && questionCount > 0) {
+          // Find the latest answer timestamp
+          const latestAnswer = quizAnswers.reduce((latest, answer) => 
+            answer.created_at > latest.created_at ? answer : latest
+          );
+          
+          // Calculate score
+          const correctAnswers = quizAnswers.filter(answer => answer.is_correct).length;
+          const score = Math.round((correctAnswers / questionCount) * 100);
+
+          quizCompletionActivities.push({
+            id: quiz.quiz_id,
+            type: 'quiz' as const,
+            title: `Completed "${quiz.title}" quiz`,
+            score,
+            completed_at: latestAnswer.created_at,
+            topic: quiz.topics?.name || undefined,
+          });
+        }
       }
 
-      // Convert to RecentActivity format
-      const activities: RecentActivity[] = (recentQuizzes || []).map(
-        (quiz) => ({
-          id: quiz.quiz_id,
+      // Process all activities and combine them
+      const activities: RecentActivity[] = [
+        // Quiz creation activities
+        ...(quizCreationResult.data || []).map(quiz => ({
+          id: `create_${quiz.quiz_id}`, // Unique key for creation
           type: 'quiz' as const,
-          title: quiz.title,
+          title: `Created "${quiz.title}" quiz`,
           completed_at: quiz.created_at,
-          topic: quiz.topics?.[0]?.name,
-        }),
-      );
+          topic: quiz.topics?.name || undefined,
+        })),
 
-      this.logger.log(`✅ Retrieved ${activities.length} recent activities`);
-      return this.handleSuccess(activities);
+        // Quiz completion activities
+        ...quizCompletionActivities.map(activity => ({
+          ...activity,
+          id: `complete_${activity.id}`, // Unique key for completion
+        })),
+      ];
+
+      // Sort by completion date (newest first) and limit
+      activities.sort((a, b) => new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime());
+      const limitedActivities = activities.slice(0, limit);
+
+      this.logger.log(`✅ Retrieved ${limitedActivities.length} recent activities (optimized query)`);
+      return this.handleSuccess(limitedActivities);
     } catch (error) {
       return this.handleError(error, 'getRecentActivity');
     }
@@ -149,87 +225,46 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📈 Getting topic progress for user: ${userId}`);
 
-      // Type definition for complex query result
-      interface TopicProgressQueryResult {
-        questions: {
-          topic_id: string | null;
-          topics: { name: string }[];
-        } | null;
-        is_correct: boolean | null;
-        created_at: string;
-      }
+      // Get topic progress directly from user_topic_progress table - ONLY PARENT TOPICS
+      this.logger.log(`🔍 Querying user_topic_progress for user: ${userId} (parent topics only)`);
+      
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
+        .select(`
+          topic_id,
+          proficiency_level,
+          questions_attempted,
+          questions_correct,
+          last_activity,
+          topics(name, parent_topic_id)
+        `)
+        .eq('user_id', userId)
+        .is('topics.parent_topic_id', null) // Only parent topics (no parent)
+        .order('last_activity', { ascending: false });
 
-      // Get topic progress from user answers grouped by topic
-      const { data, error } = (await this.supabase
-        .from(TABLE_NAMES.USER_ANSWERS)
-        .select(
-          `
-          questions!inner(topic_id, topics!inner(name)),
-          is_correct,
-          created_at
-        `,
-        )
-        .eq('user_id', userId)) as {
-        data: TopicProgressQueryResult[] | null;
-        error: any;
-      };
+      this.logger.log(`📊 Raw query result: ${JSON.stringify({ 
+        dataLength: data?.length || 0, 
+        error: error?.message || null,
+        firstItem: data?.[0] || null 
+      })}`);
 
       if (error) {
+        this.logger.error(`❌ Error fetching topic progress: ${error.message}`, error);
         return this.handleError(error, 'getTopicProgress');
       }
 
-      // Group answers by topic and calculate progress
-      const topicMap = new Map<
-        string,
-        {
-          topic_id: string;
-          topic_name: string;
-          total: number;
-          correct: number;
-          lastActivity: string;
-        }
-      >();
-
-      (data || []).forEach((answer) => {
-        const topicId = answer.questions?.topic_id;
-        const topicName = answer.questions?.topics?.[0]?.name;
-
-        if (topicId && topicName) {
-          const existing = topicMap.get(topicId) || {
-            topic_id: topicId,
-            topic_name: topicName,
-            total: 0,
-            correct: 0,
-            lastActivity: answer.created_at,
-          };
-
-          existing.total++;
-          if (answer.is_correct) existing.correct++;
-          if (answer.created_at > existing.lastActivity) {
-            existing.lastActivity = answer.created_at;
-          }
-
-          topicMap.set(topicId, existing);
-        }
-      });
-
       // Convert to TopicProgress format
-      const topicProgress: TopicProgress[] = Array.from(topicMap.values()).map(
-        (topic) => ({
-          topic_id: topic.topic_id,
-          topic_name: topic.topic_name,
-          progress_percentage:
-            topic.total > 0
-              ? Math.round((topic.correct / topic.total) * 100)
-              : 0,
-          questions_attempted: topic.total,
-          questions_correct: topic.correct,
-          last_activity: topic.lastActivity,
-        }),
-      );
+      const topicProgress: TopicProgress[] = (data || []).map((item) => ({
+        topic_id: item.topic_id,
+        topic_name: item.topics?.name || 'Unknown Topic',
+        progress_percentage: Math.round((item.proficiency_level || 0) * 100),
+        questions_attempted: item.questions_attempted || 0,
+        questions_correct: item.questions_correct || 0,
+        last_activity: item.last_activity,
+      }));
 
       this.logger.log(
-        `✅ Retrieved progress for ${topicProgress.length} topics`,
+        `✅ Retrieved progress for ${topicProgress.length} topics from user_topic_progress table`,
       );
       return this.handleSuccess(topicProgress);
     } catch (error) {
@@ -461,6 +496,8 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
 
   /**
    * Get user activity heatmap data for calendar visualization
+   * Includes ALL user activities: questions, flashcards, quizzes, exams
+   * Default: Returns last 30 days of activity (or full year if year parameter specified)
    */
   async getUserActivityHeatmap(
     userId: string,
@@ -470,30 +507,136 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     activity_count: number;
   }>>> {
     try {
-      this.logger.log(`🔥 Getting activity heatmap for user: ${userId}`);
+      this.logger.log(`🔥 Getting activity heatmap for user: ${userId} (last 30 days)`);
 
-      // Get activity dates from user_answers
-      let query = this.supabase
-        .from(TABLE_NAMES.USER_ANSWERS)
-        .select('created_at')
-        .eq('user_id', userId);
-
+      // Build date filter - default to last 30 days, or year if specified
+      let dateFilter: { gte?: string; lte?: string } = {};
+      
       if (year) {
+        // If year is specified, use the entire year
         const startDate = new Date(year, 0, 1).toISOString();
         const endDate = new Date(year, 11, 31).toISOString();
-        query = query.gte('created_at', startDate).lte('created_at', endDate);
+        dateFilter = {
+          gte: startDate,
+          lte: endDate
+        };
+      } else {
+        // Default: last 30 days - match frontend exactly
+        const today = new Date();
+        const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+        const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 29, 0, 0, 0).toISOString();
+        dateFilter = {
+          gte: startDate,
+          lte: endDate
+        };
       }
 
-      const { data, error } = await query;
+      // Get ALL user activities from multiple sources
+      const [
+        userAnswersResult,
+        flashcardsResult,
+        quizzesResult,
+        examsResult,
+        examSessionsResult
+      ] = await Promise.all([
+        // 1. User answers (question responses)
+        this.supabase
+          .from(TABLE_NAMES.USER_ANSWERS)
+          .select('created_at')
+          .eq('user_id', userId)
+          .gte('created_at', dateFilter.gte ?? '1970-01-01')
+          .lte('created_at', dateFilter.lte ?? '2100-01-01'),
 
-      if (error) {
-        return this.handleError(error, 'getUserActivityHeatmap');
+        // 2. Flashcard creation and updates
+        this.supabase
+          .from(TABLE_NAMES.FLASHCARDS)
+          .select('created_at, updated_at')
+          .eq('user_id', userId)
+          .gte('created_at', dateFilter.gte ?? '1970-01-01')
+          .lte('created_at', dateFilter.lte ?? '2100-01-01'),
+
+        // 3. Quiz creation
+        this.supabase
+          .from(TABLE_NAMES.QUIZZES)
+          .select('created_at')
+          .eq('user_id', userId)
+          .gte('created_at', dateFilter.gte ?? '1970-01-01')
+          .lte('created_at', dateFilter.lte ?? '2100-01-01'),
+
+        // 4. Exam creation
+        this.supabase
+          .from(TABLE_NAMES.EXAMS)
+          .select('created_at')
+          .eq('user_id', userId)
+          .gte('created_at', dateFilter.gte ?? '1970-01-01')
+          .lte('created_at', dateFilter.lte ?? '2100-01-01'),
+
+        // 5. Exam sessions (when users take exams)
+        this.supabase
+          .from(TABLE_NAMES.EXAM_SESSIONS)
+          .select('created_at')
+          .eq('user_id', userId)
+          .gte('created_at', dateFilter.gte ?? '1970-01-01')
+          .lte('created_at', dateFilter.lte ?? '2100-01-01'),
+      ]);
+
+      // Check for errors
+      if (
+        userAnswersResult.error ||
+        flashcardsResult.error ||
+        quizzesResult.error ||
+        examsResult.error ||
+        examSessionsResult.error
+      ) {
+        return this.handleError(
+          userAnswersResult.error || 
+          flashcardsResult.error || 
+          quizzesResult.error || 
+          examsResult.error || 
+          examSessionsResult.error,
+          'getUserActivityHeatmap'
+        );
       }
 
-      // Group by date and count activities
+      // Combine all activities into a single map
       const activityMap = new Map<string, number>();
-      (data || []).forEach((answer) => {
+
+      // Process user answers
+      (userAnswersResult.data || []).forEach((answer) => {
         const date = answer.created_at.split('T')[0];
+        activityMap.set(date, (activityMap.get(date) || 0) + 1);
+      });
+
+      // Process flashcard activities (creation and updates)
+      (flashcardsResult.data || []).forEach((flashcard) => {
+        // Count creation
+        const createDate = flashcard.created_at.split('T')[0];
+        activityMap.set(createDate, (activityMap.get(createDate) || 0) + 1);
+        
+        // Count updates (if different from creation date and within the date range)
+        const updateDate = flashcard.updated_at.split('T')[0];
+        const gteDate = dateFilter.gte?.split('T')[0];
+        const lteDate = dateFilter.lte?.split('T')[0];
+        if (updateDate !== createDate && gteDate && lteDate && updateDate >= gteDate && updateDate <= lteDate) {
+          activityMap.set(updateDate, (activityMap.get(updateDate) || 0) + 1);
+        }
+      });
+
+      // Process quiz creation
+      (quizzesResult.data || []).forEach((quiz) => {
+        const date = quiz.created_at.split('T')[0];
+        activityMap.set(date, (activityMap.get(date) || 0) + 1);
+      });
+
+      // Process exam creation
+      (examsResult.data || []).forEach((exam) => {
+        const date = exam.created_at.split('T')[0];
+        activityMap.set(date, (activityMap.get(date) || 0) + 1);
+      });
+
+      // Process exam sessions
+      (examSessionsResult.data || []).forEach((session) => {
+        const date = session.created_at.split('T')[0];
         activityMap.set(date, (activityMap.get(date) || 0) + 1);
       });
 
@@ -502,7 +645,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         activity_count: count,
       }));
 
-      this.logger.log(`✅ Retrieved ${heatmapData.length} activity days`);
+      this.logger.log(`✅ Retrieved ${heatmapData.length} activity days with comprehensive tracking`);
       return this.handleSuccess(heatmapData);
     } catch (error) {
       return this.handleError(error, 'getUserActivityHeatmap');
@@ -784,6 +927,111 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
   }
 
   /**
+   * Get all topic progress data (parent and child topics) for detailed analysis
+   */
+  async getAllTopicProgress(
+    userId: string
+  ): Promise<ApiResponse<Array<{
+    topic_id: string;
+    topic_name: string;
+    parent_topic_id: string | null;
+    parent_topic_name?: string;
+    proficiency_level: number;
+    questions_attempted: number;
+    questions_correct: number;
+    accuracy_percentage: number;
+    last_activity: string;
+  }>>> {
+    try {
+      this.logger.log(`📈 Getting all topic progress for user: ${userId}`);
+
+      // First, let's test if we can get basic data from user_topic_progress
+      const { data: basicData, error: basicError } = await this.supabase
+        .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
+        .select('*')
+        .eq('user_id', userId);
+
+      this.logger.log(`📊 Basic user_topic_progress query result: ${JSON.stringify({ 
+        dataLength: basicData?.length || 0, 
+        error: basicError?.message || null,
+        firstItem: basicData?.[0] || null 
+      })}`);
+
+      // Get all topic progress from user_topic_progress table (both parent and child topics)
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
+        .select(`
+          topic_id,
+          proficiency_level,
+          questions_attempted,
+          questions_correct,
+          last_activity,
+          topics(name, parent_topic_id)
+        `)
+        .eq('user_id', userId)
+        .order('last_activity', { ascending: false });
+
+      this.logger.log(`📊 getAllTopicProgress query result: ${JSON.stringify({ 
+        dataLength: data?.length || 0, 
+        error: error?.message || null,
+        firstItem: data?.[0] || null 
+      })}`);
+
+      if (error) {
+        this.logger.error(`❌ Error fetching all topic progress: ${error.message}`, error);
+        return this.handleError(error, 'getAllTopicProgress');
+      }
+
+      // Get parent topic names for child topics
+      const parentTopicIds = new Set<string>();
+      (data || []).forEach(item => {
+        if (item.topics?.parent_topic_id) {
+          parentTopicIds.add(item.topics.parent_topic_id);
+        }
+      });
+
+      let parentTopicNames: { [key: string]: string } = {};
+      if (parentTopicIds.size > 0) {
+        const { data: parentTopics, error: parentError } = await this.supabase
+          .from(TABLE_NAMES.TOPICS)
+          .select('topic_id, name')
+          .in('topic_id', Array.from(parentTopicIds));
+
+        if (!parentError && parentTopics) {
+          parentTopicNames = parentTopics.reduce((acc, topic) => {
+            acc[topic.topic_id] = topic.name;
+            return acc;
+          }, {} as { [key: string]: string });
+        }
+      }
+
+      // Convert to detailed topic progress format
+      const topicProgress = (data || []).map((item) => {
+        const accuracyPercentage = item.questions_attempted > 0 
+          ? Math.round((item.questions_correct / item.questions_attempted) * 100)
+          : 0;
+
+        return {
+          topic_id: item.topic_id,
+          topic_name: item.topics?.name || 'Unknown Topic',
+          parent_topic_id: item.topics?.parent_topic_id || null,
+          parent_topic_name: item.topics?.parent_topic_id ? parentTopicNames[item.topics.parent_topic_id] : undefined,
+          proficiency_level: Math.round((item.proficiency_level || 0) * 100), // Convert decimal to percentage
+          questions_attempted: item.questions_attempted || 0,
+          questions_correct: item.questions_correct || 0,
+          accuracy_percentage: accuracyPercentage,
+          last_activity: item.last_activity,
+        };
+      });
+
+      this.logger.log(`✅ Retrieved detailed progress for ${topicProgress.length} topics`);
+      return this.handleSuccess(topicProgress);
+    } catch (error) {
+      return this.handleError(error, 'getAllTopicProgress');
+    }
+  }
+
+  /**
    * Get best and worst performing topics
    */
   async getUserBestWorstTopics(
@@ -805,30 +1053,39 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🏆 Getting best/worst topics for user: ${userId}`);
 
-      // Reuse existing topic progress data
-      const topicProgressResult = await this.getTopicProgress(userId);
-      
-      if (!topicProgressResult.success || !topicProgressResult.data) {
-        return this.handleError(topicProgressResult.error || 'Failed to get topic progress', 'getUserBestWorstTopics');
+      // Get topic progress directly from user_topic_progress table - ONLY PARENT TOPICS
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
+        .select(`
+          topic_id,
+          proficiency_level,
+          questions_attempted,
+          questions_correct,
+          last_activity,
+          topics(name, parent_topic_id)
+        `)
+        .eq('user_id', userId)
+        .is('topics.parent_topic_id', null) // Only parent topics (no parent)
+        .order('proficiency_level', { ascending: false });
+
+      if (error) {
+        this.logger.error(`❌ Error fetching best/worst topics: ${error.message}`);
+        return this.handleError(error, 'getUserBestWorstTopics');
       }
 
-      const topics = topicProgressResult.data
-        .filter(topic => topic.questions_attempted >= 5) // Only topics with sufficient data
-        .sort((a, b) => b.progress_percentage - a.progress_percentage);
+      // Filter topics with sufficient data and sort by proficiency
+      const topics = (data || [])
+        .filter(item => (item.questions_attempted || 0) >= 5) // Only topics with sufficient data
+        .map(item => ({
+          topic_id: item.topic_id,
+          topic_name: item.topics?.name || 'Unknown Topic',
+          accuracy_percentage: Math.round((item.proficiency_level || 0) * 100),
+          questions_attempted: item.questions_attempted || 0,
+        }))
+        .sort((a, b) => b.accuracy_percentage - a.accuracy_percentage);
 
-      const bestTopics = topics.slice(0, 5).map(topic => ({
-        topic_id: topic.topic_id,
-        topic_name: topic.topic_name,
-        accuracy_percentage: topic.progress_percentage,
-        questions_attempted: topic.questions_attempted,
-      }));
-
-      const worstTopics = topics.slice(-5).reverse().map(topic => ({
-        topic_id: topic.topic_id,
-        topic_name: topic.topic_name,
-        accuracy_percentage: topic.progress_percentage,
-        questions_attempted: topic.questions_attempted,
-      }));
+      const bestTopics = topics.slice(0, 5);
+      const worstTopics = topics.slice(-5).reverse();
 
       this.logger.log(`✅ Retrieved best/worst topics: ${bestTopics.length} best, ${worstTopics.length} worst`);
       return this.handleSuccess({ bestTopics, worstTopics });
@@ -836,4 +1093,35 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       return this.handleError(error, 'getUserBestWorstTopics');
     }
   }
+
+  /**
+   * Get total study time from user answers
+   */
+  async getUserTotalStudyTime(userId: string): Promise<ApiResponse<number>> {
+    try {
+      this.logger.log(`⏱️ Getting total study time for user: ${userId}`);
+
+      // Sum up all time_taken_seconds from user_answers table
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.USER_ANSWERS)
+        .select('time_taken_seconds')
+        .eq('user_id', userId)
+        .not('time_taken_seconds', 'is', null);
+
+      if (error) {
+        return this.handleError(error, 'getUserTotalStudyTime');
+      }
+
+      const totalSeconds = (data || []).reduce((sum, answer) => {
+        return sum + (answer.time_taken_seconds || 0);
+      }, 0);
+
+      this.logger.log(`✅ Total study time: ${totalSeconds} seconds`);
+      return this.handleSuccess(totalSeconds);
+    } catch (error) {
+      return this.handleError(error, 'getUserTotalStudyTime');
+    }
+  }
+
+
 }

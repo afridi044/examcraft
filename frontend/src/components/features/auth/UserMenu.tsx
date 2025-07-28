@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Settings, LogOut, ChevronDown } from "lucide-react";
+import { BarChart3, Settings, LogOut, ChevronDown, Plus, Brain } from "lucide-react";
 
 interface UserMenuProps {
   user: { full_name?: string; email?: string } | null;
@@ -101,14 +101,24 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, signOut, router }) => 
                 <span className="font-medium">Dashboard</span>
               </Link>
               <Link
-                href="/settings"
+                href="/quiz/create"
                 onClick={() => setIsUserMenuOpen(false)}
                 className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:text-white hover:bg-gradient-to-br hover:from-blue-500/10 hover:to-indigo-500/10 rounded-xl transition-all duration-200 group"
               >
                 <div className="h-8 w-8 bg-slate-800/80 rounded-lg flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-blue-500/20 group-hover:to-indigo-500/20 transition-colors duration-200">
-                  <Settings className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
                 </div>
-                <span className="font-medium">Settings</span>
+                <span className="font-medium">Create Quiz</span>
+              </Link>
+              <Link
+                href="/flashcards/create"
+                onClick={() => setIsUserMenuOpen(false)}
+                className="flex items-center gap-3 px-3 py-2.5 text-slate-300 hover:text-white hover:bg-gradient-to-br hover:from-blue-500/10 hover:to-indigo-500/10 rounded-xl transition-all duration-200 group"
+              >
+                <div className="h-8 w-8 bg-slate-800/80 rounded-lg flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-blue-500/20 group-hover:to-indigo-500/20 transition-colors duration-200">
+                  <Brain className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                </div>
+                <span className="font-medium">Create Flashcards</span>
               </Link>
               <div className="h-px bg-gradient-to-r from-slate-700/0 via-slate-700/60 to-slate-700/0 my-2" />
               <button

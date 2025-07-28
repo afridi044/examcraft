@@ -31,6 +31,11 @@ export class QuizService {
     return await this.databaseService.getUserQuizAttempts(userId);
   }
 
+  async searchQuizzes(query: string, userId: string): Promise<ApiResponse<any[]>> {
+    this.logger.log(`🔍 Searching quizzes for user: ${userId}, query: ${query}`);
+    return await this.databaseService.searchQuizzes(query, userId);
+  }
+
   async getQuizWithQuestions(
     quizId: string,
   ): Promise<ApiResponse<QuizWithQuestions>> {

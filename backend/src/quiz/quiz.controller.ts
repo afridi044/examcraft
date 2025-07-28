@@ -60,6 +60,18 @@ export class QuizController {
     return await this.quizService.getUserQuizAttempts(user.id);
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Search quizzes for the authenticated user' })
+  @ApiQuery({ name: 'q', description: 'Search query', example: 'JavaScript' })
+  @ApiResponse({
+    status: 200,
+    description: 'Search results retrieved successfully',
+  })
+  async searchQuizzes(@Query('q') query: string, @User() user: AuthUser) {
+    this.logger.log(`🔍 Searching quizzes for user: ${user.id}, query: ${query}`);
+    return await this.quizService.searchQuizzes(query, user.id);
+  }
+
   @Get(':quizId')
   @ApiOperation({ summary: 'Get quiz with questions by ID' })
   @ApiParam({ name: 'quizId', description: 'Quiz ID', example: 'uuid-quiz-id' })

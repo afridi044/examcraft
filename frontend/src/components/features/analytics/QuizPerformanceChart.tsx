@@ -7,10 +7,10 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
+  Tooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { BarChart3, TrendingUp } from 'lucide-react';
@@ -60,7 +60,7 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
     : 0;
   const totalQuizzes = chartData.length;
   const bestScore = Math.max(...chartData.map(item => item.score));
-  const totalQuestions = chartData.reduce((sum, item) => sum + item.totalQuestions, 0);
+  const worstScore = Math.min(...chartData.map(item => item.score));
 
   return (
     <motion.div
@@ -70,14 +70,14 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
       className="w-full h-full flex flex-col"
     >
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-orange-300 mb-1">Average Score</p>
-          <p className="text-2xl font-bold text-orange-400">{averageScore}%</p>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-orange-300 mb-1">Average Score</p>
+          <p className="text-lg font-bold text-orange-400">{averageScore}%</p>
         </div>
-        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-blue-300 mb-1">Total Quizzes</p>
-          <p className="text-2xl font-bold text-blue-400">{totalQuizzes}</p>
+        <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-blue-300 mb-1">Total Quizzes</p>
+          <p className="text-lg font-bold text-blue-400">{totalQuizzes}</p>
         </div>
       </div>
 
@@ -87,59 +87,90 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
           <h4 className="text-lg font-semibold text-gray-100 mb-2">Performance Trend</h4>
           <p className="text-sm text-gray-400 mb-4">Your quiz scores over time</p>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData} style={{ background: 'transparent' }}>
+        <div className="-ml-10">
+          <ResponsiveContainer width="100%" height={280} className="sm:h-[300px] md:h-[320px]">
+            <LineChart 
+              data={chartData} 
+              style={{ background: 'transparent' }}
+              margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+            >
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis 
               dataKey="date" 
               stroke="#9ca3af" 
-              fontSize={12}
+              fontSize={10}
+              className="text-xs sm:text-sm"
               tickLine={false}
               axisLine={false}
             />
             <YAxis 
               stroke="#9ca3af" 
-              fontSize={12}
+              fontSize={10}
+              className="text-xs sm:text-sm"
               tickLine={false}
               axisLine={false}
               domain={[0, 100]}
             />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#1f2937',
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                color: '#f9fafb',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+            <Tooltip 
+              content={({ active, payload, label }) => {
+                if (!active || !payload || payload.length === 0) return null;
+                
+                return (
+                  <div
+                    className="bg-slate-900/95 backdrop-blur-sm border border-slate-700/60 rounded-lg shadow-xl shadow-black/20 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium text-slate-200 z-50"
+                    style={{
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+                      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    }}
+                  >
+                    {label && (
+                      <div className="text-slate-300 font-semibold mb-0.5 sm:mb-1 text-xs sm:text-sm">
+                        {label}
+                      </div>
+                    )}
+                    {payload.map((entry: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                          <div 
+                            className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
+                            style={{ backgroundColor: entry.color || '#3b82f6' }}
+                          />
+                          <span className="text-slate-300 text-xs sm:text-sm">
+                            {entry.name}
+                          </span>
+                        </div>
+                        <span className="text-slate-100 font-bold text-xs sm:text-sm">
+                          {entry.value}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
               }}
-              labelStyle={{ color: '#9ca3af', fontWeight: '600' }}
-              formatter={(value: any, name: any, props: any) => [
-                `${value}%`,
-                `${props.payload.title}`
-              ]}
             />
             <Line
               type="monotone"
               dataKey="score"
-              stroke="#f59e0b"
-              strokeWidth={3}
-              dot={{ fill: '#f59e0b', strokeWidth: 2, r: 5 }}
-              activeDot={{ r: 8, stroke: '#f59e0b', strokeWidth: 2 }}
+              stroke="#3b82f6"
+              strokeWidth={2}
+              dot={{ fill: '#3b82f6', strokeWidth: 1, r: 3 }}
+              activeDot={{ r: 5, stroke: '#3b82f6', strokeWidth: 1 }}
               name="Score %"
             />
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Additional Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-green-300 mb-1">Best Score</p>
-          <p className="text-xl font-bold text-green-400">{bestScore}%</p>
+      <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-green-300 mb-1">Best Score</p>
+          <p className="text-lg font-bold text-green-400">{bestScore}%</p>
         </div>
-        <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-purple-300 mb-1">Total Questions</p>
-          <p className="text-xl font-bold text-purple-400">{totalQuestions}</p>
+        <div className="bg-purple-500/10 border border-purple-500/20 p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-purple-300 mb-1">Worst Score</p>
+          <p className="text-lg font-bold text-purple-400">{worstScore}%</p>
         </div>
       </div>
 

@@ -65,14 +65,22 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
     return 'bg-green-300/90';
   };
 
-  // Group days by week
+  // Group days by week - ensure all 30 days are displayed
   const weeks = [];
   for (let i = 0; i < days.length; i += 7) {
     weeks.push(days.slice(i, i + 7));
   }
+  
+  // Ensure we have exactly 30 days (5 rows × 6 columns)
+  const totalDays = weeks.reduce((sum, week) => sum + week.length, 0);
+  if (totalDays !== 30) {
+    console.warn(`Expected 30 days but got ${totalDays} days in heatmap`);
+  }
 
+  // Calculate stats from the last 30 days of data (now limited by backend)
   const totalActivities = data.reduce((sum, item) => sum + item.activity_count, 0);
-  const activeDays = data.filter(item => item.activity_count > 0).length;
+  // Calculate active days based on the generated 30-day grid, not the backend data array
+  const activeDays = days.filter(day => day.count > 0).length;
   const averagePerDay = activeDays > 0 ? Math.round(totalActivities / activeDays) : 0;
 
   return (
@@ -80,40 +88,40 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      className="w-full h-full flex flex-col bg-transparent"
+      className="w-full h-full flex flex-col bg-transparent relative z-10 overflow-hidden"
     >
       {/* Header with Legend */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <div className="flex items-center space-x-1 text-xs text-gray-400">
               <span>Less</span>
-              <div className="flex space-x-1">
-                <div className="w-3 h-3 bg-slate-700/60 rounded-sm border border-slate-600/40"></div>
-                <div className="w-3 h-3 bg-green-600/60 rounded-sm border border-slate-600/40"></div>
-                <div className="w-3 h-3 bg-green-500/70 rounded-sm border border-slate-600/40"></div>
-                <div className="w-3 h-3 bg-green-400/80 rounded-sm border border-slate-600/40"></div>
-                <div className="w-3 h-3 bg-green-300/90 rounded-sm border border-slate-600/40"></div>
+              <div className="flex space-x-0.5 sm:space-x-1">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-slate-700/60 rounded-sm border border-slate-600/40"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-600/60 rounded-sm border border-slate-600/40"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500/70 rounded-sm border border-slate-600/40"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-400/80 rounded-sm border border-slate-600/40"></div>
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-300/90 rounded-sm border border-slate-600/40"></div>
               </div>
               <span>More</span>
             </div>
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-500 hidden sm:block">
             Last 30 days
           </div>
         </div>
       </div>
 
       {/* Heatmap Grid */}
-      <div className="flex-1 flex flex-col justify-center">
-        <div className="space-y-2">
+      <div className="flex-1 flex flex-col justify-center relative z-20 min-h-0">
+        <div className="space-y-1 sm:space-y-2 max-w-full overflow-visible">
           {weeks.map((week, weekIndex) => (
             <motion.div
               key={weekIndex}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: weekIndex * 0.05 }}
-              className="flex space-x-1"
+              className="flex space-x-0.5 sm:space-x-1 justify-center sm:justify-start"
             >
               {week.map((day, dayIndex) => (
                 <motion.div
@@ -125,12 +133,12 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                     delay: weekIndex * 0.05 + dayIndex * 0.02 
                   }}
                   className={`
-                    relative w-10 h-10 rounded-lg border border-slate-600/40
+                    relative w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-lg border border-slate-600/40
                     ${getColorIntensity(day.count)}
                     hover:scale-110 transition-transform duration-200 cursor-pointer
                     flex items-center justify-center text-xs font-medium
                     ${day.count > 0 ? 'text-white' : 'text-gray-400'}
-                    shadow-sm hover:shadow-md
+                    shadow-sm hover:shadow-md z-30 relative
                   `}
                   title={`${day.dayName}, ${day.dayNumber}: ${day.count} activities`}
                 >
@@ -141,7 +149,7 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
                       transition={{ delay: weekIndex * 0.05 + dayIndex * 0.02 + 0.3 }}
                       className="absolute inset-0 flex items-center justify-center"
                     >
-                      <span className="text-xs font-bold">
+                      <span className="text-xs font-bold hidden sm:block">
                         {day.count > 9 ? '9+' : day.count}
                       </span>
                     </motion.div>
@@ -154,21 +162,18 @@ export function ActivityHeatmap({ data }: ActivityHeatmapProps) {
       </div>
 
       {/* Summary Stats */}
-      <div className="mt-6 grid grid-cols-3 gap-4">
-        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-center">
-          <div className="flex items-center justify-center mb-2">
-            <TrendingUp className="h-4 w-4 text-blue-400 mr-1" />
-            <p className="text-sm font-medium text-blue-300">Total Activities</p>
-          </div>
-          <p className="text-xl font-bold text-blue-400">{totalActivities}</p>
+      <div className="mt-4 sm:mt-6 grid grid-cols-3 gap-1.5 sm:gap-3 relative z-20">
+        <div className="bg-blue-500/10 border border-blue-500/20 p-1.5 sm:p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-blue-300 mb-0.5 sm:mb-1">Total Activities</p>
+          <p className="text-sm sm:text-lg font-bold text-blue-400">{totalActivities}</p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-green-300 mb-2">Active Days</p>
-          <p className="text-xl font-bold text-green-400">{activeDays}/30</p>
+        <div className="bg-green-500/10 border border-green-500/20 p-1.5 sm:p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-green-300 mb-0.5 sm:mb-1">Active Days</p>
+          <p className="text-sm sm:text-lg font-bold text-green-400">{activeDays}/30</p>
         </div>
-        <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-purple-300 mb-2">Avg/Day</p>
-          <p className="text-xl font-bold text-purple-400">{averagePerDay}</p>
+        <div className="bg-purple-500/10 border border-purple-500/20 p-1.5 sm:p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-purple-300 mb-0.5 sm:mb-1">Avg/Day</p>
+          <p className="text-sm sm:text-lg font-bold text-purple-400">{averagePerDay}</p>
         </div>
       </div>
     </motion.div>

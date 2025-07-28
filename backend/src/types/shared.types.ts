@@ -21,6 +21,7 @@ export type ExamSessionRow = Tables<'exam_sessions'>;
 export type UserAnswerRow = Tables<'user_answers'>;
 export type FlashcardRow = Tables<'flashcards'>;
 export type ExplanationRow = Tables<'explanations'>;
+export type UserTopicProgressRow = Tables<'user_topic_progress'>;
 
 // Insert types
 export type UserInsert = TablesInsert<'users'>;
@@ -35,6 +36,7 @@ export type ExamSessionInsert = TablesInsert<'exam_sessions'>;
 export type UserAnswerInsert = TablesInsert<'user_answers'>;
 export type FlashcardInsert = TablesInsert<'flashcards'>;
 export type ExplanationInsert = TablesInsert<'explanations'>;
+export type UserTopicProgressInsert = TablesInsert<'user_topic_progress'>;
 
 // Update types
 export type UserUpdate = TablesUpdate<'users'>;
@@ -49,6 +51,7 @@ export type ExamSessionUpdate = TablesUpdate<'exam_sessions'>;
 export type UserAnswerUpdate = TablesUpdate<'user_answers'>;
 export type FlashcardUpdate = TablesUpdate<'flashcards'>;
 export type ExplanationUpdate = TablesUpdate<'explanations'>;
+export type UserTopicProgressUpdate = TablesUpdate<'user_topic_progress'>;
 
 // =============================================
 // Composite Types (Built from Supabase types)
@@ -165,6 +168,7 @@ export const TABLE_NAMES = {
   USER_ANSWERS: 'user_answers',
   FLASHCARDS: 'flashcards',
   EXPLANATIONS: 'explanations',
+  USER_TOPIC_PROGRESS: 'user_topic_progress',
 } as const;
 
 export type TableName = (typeof TABLE_NAMES)[keyof typeof TABLE_NAMES];

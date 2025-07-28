@@ -52,9 +52,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Navigation items
   const navigationItems = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-    { name: "Analytics", href: "/analytics", icon: TrendingUp },
     { name: "Quizes", href: "/dashboard/quiz-history", icon: BookOpen },
     { name: "Flashcards", href: "/flashcards", icon: Brain },
+    { name: "Analytics", href: "/analytics", icon: TrendingUp },
     { name: "Your Library", href: "/library", icon: FolderOpen },
     { name: "Profile", href: "/profile", icon: User },
     { name: "Settings", href: "/settings", icon: Settings },

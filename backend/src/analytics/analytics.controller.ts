@@ -139,6 +139,21 @@ export class AnalyticsController {
     return this.analyticsService.getUserBestWorstTopics(user.id);
   }
 
+  @Get('topic-stats')
+  @ApiOperation({ summary: 'Get detailed topic progress analysis with parent-child relationships' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detailed topic stats data retrieved successfully',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async getTopicStats(
+    @User() user: AuthUser,
+  ): Promise<CustomApiResponse<any>> {
+    this.logger.log(`📊 Topic stats requested for user: ${user.id}`);
+    return this.analyticsService.getTopicStats(user.id);
+  }
+
   @Get('comprehensive')
   @ApiOperation({
     summary: 'Get comprehensive analytics data for the analytics page (all data in one call)',
