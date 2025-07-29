@@ -120,10 +120,10 @@ export default function ProfilePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <Card className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 rounded-xl">
+              <Card className="p-6 bg-gradient-to-br from-slate-800/70 to-slate-900/80 border-slate-600/60 rounded-xl">
                 <div className="flex items-center gap-2 mb-4">
-                  <Settings className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-semibold text-blue-900">Profile Information</h3>
+                  <Settings className="w-5 h-5 text-blue-400" />
+                  <h3 className="text-lg font-semibold text-white">Profile Information</h3>
                 </div>
                 <ProfileForm 
                   user={user} 

@@ -224,7 +224,7 @@ export function StudyTimer({ isOpen, onClose }: StudyTimerProps) {
                   <Button
                     onClick={resetTimer}
                     variant="outline"
-                    className="border-slate-600 text-white hover:bg-slate-700"
+                    className="border-red-500 text-red-400 hover:bg-red-500/20 hover:text-red-300"
                   >
                     <RotateCcw className="w-4 h-4 mr-2" />
                     Reset
@@ -250,47 +250,12 @@ export function StudyTimer({ isOpen, onClose }: StudyTimerProps) {
                 ))}
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                  <div className="text-2xl font-bold text-white">{completedSessions}</div>
-                  <div className="text-xs text-gray-400">Sessions</div>
-                </div>
-                <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
-                  <div className="text-2xl font-bold text-white">
-                    {Math.round(totalStudyTime / 60)}
-                  </div>
-                  <div className="text-xs text-gray-400">Study Minutes</div>
-                </div>
-              </div>
+
             </div>
 
-            {/* Recent Sessions */}
-            <div className="border-t border-slate-700 p-4">
-              <h4 className="text-sm font-medium text-white mb-3">Recent Sessions</h4>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {sessions.slice(0, 3).map((session) => (
-                  <div
-                    key={session.id}
-                    className="flex items-center justify-between p-2 bg-slate-800/50 rounded-lg"
-                  >
-                    <div className="flex items-center gap-2">
-                      {session.type === 'study' ? (
-                        <BookOpen className="w-4 h-4 text-blue-400" />
-                      ) : (
-                        <Coffee className="w-4 h-4 text-green-400" />
-                      )}
-                      <span className="text-sm text-white">
-                        {session.type === 'study' ? 'Study' : 'Break'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      {Math.round(session.duration / 60)}m • {session.timestamp}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+
+
+
           </motion.div>
         </motion.div>
       )}
