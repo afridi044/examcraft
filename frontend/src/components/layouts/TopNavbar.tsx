@@ -14,10 +14,9 @@ import {
   Bell, 
   Sparkles,
   Menu,
-  X,
-  Settings
+  X
 } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { UserMenu } from "@/components/ui/user-menu";
 import { MobileSearchModal } from "@/components/ui/mobile-search-modal";
 import { NotificationCenter } from "@/components/ui/notification-center";
@@ -31,7 +30,6 @@ interface TopNavbarProps {
 export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbarProps) {
   const router = useRouter();
   const { user, signOut } = useBackendAuth();
-  const { isDark } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -79,12 +77,8 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
       <motion.div 
         className={`h-[72px] fixed top-0 left-0 right-0 z-50 transition-all duration-300 premium-glass ${
           isScrolled 
-            ? isDark 
-              ? "bg-slate-950/95 backdrop-blur-2xl border-b border-slate-700/60 shadow-xl shadow-blue-900/10"
-              : "bg-white/95 backdrop-blur-2xl border-b border-gray-200/60 shadow-xl shadow-gray-200/10"
-            : isDark
-              ? "bg-slate-950/95 backdrop-blur-xl border-b border-slate-700/40 animate-gradient"
-              : "bg-white/95 backdrop-blur-xl border-b border-gray-200/40 animate-gradient"
+            ? "bg-slate-950/95 backdrop-blur-2xl border-b border-slate-700/60 shadow-xl shadow-blue-900/10"
+            : "bg-slate-950/95 backdrop-blur-xl border-b border-slate-700/40 animate-gradient"
         }`}
         initial={{ y: -72 }}
         animate={{ y: 0 }}
@@ -95,15 +89,11 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
           <div className="flex items-center gap-x-4">
             {/* Sidebar Toggle Button */}
             <button
-              className={`p-2 rounded-md transition-all duration-300 ${
-                isDark 
-                  ? "bg-white/10 hover:bg-white/20" 
-                  : "bg-gray-800/10 hover:bg-gray-800/20"
-              }`}
+              className="p-2 rounded-md transition-all duration-300 bg-white/10 hover:bg-white/20"
               onClick={() => setIsSidebarOpen(true)}
               aria-label="Open sidebar"
             >
-              <Menu className={`h-6 w-6 ${isDark ? "text-white" : "text-gray-800"}`} />
+              <Menu className="h-6 w-6 text-white" />
             </button>
             
             {/* Premium Logo */}
@@ -115,18 +105,10 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
                 <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-purple-600/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </div>
               <div className="flex flex-col">
-                <span className={`text-lg sm:text-xl font-bold tracking-tight ${
-                  isDark 
-                    ? "bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent"
-                    : "bg-gradient-to-r from-gray-800 via-blue-600 to-indigo-700 bg-clip-text text-transparent"
-                }`}>
+                <span className="text-lg sm:text-xl font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
                   ExamCraft
                 </span>
-                <span className={`text-xs font-medium -mt-1 hidden sm:block ${
-                  isDark 
-                    ? "bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
-                }`}>
+                <span className="text-xs font-medium -mt-1 hidden sm:block bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                   AI-Powered Learning
                 </span>
               </div>
@@ -145,26 +127,14 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
                       placeholder="Search quizzes, exams, flashcards, or ask AI..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className={`h-12 pl-12 pr-4 rounded-2xl font-medium transition-all duration-300 ${
-                        isDark
-                          ? "bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
-                          : "bg-gray-100/80 border-gray-300/60 text-gray-800 placeholder-gray-500 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:bg-gray-100 shadow-inner shadow-gray-200/70"
-                      }`}
+                      className="h-12 pl-12 pr-4 rounded-2xl font-medium transition-all duration-300 bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
                     />
-                    <Search className={`absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors ${
-                      isDark ? "text-slate-400 group-focus-within:text-blue-400" : "text-gray-500 group-focus-within:text-blue-600"
-                    }`} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 transition-colors text-slate-400 group-focus-within:text-blue-400" />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                      <kbd className={`hidden sm:inline-flex items-center px-2 py-1 text-xs rounded-md shadow-sm ${
-                        isDark 
-                          ? "bg-slate-700/60 border border-slate-600/60 text-slate-400"
-                          : "bg-gray-200/80 border border-gray-300/60 text-gray-600"
-                      }`}>
+                      <kbd className="hidden sm:inline-flex items-center px-2 py-1 text-xs rounded-md shadow-sm bg-slate-700/60 border border-slate-600/60 text-slate-400">
                         ⌘K
                       </kbd>
-                      <Sparkles className={`h-3 w-3 ml-1 hidden sm:block ${
-                        isDark ? "text-blue-400/70" : "text-blue-600/70"
-                      }`} />
+                      <Sparkles className="h-3 w-3 ml-1 hidden sm:block text-blue-400/70" />
                     </div>
                   </div>
                 </div>
@@ -179,11 +149,7 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
               <Button
                 variant="ghost"
                 size="sm"
-                className={`lg:hidden transition-all duration-300 rounded-xl h-10 w-10 shadow-md ${
-                  isDark 
-                    ? "bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white"
-                    : "bg-gray-100/80 hover:bg-gray-200/80 border border-gray-300/60 text-gray-700 hover:text-gray-900"
-                }`}
+                className="lg:hidden transition-all duration-300 rounded-xl h-10 w-10 shadow-md bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white"
                 onClick={() => setIsMobileSearchOpen(true)}
               >
                 <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
@@ -192,30 +158,14 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
 
 
 
-            {/* Settings */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/settings')}
-              className={`transition-all duration-300 rounded-xl h-10 w-10 shadow-md hover:shadow-lg ${
-                isDark 
-                  ? "bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white"
-                  : "bg-gray-100/80 hover:bg-gray-200/80 border border-gray-300/60 text-gray-700 hover:text-gray-900"
-              }`}
-            >
-              <Settings className="h-4 w-4 group-hover:scale-110 transition-transform" />
-            </Button>
+
 
             {/* Notifications */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setIsNotificationOpen(true)}
-              className={`transition-all duration-300 rounded-xl h-10 w-10 relative shadow-md hover:shadow-lg ${
-                isDark 
-                  ? "bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white"
-                  : "bg-gray-100/80 hover:bg-gray-200/80 border border-gray-300/60 text-gray-700 hover:text-gray-900"
-              }`}
+              className="transition-all duration-300 rounded-xl h-10 w-10 relative shadow-md hover:shadow-lg bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white"
             >
               <Bell className="h-4 w-4 group-hover:scale-110 transition-transform" />
               <div className="absolute -top-1 -right-1 h-3 w-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-md animate-pulse">

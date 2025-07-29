@@ -5,21 +5,18 @@ import type { QuizReviewData } from "@/types";
 interface PerformanceSummaryProps {
   stats: QuizReviewData["quiz_stats"];
   formatTime: (seconds: number) => string;
-  isDark?: boolean;
 }
 
-export function PerformanceSummary({ stats, formatTime, isDark = true }: PerformanceSummaryProps) {
+export function PerformanceSummary({ stats, formatTime }: PerformanceSummaryProps) {
   return (
     <Card className={`premium-glass shadow-2xl p-3 sm:p-4 rounded-2xl ${
-      isDark
-        ? "bg-gradient-to-br from-slate-800/70 to-slate-900/80 border border-slate-600/60"
-        : "bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/60"
+      "bg-gradient-to-br from-slate-800/70 to-slate-900/80 border border-slate-600/60"
     }`}>
       {/* Heading Container */}
       <div className="flex flex-row items-center gap-4 ml-4 text-left">
         <Trophy className="h-5 w-5 text-yellow-400 drop-shadow" />
         <h2 className={`text-base sm:text-lg font-semibold tracking-tight ${
-          isDark ? "text-white" : "text-blue-900"
+          "text-white"
         }`}>
           Performance Summary
         </h2>
@@ -31,7 +28,7 @@ export function PerformanceSummary({ stats, formatTime, isDark = true }: Perform
             {stats.percentage}%
           </div>
           <div className={`text-xs sm:text-sm ${
-            isDark ? "text-gray-400" : "text-blue-600"
+            "text-gray-400"
           }`}>Overall Score</div>
         </div>
         <div className="text-center">
@@ -39,7 +36,7 @@ export function PerformanceSummary({ stats, formatTime, isDark = true }: Perform
             {stats.correct_answers}/{stats.total_questions}
           </div>
           <div className={`text-xs sm:text-sm ${
-            isDark ? "text-gray-400" : "text-blue-600"
+            "text-gray-400"
           }`}>Correct Answers</div>
         </div>
         <div className="text-center">
@@ -47,7 +44,7 @@ export function PerformanceSummary({ stats, formatTime, isDark = true }: Perform
             {stats.total_questions}
           </div>
           <div className={`text-xs sm:text-sm ${
-            isDark ? "text-gray-400" : "text-blue-600"
+            "text-gray-400"
           }`}>Total Questions</div>
         </div>
         <div className="text-center">
@@ -55,7 +52,7 @@ export function PerformanceSummary({ stats, formatTime, isDark = true }: Perform
             {formatTime(stats.total_time)}
           </div>
           <div className={`text-xs sm:text-sm ${
-            isDark ? "text-gray-400" : "text-blue-600"
+            "text-gray-400"
           }`}>Total Time</div>
         </div>
       </div>

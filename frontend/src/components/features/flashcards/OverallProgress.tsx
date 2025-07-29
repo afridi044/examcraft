@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import { Trophy, Brain, Target, Star } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
-
 interface OverallProgressProps {
   progress: {
     learning: number;
@@ -12,8 +10,6 @@ interface OverallProgressProps {
 }
 
 export function OverallProgress({ progress }: OverallProgressProps) {
-  const { isDark } = useTheme();
-  
   return (
     <motion.div
       className="mb-4 sm:mb-6"
@@ -22,21 +18,19 @@ export function OverallProgress({ progress }: OverallProgressProps) {
       transition={{ duration: 0.3, delay: 0.1 }}
     >
       <div className={`rounded-lg p-4 backdrop-blur-sm ${
-        isDark 
-          ? 'bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50' 
-          : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200'
+        "bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50"
       }`}>
         <div className="flex items-center gap-2 mb-3">
           <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-400/30">
             <Trophy className="h-4 w-4 text-purple-400" />
           </div>
           <h3 className={`text-base font-semibold ${
-            isDark ? 'text-white' : 'text-blue-900'
+            "text-white"
           }`}>
             Overall Progress
           </h3>
           <div className={`ml-auto text-xs ${
-            isDark ? 'text-gray-400' : 'text-blue-600'
+            "text-gray-400"
           }`}>
             {progress.total} total flashcards
           </div>
@@ -55,12 +49,12 @@ export function OverallProgress({ progress }: OverallProgressProps) {
               </span>
             </div>
             <p className={`text-xs font-medium ${
-              isDark ? 'text-gray-400' : 'text-yellow-700'
+              "text-gray-400"
             }`}>
               Learning
             </p>
             <p className={`text-xs mt-0.5 ${
-              isDark ? 'text-gray-500' : 'text-yellow-600'
+              "text-gray-500"
             }`}>
               {progress.total > 0
                 ? Math.round(
@@ -83,12 +77,12 @@ export function OverallProgress({ progress }: OverallProgressProps) {
               </span>
             </div>
             <p className={`text-xs font-medium ${
-              isDark ? 'text-gray-400' : 'text-blue-700'
+              "text-gray-400"
             }`}>
               Under Review
             </p>
             <p className={`text-xs mt-0.5 ${
-              isDark ? 'text-gray-500' : 'text-blue-600'
+              "text-gray-500"
             }`}>
               {progress.total > 0
                 ? Math.round(
@@ -111,12 +105,12 @@ export function OverallProgress({ progress }: OverallProgressProps) {
               </span>
             </div>
             <p className={`text-xs font-medium ${
-              isDark ? 'text-gray-400' : 'text-green-700'
+              "text-gray-400"
             }`}>
               Mastered
             </p>
             <p className={`text-xs mt-0.5 ${
-              isDark ? 'text-gray-500' : 'text-green-600'
+              "text-gray-500"
             }`}>
               {progress.total > 0
                 ? Math.round(

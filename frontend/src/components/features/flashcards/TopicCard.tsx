@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
 import { BookOpen, Hash, Play } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
-
 interface TopicCardProps {
   topicId: string;
   topicName: string;
@@ -28,14 +26,10 @@ export function TopicCard({
   onStudy,
   index,
 }: TopicCardProps) {
-  const { isDark } = useTheme();
-  
   return (
     <motion.div
       className={`relative overflow-hidden rounded-lg p-6 cursor-pointer transition-all duration-300 group ${
-        isDark 
-          ? 'bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/20' 
-          : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/20'
+        "bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 hover:border-purple-400/50 hover:shadow-lg hover:shadow-purple-500/20"
       }`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -58,9 +52,7 @@ export function TopicCard({
             <BookOpen className="h-6 w-6 text-purple-400 group-hover:text-purple-300 transition-colors" />
           </div>
           <div className={`flex items-center space-x-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            isDark 
-              ? 'bg-gray-700/50 text-gray-300 group-hover:bg-purple-500/20 group-hover:text-purple-300' 
-              : 'bg-blue-100 text-blue-700 group-hover:bg-purple-100 group-hover:text-purple-700'
+            "bg-gray-700/50 text-gray-300 group-hover:bg-purple-500/20 group-hover:text-purple-300"
           }`}>
             <Hash className="h-4 w-4" />
             <span>{count}</span>
@@ -69,16 +61,12 @@ export function TopicCard({
 
         <div>
           <h3 className={`font-semibold text-lg transition-colors mb-2 ${
-            isDark 
-              ? 'text-white group-hover:text-purple-300' 
-              : 'text-blue-900 group-hover:text-purple-700'
+            "text-white group-hover:text-purple-300"
           }`}>
             {topicName}
           </h3>
           <p className={`text-sm transition-colors mb-4 ${
-            isDark 
-              ? 'text-gray-400 group-hover:text-gray-300' 
-              : 'text-blue-600 group-hover:text-purple-600'
+            "text-gray-400 group-hover:text-gray-300"
           }`}>
             {count} flashcard{count !== 1 ? "s" : ""}
           </p>
@@ -87,7 +75,7 @@ export function TopicCard({
           <div className="mb-4 space-y-3">
             {/* Progress Bar */}
             <div className={`w-full rounded-full h-2 overflow-hidden ${
-              isDark ? 'bg-gray-800/50' : 'bg-gray-200'
+              "bg-gray-800/50"
             }`}>
               <div className="h-full flex">
                 {progress.learning > 0 && (
@@ -122,19 +110,19 @@ export function TopicCard({
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400"></div>
                               <span className={`${
-                isDark ? 'text-gray-400' : 'text-yellow-700'
+                "text-gray-400"
               }`}>{progress.learning}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-400 to-cyan-400"></div>
               <span className={`${
-                isDark ? 'text-gray-400' : 'text-blue-700'
+                "text-gray-400"
               }`}>{progress.under_review}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full bg-gradient-to-r from-green-400 to-emerald-400"></div>
               <span className={`${
-                isDark ? 'text-gray-400' : 'text-green-700'
+                "text-gray-400"
               }`}>{progress.mastered}</span>
               </div>
             </div>
@@ -147,9 +135,7 @@ export function TopicCard({
               onStudy();
             }}
             className={`w-full px-4 py-2.5 rounded-lg transition-all text-sm font-medium flex items-center justify-center gap-2 ${
-              isDark 
-                ? 'bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-400/30 text-purple-300 hover:from-purple-500/30 hover:to-blue-500/30 hover:border-purple-400/50' 
-                : 'bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-300 text-purple-700 hover:from-purple-200 hover:to-blue-200 hover:border-purple-400'
+              "bg-gradient-to-r from-purple-500/20 to-blue-500/20 border border-purple-400/30 text-purple-300 hover:from-purple-500/30 hover:to-blue-500/30 hover:border-purple-400/50"
             }`}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

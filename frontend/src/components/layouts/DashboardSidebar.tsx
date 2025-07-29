@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { BarChart3, X, User, UserPlus, LogIn, Crown } from "lucide-react";
 import React from "react";
-import { useTheme } from "@/contexts/ThemeContext";
+
 
 export function DashboardSidebar({
     open,
@@ -28,7 +28,7 @@ export function DashboardSidebar({
     sidebarRef: React.RefObject<HTMLDivElement | null>;
     side?: "left" | "right";
 }) {
-    const { isDark } = useTheme();
+
     const positionClass = side === "right" ? "right-0" : "left-0";
     const initialX = side === "right" ? 320 : -320;
     const exitX = side === "right" ? 320 : -320;
@@ -42,9 +42,7 @@ export function DashboardSidebar({
                     exit={{ x: exitX }}
                     transition={{ type: "spring", damping: 30, stiffness: 300 }}
                     className={`fixed top-0 ${positionClass} h-full z-50 backdrop-blur-xl shadow-2xl ${
-                        isDark 
-                            ? "bg-white/5 border-r border-white/10" 
-                            : "bg-white/95 border-r border-gray-200/60"
+                        "bg-white/5 border-r border-white/10"
                         } ${isMobile ? "w-72" : "w-80"}`}
                 >
                     <div className="flex flex-col h-full p-4 sm:p-6">
@@ -56,10 +54,10 @@ export function DashboardSidebar({
                                 </div>
                                 <div>
                                     <h1 className={`text-base sm:text-lg font-bold ${
-                                        isDark ? 'text-white' : 'text-gray-900'
+                                        "text-white"
                                     }`}>ExamCraft</h1>
                                     <p className={`text-xs hidden sm:block ${
-                                        isDark ? 'text-gray-400' : 'text-gray-600'
+                                        "text-gray-400"
                                     }`}>AI-Powered Learning</p>
                                 </div>
                             </Link>
@@ -68,9 +66,7 @@ export function DashboardSidebar({
                                 size="icon"
                                 onClick={onClose}
                                 className={`h-8 w-8 rounded-lg ${
-                                    isDark 
-                                        ? "text-gray-400 hover:text-white hover:bg-white/10" 
-                                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-100/80"
+                                    "text-gray-400 hover:text-white hover:bg-white/10"
                                 }`}
                             >
                                 <X className="h-4 w-4" />
@@ -80,7 +76,7 @@ export function DashboardSidebar({
                         <nav className="flex-1 space-y-2">
                             <div className="mb-4 sm:mb-6">
                                 <p className={`text-xs font-semibold uppercase tracking-wider mb-3 px-3 ${
-                                    isDark ? 'text-gray-400' : 'text-gray-700'
+                                    "text-gray-400"
                                 }`}>
                                     Navigation
                                 </p>
@@ -93,22 +89,18 @@ export function DashboardSidebar({
                                             className={`group flex items-center space-x-3 px-3 py-2.5 sm:py-3 rounded-xl transition-all duration-200 ${
                                                 isActive
                                                     ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg"
-                                                    : isDark 
-                                                        ? "text-gray-300 hover:text-white hover:bg-white/10"
-                                                        : "text-gray-700 hover:text-gray-900 hover:bg-gray-100/80"
+                                                    : "text-gray-300 hover:text-white hover:bg-white/10"
                                             }`}
                                         >
                                             <div
                                                 className={`h-7 w-7 sm:h-8 sm:w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
                                                     isActive
                                                         ? "bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg"
-                                                        : isDark 
-                                                            ? "bg-white/10 group-hover:bg-white/20"
-                                                            : "bg-gray-100/80 group-hover:bg-gray-200/80"
+                                                        : "bg-white/10 group-hover:bg-white/20"
                                                 }`}
                                             >
                                                 <item.icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${
-                                                    isActive ? 'text-white' : isDark ? 'text-gray-300' : 'text-gray-600'
+                                                    isActive ? 'text-white' : "text-gray-300"
                                                 }`} />
                                             </div>
                                             <span className="font-medium text-sm sm:text-base">{item.name}</span>
@@ -119,10 +111,10 @@ export function DashboardSidebar({
                         </nav>
                         {/* Profile Section */}
                         <div className={`border-t pt-4 sm:pt-6 ${
-                            isDark ? 'border-white/10' : 'border-gray-200/60'
+                            "border-white/10"
                         }`}>
                             <div className={`rounded-xl p-3 sm:p-4 ${
-                                isDark ? 'bg-white/5 border border-white/10' : 'bg-gray-50/80 border border-gray-200/60'
+                                "bg-white/5 border border-white/10"
                             }`}>
                                 <div className="flex items-center space-x-3 mb-3">
                                     <div className="h-8 w-8 sm:h-10 sm:w-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
@@ -130,12 +122,12 @@ export function DashboardSidebar({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className={`text-xs sm:text-sm font-medium truncate ${
-                                            isDark ? 'text-white' : 'text-gray-900'
+                                            "text-white"
                                         }`}>
                                             {user?.first_name || user?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || "User"}
                                         </p>
                                         <p className={`text-xs ${
-                                            isDark ? 'text-gray-400' : 'text-gray-600'
+                                            "text-gray-400"
                                         }`}>{user?.email}</p>
                                     </div>
                                 </div>
@@ -144,9 +136,7 @@ export function DashboardSidebar({
                                     variant="ghost"
                                     size="sm"
                                     className={`w-full justify-start rounded-lg text-xs sm:text-sm ${
-                                        isDark 
-                                            ? "text-gray-300 hover:text-white hover:bg-white/10" 
-                                            : "text-gray-700 hover:text-gray-900 hover:bg-gray-100/80"
+                                        "text-gray-300 hover:text-white hover:bg-white/10"
                                     }`}
                                 >
                                     <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-2" />
@@ -178,7 +168,6 @@ export function SimpleSidebar({
     sidebarRef: React.RefObject<HTMLDivElement | null>;
     side?: "left" | "right";
 }) {
-    const { isDark } = useTheme();
     const positionClass = side === "right" ? "right-0" : "left-0";
     const initialX = side === "right" ? 320 : -320;
     const exitX = side === "right" ? 320 : -320;
@@ -192,9 +181,7 @@ export function SimpleSidebar({
                     exit={{ x: exitX }}
                     transition={{ type: "spring", damping: 30, stiffness: 300 }}
                     className={`fixed top-0 ${positionClass} z-50 h-screen backdrop-blur-xl shadow-2xl ${
-                        isDark 
-                            ? "bg-white/5 border-r border-white/10" 
-                            : "bg-white/95 border-r border-gray-200/60"
+                        "bg-white/5 border-r border-white/10"
                         } ${isMobile ? "w-72" : "w-80"}`}
                 >
                     <div className="p-4 sm:p-6">
@@ -206,10 +193,10 @@ export function SimpleSidebar({
                                 </div>
                                 <div>
                                     <h1 className={`text-base sm:text-lg font-bold ${
-                                        isDark ? 'text-white' : 'text-gray-900'
+                                        "text-white"
                                     }`}>ExamCraft</h1>
                                     <p className={`text-xs hidden sm:block ${
-                                        isDark ? 'text-gray-400' : 'text-gray-600'
+                                        "text-gray-400"
                                     }`}>AI-Powered Learning</p>
                                 </div>
                             </Link>

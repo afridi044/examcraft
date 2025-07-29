@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { BookOpen, CheckCircle } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
-
 interface QuestionOption {
   option_id: string;
   content: string;
@@ -37,8 +35,6 @@ export function QuizTakingQuestionCard({
   userAnswer,
   onAnswerSelect,
 }: QuizTakingQuestionCardProps) {
-  const { isDark } = useTheme();
-
   return (
     <motion.div
       key={questionIndex}
@@ -47,9 +43,7 @@ export function QuizTakingQuestionCard({
       transition={{ duration: 0.2 }}
     >
       <Card className={`p-3 sm:p-4 ${
-        isDark
-          ? "bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-blue-700/50"
-          : "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200/50"
+        "bg-gradient-to-br from-blue-900/50 to-indigo-900/50 border-blue-700/50"
       }`}>
         <div className="space-y-3 sm:space-y-4">
           {/* Question */}
@@ -59,13 +53,13 @@ export function QuizTakingQuestionCard({
                 <BookOpen className="h-3 w-3 text-white" />
               </div>
               <h2 className={`text-base sm:text-lg font-bold ${
-                isDark ? "text-white" : "text-blue-900"
+                "text-white"
               }`}>
                 Question {questionIndex + 1}
               </h2>
             </div>
             <p className={`text-sm sm:text-base leading-normal ${
-              isDark ? "text-gray-200" : "text-blue-800"
+              "text-gray-200"
             }`}>
               {question.content}
             </p>
@@ -76,7 +70,7 @@ export function QuizTakingQuestionCard({
             {question.question_type === "fill-in-blank" ? (
               <div className="space-y-1">
                 <label className={`text-xs sm:text-sm ${
-                  isDark ? "text-gray-300" : "text-blue-700"
+                  "text-gray-300"
                 }`}>
                   Your Answer:
                 </label>
@@ -86,9 +80,7 @@ export function QuizTakingQuestionCard({
                   onChange={(e) => onAnswerSelect("", e.target.value)}
                   placeholder="Type your answer here..."
                   className={`w-full p-2 sm:p-3 border rounded-lg min-h-[40px] ${
-                    isDark
-                      ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
-                      : "bg-white border-blue-300 text-blue-900 placeholder:text-blue-400"
+                    "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
                   }`}
                 />
               </div>
@@ -101,12 +93,8 @@ export function QuizTakingQuestionCard({
                     onClick={() => onAnswerSelect(option.option_id)}
                     className={`w-full p-2 sm:p-3 text-left rounded-lg border transition-all min-h-[44px] ${
                       isSelected
-                        ? isDark
-                          ? "border-purple-500 bg-purple-500/20 text-purple-300"
-                          : "border-purple-500 bg-purple-100/50 text-purple-700"
-                        : isDark
-                          ? "border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700/70"
-                          : "border-blue-300 bg-white text-blue-800 hover:border-blue-400 hover:bg-blue-50"
+                        ? "border-purple-500 bg-purple-500/20 text-purple-300"
+                        : "border-gray-600 bg-gray-700/50 text-gray-300 hover:border-gray-500 hover:bg-gray-700/70"
                     }`}
                   >
                     <div className="flex items-center space-x-2">
@@ -114,9 +102,7 @@ export function QuizTakingQuestionCard({
                         className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
                           isSelected
                             ? "border-purple-500 bg-purple-500"
-                            : isDark
-                              ? "border-gray-500"
-                              : "border-blue-400"
+                            : "border-gray-500"
                         }`}
                       >
                         {isSelected && (

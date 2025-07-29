@@ -30,8 +30,6 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { useTheme } from "@/contexts/ThemeContext";
-
 interface UserAnswer {
   question_id: string;
   selected_option_id?: string;
@@ -54,7 +52,6 @@ export default function TakeQuizPage() {
   const params = useParams();
   const quizId = params.quizId as string;
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const { isDark } = useTheme();
   const invalidateBackendQuiz = useInvalidateBackendQuiz();
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
   const invalidateFlashcards = useInvalidateFlashcards();
@@ -283,20 +280,18 @@ export default function TakeQuizPage() {
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
           <Card className={`p-8 text-center ${
-            isDark
-              ? "bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-700/50"
-              : "bg-gradient-to-br from-red-50 to-red-100 border-red-300/50"
+            "bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-700/50"
           }`}>
             <XCircle className={`h-12 w-12 mx-auto mb-4 ${
-              isDark ? "text-red-400" : "text-red-600"
+              "text-red-400"
             }`} />
             <h2 className={`text-xl font-bold mb-2 ${
-              isDark ? "text-white" : "text-red-900"
+              "text-white"
             }`}>
               Quiz Not Available
             </h2>
             <p className={`mb-4 ${
-              isDark ? "text-gray-300" : "text-red-700"
+              "text-gray-300"
             }`}>
               This quiz is not available or has no questions.
             </p>
@@ -357,7 +352,7 @@ export default function TakeQuizPage() {
           rightContent={
             <div className="flex items-center space-x-4">
               <div className={`flex items-center space-x-2 ${
-                isDark ? "text-gray-300" : "text-blue-700"
+                "text-gray-300"
               }`}>
                 <Clock className="h-4 w-4" />
                 <span className="text-sm sm:text-base">
@@ -365,19 +360,19 @@ export default function TakeQuizPage() {
                 </span>
               </div>
               <div className={`text-sm sm:text-base ${
-                isDark ? "text-gray-300" : "text-blue-700"
+                "text-gray-300"
               }`}>
                 {currentQuestionIndex + 1} / {questions.length}
               </div>
             </div>
           }
-          isDark={isDark}
+
         />
         {/* Timer section removed as it's now in DashboardHeader */}
 
         {/* Progress Bar */}
         <div className={`w-full rounded-full h-2 ${
-          isDark ? "bg-gray-700" : "bg-gray-200"
+          "bg-gray-700"
         }`}>
           <div
             className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
@@ -401,9 +396,7 @@ export default function TakeQuizPage() {
             onClick={handlePreviousQuestion}
             disabled={currentQuestionIndex === 0}
             className={`border-0 shadow-lg disabled:opacity-50 disabled:shadow-none w-full sm:w-auto min-h-[48px] px-5 ${
-              isDark
-                ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-900/30"
-                : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white shadow-blue-500/30"
+              "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-900/30"
             }`}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -435,9 +428,7 @@ export default function TakeQuizPage() {
                         ? "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-md shadow-purple-500/30 border border-purple-400/30"
                         : isAnswered
                           ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-sm shadow-green-500/20 border border-green-400/30"
-                          : isDark
-                            ? "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-400 border border-gray-600/30"
-                            : "bg-gradient-to-r from-gray-200 to-gray-300 text-gray-600 border border-gray-400/30"
+                          : "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-400 border border-gray-600/30"
                     }`}
                   >
                     {index + 1}

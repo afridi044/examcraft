@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Search, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
-import { useTheme } from "@/contexts/ThemeContext";
+
 
 interface DashboardSearchBarProps {
   value: string;
@@ -41,7 +41,6 @@ export const DashboardSearchBar: React.FC<DashboardSearchBarProps> = ({
   onRightIconClick,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const { isDark } = useTheme();
   // Debounce logic removed for now
 
   // Handle clear button click
@@ -70,9 +69,7 @@ export const DashboardSearchBar: React.FC<DashboardSearchBarProps> = ({
           scale: isFocused ? 1.1 : 1,
           x: isFocused ? 2 : 0,
         }}
-        className={`absolute left-3 top-1/2 -translate-y-1/2 z-10 ${
-          isDark ? "text-blue-400" : "text-blue-600"
-        }`}
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-blue-400"
       >
         <Search className="h-4 w-4" />
       </motion.div>
@@ -87,9 +84,7 @@ export const DashboardSearchBar: React.FC<DashboardSearchBarProps> = ({
         onBlur={() => setIsFocused(false)}
         className={clsx(
           "pl-10 pr-12",
-          isDark
-            ? "bg-gradient-to-r from-blue-900/50 to-indigo-900/50 backdrop-blur-sm border-blue-700/50 text-white placeholder-blue-300 focus:bg-blue-900/70 focus:border-blue-500/50 hover:bg-blue-900/60"
-            : "bg-gradient-to-r from-blue-50 to-indigo-50 backdrop-blur-sm border-blue-300/50 text-blue-900 placeholder-blue-600 focus:bg-blue-100/70 focus:border-blue-500/50 hover:bg-blue-100/60",
+          "bg-gradient-to-r from-blue-900/50 to-indigo-900/50 backdrop-blur-sm border-blue-700/50 text-white placeholder-blue-300 focus:bg-blue-900/70 focus:border-blue-500/50 hover:bg-blue-900/60",
           "transition-colors duration-200",
           "focus:ring-blue-500/10",
           "focus:outline-none",
@@ -110,9 +105,7 @@ export const DashboardSearchBar: React.FC<DashboardSearchBarProps> = ({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleClear}
-              className={`transition-colors ${
-                isDark ? "text-blue-300 hover:text-blue-200" : "text-blue-600 hover:text-blue-700"
-              }`}
+              className="transition-colors text-blue-300 hover:text-blue-200"
             >
               <X className="h-4 w-4" />
             </motion.button>
@@ -127,7 +120,7 @@ export const DashboardSearchBar: React.FC<DashboardSearchBarProps> = ({
               animate={{ opacity: 1, rotate: 360 }}
               exit={{ opacity: 0 }}
               transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-              className={isDark ? "text-blue-400" : "text-blue-600"}
+              className="text-blue-400"
             >
               <Loader2 className="h-4 w-4" />
             </motion.div>
@@ -145,9 +138,7 @@ export const DashboardSearchBar: React.FC<DashboardSearchBarProps> = ({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className={`focus:outline-none cursor-pointer ${
-                isDark ? "text-blue-300 hover:text-blue-200" : "text-blue-600 hover:text-blue-700"
-              }`}
+              className="focus:outline-none cursor-pointer text-blue-300 hover:text-blue-200"
               onClick={onRightIconClick}
             >
               {rightIcon}

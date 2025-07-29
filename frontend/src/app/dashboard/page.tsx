@@ -20,7 +20,6 @@ import {
   Activity,
   Rocket,
   TrendingUp,
-  Settings,
 } from "lucide-react";
 import type { RecentActivity, TopicProgress } from "@/types";
 import { StatCard } from "@/components/features/dashboard/StatCard";
@@ -32,8 +31,6 @@ import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { StudyTimer } from "@/components/ui/study-timer";
-import { useTheme } from "@/contexts/ThemeContext";
-
 // Default stats object
 const DEFAULT_STATS = {
   totalQuizzes: 0,
@@ -47,7 +44,6 @@ const DEFAULT_STATS = {
 export default function DashboardPage() {
   const router = useRouter();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const { isDark } = useTheme();
   const [isStudyTimerOpen, setIsStudyTimerOpen] = useState(false);
 
   // Use individual backend-powered dashboard hooks (JWT-secured)
@@ -171,35 +167,30 @@ export default function DashboardPage() {
           <DashboardHeader
             title="Dashboard"
             subtitle="Welcome back! Here's your learning progress overview"
-            isDark={isDark}
           >
             {safeStats.studyStreak > 0 && (
               <motion.div 
                 className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs ${
-                  isDark 
-                    ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20' 
-                    : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30'
+                  "bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20"
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Flame className={`h-3 w-3 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
-                <span className={`font-medium ${isDark ? 'text-amber-100' : 'text-amber-800'}`}>
+                <Flame className={`h-3 w-3 ${"text-amber-400"}`} />
+                <span className={`font-medium ${"text-amber-100"}`}>
                   {safeStats.studyStreak} day streak
                 </span>
               </motion.div>
             )}
             <motion.div 
               className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs ${
-                isDark 
-                  ? 'bg-slate-800/60 border border-slate-700/50' 
-                  : 'bg-slate-100/80 border border-slate-300/60'
+                "bg-slate-800/60 border border-slate-700/50"
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Trophy className={`h-3 w-3 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
-              <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+              <Trophy className={`h-3 w-3 ${"text-blue-400"}`} />
+              <span className={`font-medium ${"text-slate-200"}`}>
                 Level {Math.floor(safeStats.questionsAnswered / 100) + 1}
               </span>
             </motion.div>
@@ -289,7 +280,7 @@ export default function DashboardPage() {
               <Rocket className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
             <h2 className={`text-base sm:text-lg font-bold ${
-              isDark ? 'text-gray-100' : 'text-gray-900'
+              "text-gray-100"
             }`}>Quick Actions</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-blue-500/30 to-transparent"></div>
           </div>
@@ -373,7 +364,7 @@ export default function DashboardPage() {
               <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
             <h2 className={`text-base sm:text-lg font-bold ${
-              isDark ? 'text-gray-100' : 'text-gray-900'
+              "text-gray-100"
             }`}>Track Your Learning</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/30 to-transparent"></div>
           </div>
@@ -394,33 +385,27 @@ export default function DashboardPage() {
             className="md:hover:scale-[1.01] transition-transform duration-200"
           >
             <Card className={`${
-              isDark 
-                ? 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60' 
-                : 'bg-white/80 border-gray-200/60 hover:bg-white/90'
+              "bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60"
             } transition-all duration-300`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className={`flex items-center gap-2 text-sm sm:text-base font-semibold ${
-                    isDark ? 'text-gray-100' : 'text-gray-900'
+                    "text-gray-100"
                   }`}>
                     <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-lg flex items-center justify-center ${
-                      isDark 
-                        ? 'bg-slate-600/20 border border-slate-500/30' 
-                        : 'bg-gray-100/80 border border-gray-300/60'
+                      "bg-slate-600/20 border border-slate-500/30"
                     }`}>
                       <Clock className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
-                        isDark ? 'text-slate-300' : 'text-gray-600'
+                        "text-slate-300"
                       }`} />
                     </div>
                     <span>Recent Activity</span>
                   </CardTitle>
                   <div className={`px-2 py-1 rounded-md ${
-                    isDark 
-                      ? 'bg-slate-700/50 border border-slate-600/50' 
-                      : 'bg-gray-100/80 border border-gray-300/60'
+                    "bg-slate-700/50 border border-slate-600/50"
                   }`}>
                     <span className={`text-xs font-medium ${
-                      isDark ? 'text-slate-300' : 'text-gray-700'
+                      "text-slate-300"
                     }`}>{safeRecentActivity.length} items</span>
                   </div>
                 </div>
@@ -448,19 +433,17 @@ export default function DashboardPage() {
                 ) : (
                   <div className="text-center py-6 sm:py-8">
                     <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 ${
-                      isDark 
-                        ? 'bg-slate-700/40 border border-slate-600/40' 
-                        : 'bg-gray-100/80 border border-gray-300/60'
+                      "bg-slate-700/40 border border-slate-600/40"
                     }`}>
                       <BookOpen className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                        isDark ? 'text-gray-400' : 'text-gray-500'
+                        "text-gray-400"
                       }`} />
                     </div>
                     <p className={`text-sm font-medium ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
+                      "text-gray-400"
                     }`}>No recent activity</p>
                     <p className={`text-xs mt-0.5 ${
-                      isDark ? 'text-gray-500' : 'text-gray-500'
+                      "text-gray-500"
                     }`}>Create and complete quizzes to see your activity here</p>
                   </div>
                 )}
@@ -476,33 +459,27 @@ export default function DashboardPage() {
             className="md:hover:scale-[1.01] transition-transform duration-200"
           >
             <Card className={`${
-              isDark 
-                ? 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60' 
-                : 'bg-white/80 border-gray-200/60 hover:bg-white/90'
+              "bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60"
             } transition-all duration-300`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className={`flex items-center gap-2 text-sm sm:text-base font-semibold ${
-                    isDark ? 'text-gray-100' : 'text-gray-900'
+                    "text-gray-100"
                   }`}>
                     <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-lg flex items-center justify-center ${
-                      isDark 
-                        ? 'bg-slate-600/20 border border-slate-500/30' 
-                        : 'bg-gray-100/80 border border-gray-300/60'
+                      "bg-slate-600/20 border border-slate-500/30"
                     }`}>
                       <BarChart3 className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
-                        isDark ? 'text-slate-300' : 'text-gray-600'
+                        "text-slate-300"
                       }`} />
                     </div>
                     <span>Topic Progress</span>
                   </CardTitle>
                   <div className={`px-2 py-1 rounded-md ${
-                    isDark 
-                      ? 'bg-slate-700/50 border border-slate-600/50' 
-                      : 'bg-gray-100/80 border border-gray-300/60'
+                    "bg-slate-700/50 border border-slate-600/50"
                   }`}>
                     <span className={`text-xs font-medium ${
-                      isDark ? 'text-slate-300' : 'text-gray-700'
+                      "text-slate-300"
                     }`}>{safeTopicProgress.length} topics</span>
                   </div>
                 </div>
@@ -525,19 +502,17 @@ export default function DashboardPage() {
                 ) : (
                   <div className="text-center py-6 sm:py-8">
                     <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 ${
-                      isDark 
-                        ? 'bg-slate-700/40 border border-slate-600/40' 
-                        : 'bg-gray-100/80 border border-gray-300/60'
+                      "bg-slate-700/40 border border-slate-600/40"
                     }`}>
                       <Target className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                        isDark ? 'text-gray-400' : 'text-gray-500'
+                        "text-gray-400"
                       }`} />
                     </div>
                     <p className={`text-sm font-medium ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
+                      "text-gray-400"
                     }`}>No progress data</p>
                     <p className={`text-xs mt-0.5 ${
-                      isDark ? 'text-gray-500' : 'text-gray-500'
+                      "text-gray-500"
                     }`}>Start learning to track your progress</p>
                   </div>
                 )}

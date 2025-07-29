@@ -35,11 +35,8 @@ import { DashboardSearchBar } from "@/components/ui/dashboard-search-bar";
 import { FilterDropdown, FilterOption } from "@/components/ui/filter-dropdown";
 import { SortDropdown, SortOption } from "@/components/ui/sort-dropdown";
 import { PageLoading } from "@/components/ui/loading";
-import { useTheme } from "@/contexts/ThemeContext";
-
 export default function QuizHistoryPage() {
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const { isDark } = useTheme();
   const deleteQuizMutation = useDeleteBackendQuiz();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -207,7 +204,6 @@ export default function QuizHistoryPage() {
           <DashboardHeader
             title="Quiz History"
             subtitle="Track your quiz performance over time"
-            isDark={isDark}
           />
         </motion.div>
 
@@ -284,9 +280,7 @@ export default function QuizHistoryPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, ease: "easeOut" }}
           className={`backdrop-blur-sm rounded-xl p-3 sm:p-4 md:p-6 ${
-            isDark 
-              ? 'bg-gray-800/70 border border-gray-700/50' 
-              : 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200'
+            "bg-gray-800/70 border border-gray-700/50"
           }`}
         >
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-start sm:items-center justify-between">
@@ -324,20 +318,18 @@ export default function QuizHistoryPage() {
         >
           {filteredAttempts?.length === 0 ? (
             <Card className={`backdrop-blur-sm p-6 sm:p-8 ${
-              isDark 
-                ? 'bg-gray-800/70 border-gray-700/50' 
-                : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'
+              "bg-gray-800/70 border-gray-700/50"
             }`}>
               <div className="text-center space-y-3 sm:space-y-4">
                 <div className={`h-12 w-12 sm:h-16 sm:w-16 rounded-full flex items-center justify-center mx-auto ${
-                  isDark ? 'bg-gray-700/50' : 'bg-blue-100'
+                  "bg-gray-700/50"
                 }`}>
                   <BookOpen className={`h-6 w-6 sm:h-8 sm:w-8 ${
-                    isDark ? 'text-gray-400' : 'text-blue-600'
+                    "text-gray-400"
                   }`} />
                 </div>
                 <h3 className={`text-lg sm:text-xl font-semibold ${
-                  isDark ? 'text-white' : 'text-blue-900'
+                  "text-white"
                 }`}>
                   {stats.totalQuizzes === 0
                     ? "No Quizzes Created Yet"

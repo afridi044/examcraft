@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Settings, LogOut, ChevronDown, Plus, Brain } from "lucide-react";
+import { BarChart3, LogOut, ChevronDown, Plus, Brain } from "lucide-react";
 
 interface UserMenuProps {
   user: { full_name?: string; email?: string } | null;

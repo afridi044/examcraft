@@ -7,10 +7,9 @@ interface FlashcardButtonProps {
   exists: boolean;
   isProcessing?: boolean;
   onCreateFlashcard: (questionId: string) => Promise<void>;
-  isDark?: boolean;
 }
 
-export function FlashcardButton({ questionId, exists, isProcessing = false, onCreateFlashcard, isDark = true }: FlashcardButtonProps) {
+export function FlashcardButton({ questionId, exists, isProcessing = false, onCreateFlashcard }: FlashcardButtonProps) {
   const [isCreating, setIsCreating] = useState(false);
 
   const handleClick = async () => {
@@ -30,9 +29,7 @@ export function FlashcardButton({ questionId, exists, isProcessing = false, onCr
         size="sm"
         onClick={() => {}}
         className={`relative overflow-hidden rounded-full font-medium text-[0.7rem] sm:text-sm h-5 w-5 sm:h-10 sm:w-auto p-0 sm:px-5 ${
-          isDark
-            ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white border border-green-400/30"
-            : "bg-gradient-to-r from-green-500 to-emerald-500 text-white border border-green-400/50"
+          "bg-gradient-to-r from-green-600 to-emerald-600 text-white border border-green-400/30"
         } cursor-not-allowed`}
         title="Flashcard exists for this question"
       >
@@ -50,9 +47,7 @@ export function FlashcardButton({ questionId, exists, isProcessing = false, onCr
         size="sm"
         disabled
         className={`relative overflow-hidden rounded-full font-medium text-[0.7rem] sm:text-sm h-5 w-5 sm:h-10 sm:w-auto p-0 sm:px-5 ${
-          isDark
-            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg backdrop-blur-sm border border-blue-400/30"
-            : "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg backdrop-blur-sm border border-blue-400/50"
+          "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg backdrop-blur-sm border border-blue-400/30"
         } cursor-not-allowed opacity-80`}
         title="Creating flashcard..."
       >
@@ -69,9 +64,7 @@ export function FlashcardButton({ questionId, exists, isProcessing = false, onCr
       size="sm"
       onClick={handleClick}
       className={`relative overflow-hidden rounded-full font-medium text-[0.7rem] sm:text-sm h-5 w-5 sm:h-10 sm:w-auto p-0 sm:px-5 ${
-        isDark
-          ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl backdrop-blur-sm border border-indigo-400/30"
-          : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-lg hover:shadow-xl backdrop-blur-sm border border-indigo-400/50"
+        "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl backdrop-blur-sm border border-indigo-400/30"
       } hover:scale-105 transition-all duration-200`}
       title="Create flashcard from this question"
     >

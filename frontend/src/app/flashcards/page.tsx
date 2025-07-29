@@ -19,14 +19,10 @@ import { useFlashcardData } from "@/hooks/useFlashcardData";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { CustomHeader } from "@/components/features/dashboard/CustomHeader";
 import { PageLoading } from "@/components/ui/loading";
-import { useTheme } from "@/contexts/ThemeContext";
-
 function FlashcardsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const { isDark } = useTheme();
-
   // Scroll to top when navigating
   useScrollToTop();
 
@@ -95,7 +91,6 @@ function FlashcardsPageContent() {
             title="Flashcards"
             subtitle="Organize and study your flashcards by topic"
             iconLeft={<BookOpen className="h-6 w-6 text-blue-400" />}
-            isDark={isDark}
             rightContent={
               <motion.button
                 onClick={() => handleCreateFlashcard()}
