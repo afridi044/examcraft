@@ -360,7 +360,9 @@ function CreateFlashcardContent() {
             </h1>
           </motion.div>
           <motion.p
-            className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
+            className={`max-w-2xl mx-auto px-4 text-sm ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}
             initial={{ opacity: 0 }}
             animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -379,7 +381,11 @@ function CreateFlashcardContent() {
           transition={{ duration: 0.6, delay: 0.1 }}
         >
           <div>
-            <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
+            <Card className={`${
+              isDark 
+                ? 'bg-gray-800/50 border-gray-700/50' 
+                : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'
+            } p-4 sm:p-5 lg:p-6 backdrop-blur-sm`}>
               <div className="space-y-4 sm:space-y-6">
                 {/* Topic Information */}
                 <div className="space-y-4 sm:space-y-6">
@@ -387,7 +393,9 @@ function CreateFlashcardContent() {
                     <div className="h-8 w-8 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg flex items-center justify-center">
                       <BookOpen className="h-4 w-4 text-white" />
                     </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white">Topic Selection</h2>
+                    <h2 className={`text-lg sm:text-xl font-bold ${
+                      isDark ? 'text-white' : 'text-blue-900'
+                    }`}>Topic Selection</h2>
                   </div>
 
                   <motion.div
@@ -396,10 +404,14 @@ function CreateFlashcardContent() {
                     animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
                   >
-                    <Label className="text-gray-300">Topic</Label>
+                    <Label className={`${
+                      isDark ? 'text-gray-300' : 'text-blue-800'
+                    }`}>Topic</Label>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
+                        <Label htmlFor="topic" className={`text-sm ${
+                          isDark ? 'text-gray-400' : 'text-blue-600'
+                        }`}>Select from existing topics</Label>
                         <ReactSelect
                           id="topic"
                           options={topicOptions}
@@ -413,32 +425,24 @@ function CreateFlashcardContent() {
                           isSearchable
                           className="react-select-container"
                           classNamePrefix="react-select"
-                        >
-                          <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200">
-                            <SelectValue placeholder="Choose a topic..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-gray-700/50 border-gray-600 text-white">
-                            {topicOptions.map((option: any) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                <div className="flex items-center space-x-2">
-                                  {option.icon}
-                                  <span>{option.label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </ReactSelect>
+                        />
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
+                        <Label htmlFor="custom_topic" className={`text-sm ${
+                          isDark ? 'text-gray-400' : 'text-blue-600'
+                        }`}>Or enter custom topic</Label>
                         <div>
                           <Input
                             id="custom_topic"
                             value={form.custom_topic}
                             onChange={(e) => handleCustomTopic(e.target.value)}
                             placeholder="e.g., Machine Learning Basics"
-                            className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200"
+                            className={`min-h-[44px] transition-all duration-200 ${
+                              isDark 
+                                ? 'bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400' 
+                                : 'bg-white border-blue-300 text-blue-900 placeholder:text-blue-400'
+                            }`}
                             disabled={!!form.topic_id}
                           />
                         </div>
@@ -453,7 +457,9 @@ function CreateFlashcardContent() {
                     <div className="h-8 w-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
                       <Brain className="h-4 w-4 text-white" />
                     </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white">Flashcard Configuration</h2>
+                    <h2 className={`text-lg sm:text-xl font-bold ${
+                      isDark ? 'text-white' : 'text-green-800'
+                    }`}>Flashcard Configuration</h2>
                   </div>
 
                   <motion.div
@@ -464,7 +470,9 @@ function CreateFlashcardContent() {
                   >
                     {/* Difficulty Level */}
                     <div className="space-y-4">
-                      <Label className="text-gray-300 flex items-center space-x-2">
+                      <Label className={`flex items-center space-x-2 ${
+                        isDark ? 'text-gray-300' : 'text-green-800'
+                      }`}>
                         <Star className="w-4 h-4" />
                         <span>Difficulty Level</span>
                       </Label>
@@ -485,8 +493,12 @@ function CreateFlashcardContent() {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => updateForm("difficulty", level.value)}
                             className={`p-2 sm:p-3 rounded-lg border text-center transition-all min-h-[44px] ${form.difficulty === level.value
-                              ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-lg shadow-blue-500/25"
-                              : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
+                              ? isDark 
+                                ? "border-blue-500 bg-blue-500/20 text-blue-300 shadow-lg shadow-blue-500/25"
+                                : "border-blue-500 bg-blue-100 text-blue-700 shadow-lg shadow-blue-500/25"
+                              : isDark
+                                ? "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
+                                : "border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50"
                               }`}
                           >
                             <div className="text-sm font-medium">{level.value}</div>
@@ -503,7 +515,9 @@ function CreateFlashcardContent() {
                       animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
                       transition={{ delay: 0.6, duration: 0.6 }}
                     >
-                      <Label htmlFor="num_flashcards" className="text-gray-300 flex items-center space-x-2">
+                      <Label htmlFor="num_flashcards" className={`flex items-center space-x-2 ${
+                        isDark ? 'text-gray-300' : 'text-green-800'
+                      }`}>
                         <Layers className="w-4 h-4 " />
                         <span>Number of Flashcards (1-50)</span>
                       </Label>
@@ -526,7 +540,11 @@ function CreateFlashcardContent() {
                             return floatValue === undefined || (floatValue >= 1 && floatValue <= 50);
                           }}
                           customInput={Input}
-                          className="bg-gray-700/50 border-gray-600 text-white min-h-[44px] text-center font-medium text-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500/50"
+                          className={`min-h-[44px] text-center font-medium text-lg transition-all duration-200 focus:ring-2 focus:ring-blue-500/50 ${
+                            isDark 
+                              ? 'bg-gray-700/50 border-gray-600 text-white' 
+                              : 'bg-white border-green-300 text-green-900'
+                          }`}
                           placeholder="10"
                         />
                       </div>
@@ -540,31 +558,45 @@ function CreateFlashcardContent() {
                     <div className="h-8 w-8 bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center">
                       <FileText className="h-4 w-4 text-white" />
                     </div>
-                    <h2 className="text-lg sm:text-xl font-bold text-white">Content & Instructions</h2>
+                    <h2 className={`text-lg sm:text-xl font-bold ${
+                      isDark ? 'text-white' : 'text-teal-800'
+                    }`}>Content & Instructions</h2>
                   </div>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="content_source" className="text-gray-300">Content Source (Optional)</Label>
+                      <Label htmlFor="content_source" className={`${
+                        isDark ? 'text-gray-300' : 'text-teal-800'
+                      }`}>Content Source (Optional)</Label>
                       <textarea
                         id="content_source"
                         value={form.content_source}
                         onChange={(e) => updateForm("content_source", e.target.value)}
                         placeholder="Paste your study material, notes, or content that you want the flashcards to be based on..."
                         rows={4}
-                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical min-h-[100px]"
+                        className={`w-full p-3 rounded-lg resize-vertical min-h-[100px] ${
+                          isDark 
+                            ? 'bg-gray-700/50 border border-gray-600 text-white placeholder:text-gray-400' 
+                            : 'bg-white border border-teal-300 text-teal-900 placeholder:text-teal-400'
+                        }`}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="additional_instructions" className="text-gray-300">Additional Instructions (Optional)</Label>
+                      <Label htmlFor="additional_instructions" className={`${
+                        isDark ? 'text-gray-300' : 'text-teal-800'
+                      }`}>Additional Instructions (Optional)</Label>
                       <textarea
                         id="additional_instructions"
                         value={form.additional_instructions}
                         onChange={(e) => updateForm("additional_instructions", e.target.value)}
                         placeholder="Any specific instructions for the AI (e.g., 'Focus on definitions', 'Include examples', etc.)"
                         rows={3}
-                        className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical min-h-[80px]"
+                        className={`w-full p-3 rounded-lg resize-vertical min-h-[80px] ${
+                          isDark 
+                            ? 'bg-gray-700/50 border border-gray-600 text-white placeholder:text-gray-400' 
+                            : 'bg-white border border-teal-300 text-teal-900 placeholder:text-teal-400'
+                        }`}
                       />
                     </div>
                   </div>

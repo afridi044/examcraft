@@ -25,7 +25,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <div className="flex flex-row items-center gap-2 sm:gap-3 w-full">
         {iconLeft && <span className="text-base sm:text-lg flex items-center">{iconLeft}</span>}
         <h1 className={`text-lg sm:text-2xl font-semibold tracking-tight ${
-          isDark ? 'text-gray-100' : 'text-gray-900'
+          isDark ? 'text-gray-100' : 'text-blue-900'
         }`}>
           {title}
         </h1>
@@ -33,7 +33,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       </div>
       <div className="flex flex-row items-center w-full pl-0 sm:pl-0 mt-1" style={{marginLeft: iconLeft ? (iconLeft ? '2.25rem' : '0') : '0'}}>
         <p className={`text-xs sm:text-sm font-medium italic ${
-          isDark ? 'text-slate-400' : 'text-gray-600'
+          isDark ? 'text-slate-400' : 'text-blue-600'
         }`}>
           {subtitle}
         </p>

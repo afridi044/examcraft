@@ -22,9 +22,11 @@ import { PageLoading } from "@/components/ui/loading";
 import type { QuizReviewData } from "@/types";
 import { flashcardService } from "@/lib/services";
 import toast from "react-hot-toast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function QuizReviewPage() {
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
+  const { isDark } = useTheme();
   const router = useRouter();
   const params = useParams();
   // Flashcard status is displayed from backend data with creation functionality
@@ -132,17 +134,27 @@ export default function QuizReviewPage() {
     return (
       <DashboardLayout>
         <div className="min-h-screen flex items-center justify-center">
-          <Card className="bg-gray-800/50 border-gray-700/50 p-8 text-center">
-            <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">
+          <Card className={`p-8 text-center ${
+            isDark
+              ? "bg-gradient-to-br from-red-900/50 to-red-800/50 border-red-700/50"
+              : "bg-gradient-to-br from-red-50 to-red-100 border-red-300/50"
+          }`}>
+            <XCircle className={`h-12 w-12 mx-auto mb-4 ${
+              isDark ? "text-red-400" : "text-red-600"
+            }`} />
+            <h2 className={`text-xl font-bold mb-2 ${
+              isDark ? "text-white" : "text-red-900"
+            }`}>
               Review Not Available
             </h2>
-            <p className="text-gray-400 mb-4">
+            <p className={`mb-4 ${
+              isDark ? "text-gray-300" : "text-red-700"
+            }`}>
               {error || "Unable to load quiz review data"}
             </p>
             <Button
               onClick={() => router.push("/dashboard")}
-              className="bg-purple-500 hover:bg-purple-600"
+              className="bg-purple-500 hover:bg-purple-600 text-white"
             >
               Return to Dashboard
             </Button>
@@ -161,10 +173,11 @@ export default function QuizReviewPage() {
           subtitle={reviewData.quiz.topic?.name || reviewData.quiz.description || "Review your quiz performance"}
           iconLeft={<span role="img" aria-label="Memo">📝</span>}
           iconAfterSubtitle={<Star className="h-5 w-5 text-yellow-300 ml-1" />}
+          isDark={isDark}
         />
 
         {/* Performance Summary */}
-        <PerformanceSummary stats={reviewData.quiz_stats} formatTime={formatTime} />
+        <PerformanceSummary stats={reviewData.quiz_stats} formatTime={formatTime} isDark={isDark} />
 
         {/* Centered Retake Button */}
         <div className="flex justify-center pt-4">
@@ -183,6 +196,7 @@ export default function QuizReviewPage() {
             title="Question Review"
             subtitle=""
             iconLeft={<BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />}
+            isDark={isDark}
           />
 
           {reviewData.questions.map((question: QuizReviewData['questions'][number], index: number) => {
@@ -203,6 +217,7 @@ export default function QuizReviewPage() {
                 getDifficultyColor={getDifficultyColor}
                 getDifficultyLabel={getDifficultyLabel}
                 isProcessing={processingQuestionId === question.question_id}
+                isDark={isDark}
               />
             );
           })}

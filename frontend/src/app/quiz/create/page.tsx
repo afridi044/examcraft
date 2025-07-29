@@ -310,7 +310,9 @@ export default function CreateQuizPage() {
             </h1>
           </motion.div>
           <motion.p
-            className="text-gray-400 max-w-2xl mx-auto px-4 text-sm"
+            className={`max-w-2xl mx-auto px-4 text-sm ${
+              isDark ? 'text-gray-400' : 'text-gray-600'
+            }`}
             initial={{ opacity: 0 }}
             animate={headerInView ? { opacity: 1 } : { opacity: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -326,7 +328,11 @@ export default function CreateQuizPage() {
           animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6, delay: 0.1 }}
         >
-          <Card className="bg-gray-800/50 border-gray-700/50 p-4 sm:p-5 lg:p-6 backdrop-blur-sm">
+          <Card className={`${
+            isDark 
+              ? 'bg-gray-800/50 border-gray-700/50' 
+              : 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200'
+          } p-4 sm:p-5 lg:p-6 backdrop-blur-sm`}>
             <div className="space-y-6 sm:space-y-8">
               {/* Basic Information */}
               <motion.div
@@ -338,36 +344,54 @@ export default function CreateQuizPage() {
                   <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                     <BookOpen className="h-4 w-4 text-white" />
                   </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">Basic Information</h2>
+                  <h2 className={`text-lg sm:text-xl font-bold ${
+                    isDark ? 'text-white' : 'text-blue-900'
+                  }`}>Basic Information</h2>
                 </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="title" className="text-gray-300">Quiz Title</Label>
+                    <Label htmlFor="title" className={`${
+                      isDark ? 'text-gray-300' : 'text-blue-800'
+                    }`}>Quiz Title</Label>
                     <Input
                       id="title"
                       value={form.title}
                       onChange={(e) => updateForm("title", e.target.value)}
                       placeholder="e.g., JavaScript Fundamentals"
-                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                      className={`${
+                        isDark 
+                          ? 'bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400' 
+                          : 'bg-white border-blue-300 text-blue-900 placeholder:text-blue-400'
+                      }`}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="description" className="text-gray-300">Description (Optional)</Label>
+                    <Label htmlFor="description" className={`${
+                      isDark ? 'text-gray-300' : 'text-blue-800'
+                    }`}>Description (Optional)</Label>
                     <Input
                       id="description"
                       value={form.description}
                       onChange={(e) => updateForm("description", e.target.value)}
                       placeholder="Brief description of the quiz"
-                      className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                      className={`${
+                        isDark 
+                          ? 'bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400' 
+                          : 'bg-white border-blue-300 text-blue-900 placeholder:text-blue-400'
+                      }`}
                     />
                   </div>
                 </div>
                 {/* Topic Selection */}
                 <div className="space-y-4 mt-4">
-                  <Label className="text-gray-300">Topic</Label>
+                  <Label className={`${
+                    isDark ? 'text-gray-300' : 'text-blue-800'
+                  }`}>Topic</Label>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="topic" className="text-sm text-gray-400 flex items-center space-x-2">
+                      <Label htmlFor="topic" className={`text-sm flex items-center space-x-2 ${
+                        isDark ? 'text-gray-400' : 'text-blue-600'
+                      }`}>
                         <span>Select from existing topics</span>
                         {form.custom_topic && (
                           <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-1 rounded">
@@ -379,15 +403,22 @@ export default function CreateQuizPage() {
                         value={form.topic_id}
                         onValueChange={(value) => updateForm("topic_id", value)}
                       >
-                        <SelectTrigger className={`transition-colors ${form.custom_topic
-                          ? 'border-orange-400/50 bg-orange-400/5'
-                          : 'border-gray-600'
-                          }`}>
-                          <SelectValue placeholder="Choose a topic..." />
+                        <SelectTrigger className={`transition-colors ${
+                          isDark 
+                            ? `${form.custom_topic ? 'border-orange-400/50 bg-orange-400/5' : 'border-gray-600'} text-white bg-gray-700/50` 
+                            : `${form.custom_topic ? 'border-orange-400/50 bg-orange-50' : 'border-blue-300'} text-blue-900 bg-white`
+                        }`}>
+                          <SelectValue placeholder="Choose a topic...">
+                            {form.topic_id ? topics?.find(topic => topic.topic_id === form.topic_id)?.name || form.topic_id : ""}
+                          </SelectValue>
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={`${
+                          isDark ? 'bg-gray-800 text-white' : 'bg-white text-blue-900'
+                        }`}>
                           {topics?.map((topic) => (
-                            <SelectItem key={topic.topic_id} value={topic.topic_id}>
+                            <SelectItem key={topic.topic_id} value={topic.topic_id} className={`${
+                              isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                            }`}>
                               {topic.name}
                             </SelectItem>
                           ))}
@@ -395,7 +426,9 @@ export default function CreateQuizPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="custom_topic" className="text-sm text-gray-400 flex items-center space-x-2">
+                      <Label htmlFor="custom_topic" className={`text-sm flex items-center space-x-2 ${
+                        isDark ? 'text-gray-400' : 'text-blue-600'
+                      }`}>
                         <span>Or enter custom topic</span>
                         {form.topic_id && (
                           <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-1 rounded">
@@ -408,18 +441,24 @@ export default function CreateQuizPage() {
                         value={form.custom_topic}
                         onChange={(e) => updateForm("custom_topic", e.target.value)}
                         placeholder="e.g., React Hooks"
-                        className={`bg-gray-700/50 border text-white placeholder:text-gray-400 transition-colors ${form.topic_id
-                          ? 'border-orange-400/50 bg-orange-400/5'
-                          : 'border-gray-600'
-                          }`}
+                        className={`transition-colors ${
+                          isDark 
+                            ? `${form.topic_id ? 'border-orange-400/50 bg-orange-400/5' : 'border-gray-600'} text-white bg-gray-700/50 placeholder:text-gray-400` 
+                            : `${form.topic_id ? 'border-orange-400/50 bg-orange-50' : 'border-blue-300'} text-blue-900 bg-white placeholder:text-blue-400`
+                        }`}
                       />
                     </div>
                   </div>
                   {(form.topic_id || form.custom_topic) && (
-                    <div className={`text-xs p-2 rounded border transition-colors ${form.topic_id && form.custom_topic.trim()
-                      ? 'text-red-400 bg-red-400/10 border-red-400/30'
-                      : 'text-gray-400 bg-gray-700/30 border-gray-600'
-                      }`}>
+                    <div className={`text-xs p-2 rounded border transition-colors ${
+                      form.topic_id && form.custom_topic.trim()
+                        ? isDark 
+                          ? 'text-red-400 bg-red-400/10 border-red-400/30'
+                          : 'text-red-600 bg-red-50 border-red-200'
+                        : isDark
+                          ? 'text-gray-400 bg-gray-700/30 border-gray-600'
+                          : 'text-blue-600 bg-blue-50 border-blue-200'
+                    }`}>
                       <span className="font-medium">
                         {form.topic_id && form.custom_topic.trim() ? 'Error:' : 'Note:'}
                       </span>
@@ -442,12 +481,16 @@ export default function CreateQuizPage() {
                   <div className="h-8 w-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
                     <Target className="h-4 w-4 text-white" />
                   </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">Quiz Configuration</h2>
+                  <h2 className={`text-lg sm:text-xl font-bold ${
+                    isDark ? 'text-white' : 'text-green-800'
+                  }`}>Quiz Configuration</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Difficulty Level */}
                   <div className="space-y-4">
-                    <Label className="text-gray-300 flex items-center space-x-2">
+                    <Label className={`flex items-center space-x-2 ${
+                      isDark ? 'text-gray-300' : 'text-green-800'
+                    }`}>
                       <Star className="w-4 h-4" />
                       <span>Difficulty Level</span>
                     </Label>
@@ -467,10 +510,15 @@ export default function CreateQuizPage() {
                           }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => updateForm("difficulty", level.value)}
-                          className={`p-2 sm:p-3 rounded-lg border text-center transition-all min-h-[44px] ${form.difficulty === level.value
-                            ? "border-purple-500 bg-purple-500/20 text-purple-300 shadow-lg shadow-purple-500/25"
-                            : "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
-                            }`}
+                          className={`p-2 sm:p-3 rounded-lg border text-center transition-all min-h-[44px] ${
+                            form.difficulty === level.value
+                              ? isDark
+                                ? "border-purple-500 bg-purple-500/20 text-purple-300 shadow-lg shadow-purple-500/25"
+                                : "border-purple-500 bg-purple-100 text-purple-700 shadow-lg shadow-purple-500/25"
+                              : isDark
+                                ? "border-gray-600 bg-gray-700/50 text-gray-400 hover:border-gray-500"
+                                : "border-gray-300 bg-white text-gray-600 hover:border-gray-400"
+                          }`}
                         >
                           <div className="text-sm font-medium">{level.value}</div>
                           <div className={`text-xs ${level.color}`}>{level.label}</div>
@@ -485,24 +533,48 @@ export default function CreateQuizPage() {
                     animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
                     transition={{ delay: 0.6, duration: 0.6 }}
                   >
-                    <Label htmlFor="num_questions" className="text-gray-300">Number of Questions</Label>
+                    <Label htmlFor="num_questions" className={`${
+                      isDark ? 'text-gray-300' : 'text-green-800'
+                    }`}>Number of Questions</Label>
                     <div className="mt-2">
                       <Select
                         value={form.num_questions.toString()}
                         onValueChange={(value) => updateForm("num_questions", parseInt(value))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className={`${
+                          isDark 
+                            ? 'text-white bg-gray-700/50 border-gray-600' 
+                            : 'text-blue-900 bg-white border-blue-300'
+                        }`}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5">5</SelectItem>
-                          <SelectItem value="10">10</SelectItem>
-                          <SelectItem value="15">15</SelectItem>
-                          <SelectItem value="20">20</SelectItem>
-                          <SelectItem value="25">25</SelectItem>
-                          <SelectItem value="30">30</SelectItem>
-                          <SelectItem value="40">40</SelectItem>
-                          <SelectItem value="50">50</SelectItem>
+                        <SelectContent className={`${
+                          isDark ? 'bg-gray-800 text-white' : 'bg-white text-blue-900'
+                        }`}>
+                          <SelectItem value="5" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>5</SelectItem>
+                          <SelectItem value="10" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>10</SelectItem>
+                          <SelectItem value="15" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>15</SelectItem>
+                          <SelectItem value="20" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>20</SelectItem>
+                          <SelectItem value="25" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>25</SelectItem>
+                          <SelectItem value="30" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>30</SelectItem>
+                          <SelectItem value="40" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>40</SelectItem>
+                          <SelectItem value="50" className={`${
+                            isDark ? 'text-white hover:bg-gray-700' : 'text-blue-900 hover:bg-blue-50'
+                          }`}>50</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -520,29 +592,43 @@ export default function CreateQuizPage() {
                   <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
                     <FileText className="h-4 w-4 text-white" />
                   </div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white">Content & Instructions</h2>
+                  <h2 className={`text-lg sm:text-xl font-bold ${
+                    isDark ? 'text-white' : 'text-orange-800'
+                  }`}>Content & Instructions</h2>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="content_source" className="text-gray-300">Content Source (Optional)</Label>
+                    <Label htmlFor="content_source" className={`${
+                      isDark ? 'text-gray-300' : 'text-orange-800'
+                    }`}>Content Source (Optional)</Label>
                     <textarea
                       id="content_source"
                       value={form.content_source}
                       onChange={(e) => updateForm("content_source", e.target.value)}
                       placeholder="Paste your study material, notes, or content that you want the quiz to be based on..."
                       rows={6}
-                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical text-sm sm:text-base"
+                      className={`w-full p-3 border rounded-lg resize-vertical text-sm sm:text-base ${
+                        isDark 
+                          ? 'bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400' 
+                          : 'bg-white border-orange-300 text-orange-900 placeholder:text-orange-400'
+                      }`}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="additional_instructions" className="text-gray-300">Additional Instructions (Optional)</Label>
+                    <Label htmlFor="additional_instructions" className={`${
+                      isDark ? 'text-gray-300' : 'text-orange-800'
+                    }`}>Additional Instructions (Optional)</Label>
                     <textarea
                       id="additional_instructions"
                       value={form.additional_instructions}
                       onChange={(e) => updateForm("additional_instructions", e.target.value)}
                       placeholder="Any specific instructions for the AI (e.g., 'Focus on practical examples', 'Include code snippets', etc.)"
                       rows={3}
-                      className="w-full p-3 bg-gray-700/50 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 resize-vertical"
+                      className={`w-full p-3 border rounded-lg resize-vertical ${
+                        isDark 
+                          ? 'bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400' 
+                          : 'bg-white border-orange-300 text-orange-900 placeholder:text-orange-400'
+                      }`}
                     />
                   </div>
                 </div>
@@ -550,7 +636,9 @@ export default function CreateQuizPage() {
 
               {/* Generate Button */}
               <motion.div
-                className="pt-4 sm:pt-6 border-t border-gray-700"
+                className={`pt-4 sm:pt-6 border-t ${
+                  isDark ? 'border-gray-700' : 'border-blue-200'
+                }`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ delay: 0.8, duration: 0.6 }}
@@ -580,7 +668,11 @@ export default function CreateQuizPage() {
           transition={{ duration: 0.3, delay: 0.0 }}
         >
           <div>
-            <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 p-4 sm:p-6 backdrop-blur-sm">
+            <Card className={`p-4 sm:p-6 backdrop-blur-sm ${
+              isDark 
+                ? 'bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20' 
+                : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+            }`}>
               <div className="flex items-start space-x-4">
                 <div
                   className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0 mt-1"

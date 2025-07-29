@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useUpdateProgress, useUserFlashcards, useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
 import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
+import { useTheme } from "@/contexts/ThemeContext";
 import { flashcardService } from "@/lib/services/flashcard.service";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,6 +52,7 @@ interface SessionStats {
 export default function StudySessionPage({ params }: StudySessionPageProps) {
   const router = useRouter();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
+  const { isDark } = useTheme();
   const updateProgress = useUpdateProgress();
   const invalidateFlashcards = useInvalidateFlashcards();
   const invalidateBackendDashboard = useInvalidateBackendDashboard();
@@ -453,9 +455,13 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
           <div className="flex flex-col gap-0.5 min-w-0">
             <div className="flex items-center gap-1.5">
               <Target className="h-5 w-5 text-purple-400 flex-shrink-0" />
-              <span className="text-lg sm:text-xl font-bold text-white truncate">{session.topic_name}</span>
+              <span className={`text-lg sm:text-xl font-bold truncate ${
+                isDark ? 'text-white' : 'text-blue-900'
+              }`}>{session.topic_name}</span>
             </div>
-            <span className="text-[11px] text-gray-400 font-medium">
+            <span className={`text-[11px] font-medium ${
+              isDark ? 'text-gray-400' : 'text-blue-600'
+            }`}>
               {session.mastery_status === "learning" && "🎯 Learning Mode"}
               {session.mastery_status === "under_review" && "📝 Review Mode"}
               {session.mastery_status === "mastered" && "⭐ Mastered Mode"}
@@ -464,13 +470,21 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
           </div>
           {/* Stat Chips */}
           <div className="flex items-center gap-1 flex-shrink-0">
-            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-800 text-[10px] text-gray-200 font-medium min-h-0 h-5">
-              <span className="text-white font-semibold">{currentCardIndex + 1} / {session.cards.length}</span> Cards
+            <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium min-h-0 h-5 ${
+              isDark 
+                ? 'bg-gray-800 text-gray-200' 
+                : 'bg-blue-100 text-blue-700'
+            }`}>
+              <span className={`font-semibold ${
+                isDark ? 'text-white' : 'text-blue-700'
+              }`}>{currentCardIndex + 1} / {session.cards.length}</span> Cards
             </span>
           </div>
         </div>
         {/* Progress Bar */}
-        <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden mt-2">
+        <div className={`w-full h-1 rounded-full overflow-hidden mt-2 ${
+          isDark ? 'bg-gray-800' : 'bg-gray-200'
+        }`}>
           <motion.div
             className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
             initial={{ width: 0 }}
@@ -480,33 +494,59 @@ export default function StudySessionPage({ params }: StudySessionPageProps) {
         </div>
         {/* Stats Row */}
         <div className="grid grid-cols-4 gap-1">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
+          <div className={`rounded-lg p-1 text-center ${
+            isDark 
+              ? 'bg-gray-800/50 border border-gray-700/50' 
+              : 'bg-blue-50 border border-blue-200'
+          }`}>
             <div className="flex items-center justify-center mb-0.5">
               <Brain className="h-3 w-3 text-blue-400 mr-0.5" />
-              <span className="text-sm font-bold text-white">{sessionStats.totalSeen}</span>
+              <span className={`text-sm font-bold ${
+                isDark ? 'text-white' : 'text-blue-700'
+              }`}>{sessionStats.totalSeen}</span>
             </div>
-            <p className="text-[9px] text-gray-400">Studied</p>
+            <p className={`text-[9px] ${
+              isDark ? 'text-gray-400' : 'text-blue-600'
+            }`}>Studied</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
+          <div className={`rounded-lg p-1 text-center ${
+            isDark 
+              ? 'bg-gray-800/50 border border-gray-700/50' 
+              : 'bg-green-50 border border-green-200'
+          }`}>
             <div className="flex items-center justify-center mb-0.5">
               <CheckCircle className="h-3 w-3 text-green-400 mr-0.5" />
               <span className="text-sm font-bold text-green-400">{sessionStats.correctAnswers}</span>
             </div>
-            <p className="text-[9px] text-gray-400">Known</p>
+            <p className={`text-[9px] ${
+              isDark ? 'text-gray-400' : 'text-green-600'
+            }`}>Known</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
+          <div className={`rounded-lg p-1 text-center ${
+            isDark 
+              ? 'bg-gray-800/50 border border-gray-700/50' 
+              : 'bg-red-50 border border-red-200'
+          }`}>
             <div className="flex items-center justify-center mb-0.5">
               <XCircle className="h-3 w-3 text-red-400 mr-0.5" />
               <span className="text-sm font-bold text-red-400">{sessionStats.incorrectAnswers}</span>
             </div>
-            <p className="text-[9px] text-gray-400">Learning</p>
+            <p className={`text-[9px] ${
+              isDark ? 'text-gray-400' : 'text-red-600'
+            }`}>Learning</p>
           </div>
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-1 text-center">
+          <div className={`rounded-lg p-1 text-center ${
+            isDark 
+              ? 'bg-gray-800/50 border border-gray-700/50' 
+              : 'bg-yellow-50 border border-yellow-200'
+          }`}>
             <div className="flex items-center justify-center mb-0.5">
               <TrendingUp className="h-3 w-3 text-yellow-400 mr-0.5" />
               <span className="text-sm font-bold text-yellow-400">{sessionStats.accuracy}%</span>
             </div>
-            <p className="text-[9px] text-gray-400">Accuracy</p>
+            <p className={`text-[9px] ${
+              isDark ? 'text-gray-400' : 'text-yellow-600'
+            }`}>Accuracy</p>
           </div>
         </div>
       </div>

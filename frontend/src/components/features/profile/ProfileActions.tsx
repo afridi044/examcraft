@@ -78,9 +78,9 @@ export function ProfileActions({ user, onMessage }: ProfileActionsProps) {
 
 
       {/* Account Actions */}
-      <Card className="p-6 bg-slate-800/40 border-slate-700/60 rounded-xl">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Settings className="w-5 h-5 text-blue-400" />
+      <Card className="p-6 bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 rounded-xl">
+        <h3 className="text-lg font-semibold text-emerald-900 mb-4 flex items-center gap-2">
+          <Settings className="w-5 h-5 text-emerald-600" />
           Account Actions
         </h3>
         
@@ -94,7 +94,7 @@ export function ProfileActions({ user, onMessage }: ProfileActionsProps) {
               onClick={handleExportData}
               disabled={loading}
               variant="outline"
-              className="w-full justify-start gap-3 bg-slate-700/30 border-slate-600/50 text-white hover:bg-slate-700/50 hover:text-white text-sm"
+              className="w-full justify-start gap-3 bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200 hover:text-emerald-900 text-sm"
             >
               {loading ? (
                 <LoadingSpinner size="sm" />
@@ -113,7 +113,7 @@ export function ProfileActions({ user, onMessage }: ProfileActionsProps) {
             <Button
               onClick={handleSignOut}
               variant="outline"
-              className="w-full justify-start gap-3 bg-slate-700/30 border-slate-600/50 text-white hover:bg-slate-700/50 hover:text-white text-sm"
+              className="w-full justify-start gap-3 bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200 hover:text-emerald-900 text-sm"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -168,28 +168,28 @@ export function ProfileActions({ user, onMessage }: ProfileActionsProps) {
       </Card>
 
       {/* Account Info */}
-      <Card className="p-6 bg-slate-800/40 border-slate-700/60 rounded-xl">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5 text-green-400" />
+      <Card className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 rounded-xl">
+        <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
+          <Shield className="w-5 h-5 text-purple-600" />
           Account Information
         </h3>
         
         <div className="space-y-3 text-sm">
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Account Status</span>
-            <span className="px-2 py-1 bg-green-600/20 text-green-400 rounded-full text-xs font-medium">
+            <span className="text-purple-700">Account Status</span>
+            <span className="px-2 py-1 bg-purple-600/20 text-purple-700 rounded-full text-xs font-medium">
               Active
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Member Since</span>
-            <span className="text-white">
+            <span className="text-purple-700">Member Since</span>
+            <span className="text-purple-900">
               {new Date(user.created_at).toLocaleDateString()}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-gray-400">Email Verified</span>
-            <span className="text-green-400">✓</span>
+            <span className="text-purple-700">Email Verified</span>
+            <span className="text-purple-600">✓</span>
           </div>
         </div>
       </Card>

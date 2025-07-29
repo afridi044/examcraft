@@ -122,44 +122,44 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
       <div className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-400">First Name</Label>
-            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
-              <User className="w-4 h-4 text-blue-400" />
-              <span className="text-white">{user.first_name || 'Not provided'}</span>
+            <Label className="text-sm font-medium text-blue-800">First Name</Label>
+            <div className="flex items-center gap-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+              <User className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-900">{user.first_name || 'Not provided'}</span>
             </div>
           </div>
           
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-400">Last Name</Label>
-            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
-              <User className="w-4 h-4 text-blue-400" />
-              <span className="text-white">{user.last_name || 'Not provided'}</span>
+            <Label className="text-sm font-medium text-blue-800">Last Name</Label>
+            <div className="flex items-center gap-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+              <User className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-900">{user.last_name || 'Not provided'}</span>
             </div>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-400">Email</Label>
-          <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
-            <Mail className="w-4 h-4 text-emerald-400" />
-            <span className="text-white">{user.email}</span>
+          <Label className="text-sm font-medium text-blue-800">Email</Label>
+          <div className="flex items-center gap-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+            <Mail className="w-4 h-4 text-emerald-600" />
+            <span className="text-blue-900">{user.email}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-400">Institution</Label>
-            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
-              <Building className="w-4 h-4 text-purple-400" />
-              <span className="text-white">{user.institution || 'Not provided'}</span>
+            <Label className="text-sm font-medium text-blue-800">Institution</Label>
+            <div className="flex items-center gap-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+              <Building className="w-4 h-4 text-purple-600" />
+              <span className="text-blue-900">{user.institution || 'Not provided'}</span>
             </div>
           </div>
           
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-400">Field of Study</Label>
-            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
-              <GraduationCap className="w-4 h-4 text-orange-400" />
-              <span className="text-white">{user.field_of_study || 'Not provided'}</span>
+            <Label className="text-sm font-medium text-blue-800">Field of Study</Label>
+            <div className="flex items-center gap-3 p-3 bg-blue-100 border border-blue-300 rounded-lg">
+              <GraduationCap className="w-4 h-4 text-orange-600" />
+              <span className="text-blue-900">{user.field_of_study || 'Not provided'}</span>
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="first_name" className="text-sm font-medium text-gray-300">
+          <Label htmlFor="first_name" className="text-sm font-medium text-blue-800">
             First Name *
           </Label>
           <div className="relative">
@@ -186,16 +186,16 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
               type="text"
               value={formData.first_name}
               onChange={(e) => handleInputChange('first_name', e.target.value)}
-              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              className="w-full bg-white border-blue-300 rounded-lg px-4 py-3 pl-10 text-blue-900 placeholder-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
               placeholder="Enter your first name"
               required
             />
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-600" />
           </div>
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="last_name" className="text-sm font-medium text-gray-300">
+          <Label htmlFor="last_name" className="text-sm font-medium text-blue-800">
             Last Name *
           </Label>
           <div className="relative">
@@ -204,17 +204,17 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
               type="text"
               value={formData.last_name}
               onChange={(e) => handleInputChange('last_name', e.target.value)}
-              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              className="w-full bg-white border-blue-300 rounded-lg px-4 py-3 pl-10 text-blue-900 placeholder-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
               placeholder="Enter your last name"
               required
             />
-            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400" />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-600" />
           </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email" className="text-sm font-medium text-gray-300">
+        <Label htmlFor="email" className="text-sm font-medium text-blue-800">
           Email Address
         </Label>
         <div className="relative">
@@ -223,16 +223,16 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
             type="email"
             value={user.email}
             disabled
-            className="w-full bg-slate-700/40 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-gray-400 cursor-not-allowed"
+            className="w-full bg-gray-100 border-gray-300 rounded-lg px-4 py-3 pl-10 text-gray-600 cursor-not-allowed"
           />
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-emerald-400" />
+          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-emerald-600" />
         </div>
-        <p className="text-xs text-gray-500">Email address cannot be changed</p>
+        <p className="text-xs text-gray-600">Email address cannot be changed</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="institution" className="text-sm font-medium text-gray-300">
+          <Label htmlFor="institution" className="text-sm font-medium text-blue-800">
             Institution
           </Label>
           <div className="relative">
@@ -241,15 +241,15 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
               type="text"
               value={formData.institution}
               onChange={(e) => handleInputChange('institution', e.target.value)}
-              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
+              className="w-full bg-white border-blue-300 rounded-lg px-4 py-3 pl-10 text-blue-900 placeholder-blue-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
               placeholder="Enter your institution"
             />
-            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-purple-400" />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-purple-600" />
           </div>
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="field_of_study" className="text-sm font-medium text-gray-300">
+          <Label htmlFor="field_of_study" className="text-sm font-medium text-blue-800">
             Field of Study
           </Label>
           <div className="relative">
@@ -258,10 +258,10 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
               type="text"
               value={formData.field_of_study}
               onChange={(e) => handleInputChange('field_of_study', e.target.value)}
-              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-300"
+              className="w-full bg-white border-blue-300 rounded-lg px-4 py-3 pl-10 text-blue-900 placeholder-blue-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-300"
               placeholder="Enter your field of study"
             />
-            <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-orange-400" />
+            <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-orange-600" />
           </div>
         </div>
       </div>
