@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useBackendDashboardStats, useBackendRecentActivity, useBackendTopicProgress } from "@/hooks/useBackendDashboard";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,8 @@ import {
   Flame,
   Activity,
   Rocket,
+  TrendingUp,
+  Settings,
 } from "lucide-react";
 import type { RecentActivity, TopicProgress } from "@/types";
 import { StatCard } from "@/components/features/dashboard/StatCard";
@@ -29,6 +31,8 @@ import { PageLoading } from "@/components/ui/loading";
 import { motion } from "framer-motion";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
+import { StudyTimer } from "@/components/ui/study-timer";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Default stats object
 const DEFAULT_STATS = {
@@ -43,6 +47,8 @@ const DEFAULT_STATS = {
 export default function DashboardPage() {
   const router = useRouter();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
+  const { isDark } = useTheme();
+  const [isStudyTimerOpen, setIsStudyTimerOpen] = useState(false);
 
   // Use individual backend-powered dashboard hooks (JWT-secured)
   const statsQuery = useBackendDashboardStats();
@@ -82,10 +88,34 @@ export default function DashboardPage() {
     progressQuery.data,
   ]);
 
-  // Safe data
+  // Check for any query errors
+  const hasErrors = statsQuery.error || activityQuery.error || progressQuery.error;
+  
+  // Log errors for debugging
+  if (statsQuery.error) console.log('❌ Stats query error:', statsQuery.error);
+  if (activityQuery.error) console.log('❌ Activity query error:', activityQuery.error);
+  if (progressQuery.error) console.log('❌ Progress query error:', progressQuery.error);
+
+  // Safe data with better null checking
   const safeStats = useMemo(() => stats || DEFAULT_STATS, [stats]);
-  const safeRecentActivity = useMemo(() => recentActivity, [recentActivity]);
-  const safeTopicProgress = useMemo(() => topicProgress, [topicProgress]);
+  const safeRecentActivity = useMemo(() => {
+    if (!recentActivity || !Array.isArray(recentActivity)) {
+      console.log('🔍 Recent activity is null or not array:', recentActivity);
+      return [];
+    }
+    const filtered = recentActivity.filter(activity => activity && typeof activity === 'object');
+    console.log('🔍 Filtered recent activity:', filtered);
+    return filtered;
+  }, [recentActivity]);
+  const safeTopicProgress = useMemo(() => {
+    if (!topicProgress || !Array.isArray(topicProgress)) {
+      console.log('🔍 Topic progress is null or not array:', topicProgress);
+      return [];
+    }
+    const filtered = topicProgress.filter(topic => topic && typeof topic === 'object');
+    console.log('🔍 Filtered topic progress:', filtered);
+    return filtered;
+  }, [topicProgress]);
 
   // EARLY REDIRECT: Check authentication immediately before showing any content
   useEffect(() => {
@@ -113,6 +143,21 @@ export default function DashboardPage() {
     );
   }
 
+  // Show error state if any queries failed
+  if (hasErrors) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-red-400 font-medium">Failed to load dashboard data</p>
+            <p className="text-gray-500 text-sm mt-2">Please try refreshing the page</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="space-y-4 sm:space-y-6">
@@ -126,25 +171,37 @@ export default function DashboardPage() {
           <DashboardHeader
             title="Dashboard"
             subtitle="Welcome back! Here's your learning progress overview"
-            emoji="🎉"
+            isDark={isDark}
           >
             {safeStats.studyStreak > 0 && (
               <motion.div 
-                className="flex items-center gap-2 px-2 py-1 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-full text-xs"
+                className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs ${
+                  isDark 
+                    ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20' 
+                    : 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30'
+                }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Flame className="h-3 w-3 text-amber-400" />
-                <span className="font-medium text-amber-100">{safeStats.studyStreak} day streak</span>
+                <Flame className={`h-3 w-3 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+                <span className={`font-medium ${isDark ? 'text-amber-100' : 'text-amber-800'}`}>
+                  {safeStats.studyStreak} day streak
+                </span>
               </motion.div>
             )}
             <motion.div 
-              className="flex items-center gap-2 px-2 py-1 bg-slate-800/60 border border-slate-700/50 rounded-full text-xs"
+              className={`flex items-center gap-2 px-2 py-1 rounded-full text-xs ${
+                isDark 
+                  ? 'bg-slate-800/60 border border-slate-700/50' 
+                  : 'bg-slate-100/80 border border-slate-300/60'
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Trophy className="h-3 w-3 text-blue-400" />
-              <span className="font-medium text-slate-200">Level {Math.floor(safeStats.questionsAnswered / 100) + 1}</span>
+              <Trophy className={`h-3 w-3 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+              <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                Level {Math.floor(safeStats.questionsAnswered / 100) + 1}
+              </span>
             </motion.div>
           </DashboardHeader>
         </motion.div>
@@ -231,11 +288,13 @@ export default function DashboardPage() {
             <div className="h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <Rocket className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-100">Quick Actions</h2>
+            <h2 className={`text-base sm:text-lg font-bold ${
+              isDark ? 'text-gray-100' : 'text-gray-900'
+            }`}>Quick Actions</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-blue-500/30 to-transparent"></div>
           </div>
           <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-3"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, staggerChildren: 0.1 }}
@@ -277,6 +336,21 @@ export default function DashboardPage() {
               className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
             >
               <QuickActionCard
+                icon={<Clock className="h-5 w-5 text-orange-300" />}
+                title="Study Timer"
+                description="Focus with Pomodoro technique"
+                onClick={() => setIsStudyTimerOpen(true)}
+                cardClass="hover:border-orange-500/40"
+                iconClass="bg-orange-500/20 border border-orange-500/40 group-hover:bg-orange-500/30"
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0 }}
+              className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
+            >
+              <QuickActionCard
                 icon={<BarChart3 className="h-5 w-5 text-emerald-300" />}
                 title="View Progress"
                 description="Track your achievements"
@@ -285,6 +359,7 @@ export default function DashboardPage() {
                 iconClass="bg-emerald-500/20 border border-emerald-500/40 group-hover:bg-emerald-500/30"
               />
             </motion.div>
+
           </motion.div>
         </motion.div>
 
@@ -297,7 +372,9 @@ export default function DashboardPage() {
             <div className="h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
               <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-100">Track Your Learning</h2>
+            <h2 className={`text-base sm:text-lg font-bold ${
+              isDark ? 'text-gray-100' : 'text-gray-900'
+            }`}>Track Your Learning</h2>
             <div className="flex-1 h-px bg-gradient-to-r from-emerald-500/30 to-transparent"></div>
           </div>
         </motion.div>
@@ -316,24 +393,42 @@ export default function DashboardPage() {
             transition={{ delay: 1.2 }}
             className="md:hover:scale-[1.01] transition-transform duration-200"
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60 transition-all duration-300">
+            <Card className={`${
+              isDark 
+                ? 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60' 
+                : 'bg-white/80 border-gray-200/60 hover:bg-white/90'
+            } transition-all duration-300`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-gray-100 flex items-center gap-2 text-sm sm:text-base font-semibold">
-                    <div className="h-5 w-5 sm:h-6 sm:w-6 bg-blue-500/10 border border-blue-500/20 rounded-lg flex items-center justify-center">
-                      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-400" />
+                  <CardTitle className={`flex items-center gap-2 text-sm sm:text-base font-semibold ${
+                    isDark ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-lg flex items-center justify-center ${
+                      isDark 
+                        ? 'bg-slate-600/20 border border-slate-500/30' 
+                        : 'bg-gray-100/80 border border-gray-300/60'
+                    }`}>
+                      <Clock className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
+                        isDark ? 'text-slate-300' : 'text-gray-600'
+                      }`} />
                     </div>
                     <span>Recent Activity</span>
                   </CardTitle>
-                  <div className="px-2 py-1 bg-slate-700/50 border border-slate-600/50 rounded-md">
-                    <span className="text-xs font-medium text-slate-300">{safeRecentActivity.length} items</span>
+                  <div className={`px-2 py-1 rounded-md ${
+                    isDark 
+                      ? 'bg-slate-700/50 border border-slate-600/50' 
+                      : 'bg-gray-100/80 border border-gray-300/60'
+                  }`}>
+                    <span className={`text-xs font-medium ${
+                      isDark ? 'text-slate-300' : 'text-gray-700'
+                    }`}>{safeRecentActivity.length} items</span>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 {safeRecentActivity.length > 0 ? (
                   <div className="space-y-2 max-h-60 sm:max-h-80 overflow-y-auto custom-scrollbar-dark pr-1 sm:pr-2">
-                    {safeRecentActivity.map((activity: RecentActivity, index: number) => (
+                    {safeRecentActivity.filter((activity: RecentActivity) => activity && activity.id).map((activity: RecentActivity, index: number) => (
                       <motion.div
                         key={activity.id}
                         initial={{ opacity: 0, y: 10 }}
@@ -342,21 +437,31 @@ export default function DashboardPage() {
                         className="md:hover:scale-[1.01] transition-transform duration-200"
                       >
                         <RecentActivityItem
-                          icon={React.createElement(getActivityIconFromTitle(activity.title), { className: "h-4 w-4 text-blue-400" })}
-                          title={activity.title}
-                          date={formatDate(activity.completed_at)}
-                          score={activity.score}
+                          icon={React.createElement(getActivityIconFromTitle(activity?.title || ''), { className: "h-4 w-4 text-blue-400" })}
+                          title={activity?.title || 'Unknown Activity'}
+                          date={formatDate(activity?.completed_at || new Date().toISOString())}
+                          score={activity?.score}
                         />
                       </motion.div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-slate-700/40 border border-slate-600/40 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                      <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                    <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 ${
+                      isDark 
+                        ? 'bg-slate-700/40 border border-slate-600/40' 
+                        : 'bg-gray-100/80 border border-gray-300/60'
+                    }`}>
+                      <BookOpen className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                        isDark ? 'text-gray-400' : 'text-gray-500'
+                      }`} />
                     </div>
-                    <p className="text-gray-400 text-sm font-medium">No recent activity</p>
-                    <p className="text-gray-500 text-xs mt-0.5">Create and complete quizzes to see your activity here</p>
+                    <p className={`text-sm font-medium ${
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    }`}>No recent activity</p>
+                    <p className={`text-xs mt-0.5 ${
+                      isDark ? 'text-gray-500' : 'text-gray-500'
+                    }`}>Create and complete quizzes to see your activity here</p>
                   </div>
                 )}
               </CardContent>
@@ -370,24 +475,42 @@ export default function DashboardPage() {
             transition={{ delay: 1.4 }}
             className="md:hover:scale-[1.01] transition-transform duration-200"
           >
-            <Card className="bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60 transition-all duration-300">
+            <Card className={`${
+              isDark 
+                ? 'bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60' 
+                : 'bg-white/80 border-gray-200/60 hover:bg-white/90'
+            } transition-all duration-300`}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-gray-100 flex items-center gap-2 text-sm sm:text-base font-semibold">
-                    <div className="h-5 w-5 sm:h-6 sm:w-6 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center">
-                      <BarChart3 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-emerald-400" />
+                  <CardTitle className={`flex items-center gap-2 text-sm sm:text-base font-semibold ${
+                    isDark ? 'text-gray-100' : 'text-gray-900'
+                  }`}>
+                    <div className={`h-5 w-5 sm:h-6 sm:w-6 rounded-lg flex items-center justify-center ${
+                      isDark 
+                        ? 'bg-slate-600/20 border border-slate-500/30' 
+                        : 'bg-gray-100/80 border border-gray-300/60'
+                    }`}>
+                      <BarChart3 className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${
+                        isDark ? 'text-slate-300' : 'text-gray-600'
+                      }`} />
                     </div>
                     <span>Topic Progress</span>
                   </CardTitle>
-                  <div className="px-2 py-1 bg-slate-700/50 border border-slate-600/50 rounded-md">
-                    <span className="text-xs font-medium text-slate-300">{safeTopicProgress.length} topics</span>
+                  <div className={`px-2 py-1 rounded-md ${
+                    isDark 
+                      ? 'bg-slate-700/50 border border-slate-600/50' 
+                      : 'bg-gray-100/80 border border-gray-300/60'
+                  }`}>
+                    <span className={`text-xs font-medium ${
+                      isDark ? 'text-slate-300' : 'text-gray-700'
+                    }`}>{safeTopicProgress.length} topics</span>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 {safeTopicProgress.length > 0 ? (
                   <div className="space-y-3 max-h-60 sm:max-h-80 overflow-y-auto custom-scrollbar-dark pr-1 sm:pr-2">
-                    {safeTopicProgress.map((topic: TopicProgress, index: number) => (
+                    {safeTopicProgress.filter((topic: TopicProgress) => topic && topic.topic_id).map((topic: TopicProgress, index: number) => (
                       <motion.div
                         key={topic.topic_id}
                         initial={{ opacity: 0, y: 10 }}
@@ -401,11 +524,21 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="text-center py-6 sm:py-8">
-                    <div className="h-8 w-8 sm:h-10 sm:w-10 bg-slate-700/40 border border-slate-600/40 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
-                      <Target className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
+                    <div className={`h-8 w-8 sm:h-10 sm:w-10 rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3 ${
+                      isDark 
+                        ? 'bg-slate-700/40 border border-slate-600/40' 
+                        : 'bg-gray-100/80 border border-gray-300/60'
+                    }`}>
+                      <Target className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                        isDark ? 'text-gray-400' : 'text-gray-500'
+                      }`} />
                     </div>
-                    <p className="text-gray-400 text-sm font-medium">No progress data</p>
-                    <p className="text-gray-500 text-xs mt-0.5">Start learning to track your progress</p>
+                    <p className={`text-sm font-medium ${
+                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    }`}>No progress data</p>
+                    <p className={`text-xs mt-0.5 ${
+                      isDark ? 'text-gray-500' : 'text-gray-500'
+                    }`}>Start learning to track your progress</p>
                   </div>
                 )}
               </CardContent>
@@ -413,6 +546,14 @@ export default function DashboardPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Study Timer Modal */}
+      <StudyTimer 
+        isOpen={isStudyTimerOpen} 
+        onClose={() => setIsStudyTimerOpen(false)} 
+      />
+
+
     </DashboardLayout>
   );
 }

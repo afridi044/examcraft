@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { useBackendDashboardStats } from "@/hooks/useBackendDashboard";
+import { motion } from "framer-motion";
 import { 
   BookOpen, 
   Target, 
@@ -12,7 +13,11 @@ import {
   TrendingUp, 
   Award,
   Calendar,
-  BarChart3
+  BarChart3,
+  Star,
+  Flame,
+  Zap,
+  Trophy
 } from "lucide-react";
 import type { AuthUser } from "@/lib/services/auth.service";
 
@@ -25,23 +30,49 @@ interface StatCardProps {
   value: string | number;
   icon: React.ReactNode;
   description?: string;
+  progress?: number;
   color: string;
+  bgColor: string;
+  borderColor: string;
+  iconBgColor: string;
+  iconColor: string;
 }
 
-function StatCard({ title, value, icon, description, color }: StatCardProps) {
+function StatCard({ title, value, icon, description, progress, color, bgColor, borderColor, iconBgColor, iconColor }: StatCardProps) {
   return (
-    <div className="flex items-center gap-4 p-4 bg-white/5 rounded-lg border border-white/10">
-      <div className={`p-2 rounded-lg ${color}`}>
-        {icon}
+    <motion.div 
+      className={`p-4 rounded-xl border transition-all duration-300 hover:scale-105 ${bgColor} ${borderColor}`}
+      whileHover={{ y: -5 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex-1">
+          <p className={`text-sm font-medium ${color}`}>{title}</p>
+          <p className="text-2xl font-bold text-white mt-1">{value}</p>
+          {description && (
+            <p className="text-xs text-gray-400 mt-1">{description}</p>
+          )}
+        </div>
+        <div className={`w-12 h-12 ${iconBgColor} rounded-lg flex items-center justify-center`}>
+          <div className={iconColor}>
+            {icon}
+          </div>
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm text-gray-400 font-medium">{title}</p>
-        <p className="text-xl font-bold text-white">{value}</p>
-        {description && (
-          <p className="text-xs text-gray-500 mt-1">{description}</p>
-        )}
-      </div>
-    </div>
+      
+      {progress !== undefined && (
+        <div className="w-full bg-slate-700/30 rounded-full h-2 overflow-hidden">
+          <motion.div 
+            className={`h-2 rounded-full ${iconBgColor.replace('bg-', 'bg-').replace('/20', '')}`}
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min(progress, 100)}%` }}
+            transition={{ duration: 1, delay: 0.5 }}
+          />
+        </div>
+      )}
+    </motion.div>
   );
 }
 
@@ -72,8 +103,11 @@ export function ProfileStats({ user }: ProfileStatsProps) {
 
   if (isLoading) {
     return (
-      <Card className="p-6 bg-white/5 border-white/10">
-        <h3 className="text-lg font-semibold text-white mb-4">Learning Statistics</h3>
+      <Card className="p-6 bg-slate-800/40 border-slate-700/60 rounded-xl">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-blue-400" />
+          Learning Statistics
+        </h3>
         <div className="flex items-center justify-center py-8">
           <LoadingSpinner size="lg" />
         </div>
@@ -83,8 +117,11 @@ export function ProfileStats({ user }: ProfileStatsProps) {
 
   if (error) {
     return (
-      <Card className="p-6 bg-white/5 border-white/10">
-        <h3 className="text-lg font-semibold text-white mb-4">Learning Statistics</h3>
+      <Card className="p-6 bg-slate-800/40 border-slate-700/60 rounded-xl">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-blue-400" />
+          Learning Statistics
+        </h3>
         <div className="text-center py-8">
           <p className="text-gray-400">Unable to load statistics</p>
         </div>
@@ -99,86 +136,129 @@ export function ProfileStats({ user }: ProfileStatsProps) {
     averageScore: 0,
     studyStreak: 0,
     questionsAnswered: 0,
-    correctAnswers: 0,
   };
 
-  const accuracy = dashboardStats.questionsAnswered > 0 
-    ? Math.round((dashboardStats.correctAnswers / dashboardStats.questionsAnswered) * 100)
-    : 0;
+  const statsCards = [
+    {
+      title: "Total Quizzes",
+      value: dashboardStats.totalQuizzes,
+      icon: <BarChart3 className="w-6 h-6" />,
+      progress: Math.min(dashboardStats.totalQuizzes * 10, 100),
+      color: "text-indigo-300",
+      bgColor: "bg-indigo-600/20",
+      borderColor: "border-indigo-500/30",
+      iconBgColor: "bg-indigo-500/20",
+      iconColor: "text-indigo-400"
+    },
+    {
+      title: "Average Score",
+      value: `${dashboardStats.averageScore.toFixed(1)}%`,
+      icon: <Star className="w-6 h-6" />,
+      progress: dashboardStats.averageScore,
+      color: "text-emerald-300",
+      bgColor: "bg-emerald-600/20",
+      borderColor: "border-emerald-500/30",
+      iconBgColor: "bg-emerald-500/20",
+      iconColor: "text-emerald-400"
+    },
+    {
+      title: "Day Streak",
+      value: dashboardStats.studyStreak,
+      icon: <Flame className="w-6 h-6" />,
+      progress: Math.min(dashboardStats.studyStreak * 10, 100),
+      color: "text-orange-300",
+      bgColor: "bg-orange-600/20",
+      borderColor: "border-orange-500/30",
+      iconBgColor: "bg-orange-500/20",
+      iconColor: "text-orange-400"
+    },
+    {
+      title: "Flashcards",
+      value: dashboardStats.totalFlashcards,
+      icon: <Brain className="w-6 h-6" />,
+      progress: Math.min(dashboardStats.totalFlashcards * 5, 100),
+      color: "text-purple-300",
+      bgColor: "bg-purple-600/20",
+      borderColor: "border-purple-500/30",
+      iconBgColor: "bg-purple-500/20",
+      iconColor: "text-purple-400"
+    }
+  ];
 
   return (
-    <Card className="p-6 bg-white/5 border-white/10">
-      <h3 className="text-lg font-semibold text-white mb-4">Learning Statistics</h3>
-      
-      <div className="space-y-4">
-        {/* Member Since */}
-        <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-500/20">
-          <div className="p-2 rounded-lg bg-blue-500/20">
-            <Calendar className="w-5 h-5 text-blue-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-gray-400 font-medium">Member Since</p>
-            <p className="text-xl font-bold text-white">{memberSince}</p>
-          </div>
-        </div>
-
-        {/* Study Streak */}
-        <StatCard
-          title="Study Streak"
-          value={dashboardStats.studyStreak}
-          icon={<TrendingUp className="w-5 h-5 text-green-400" />}
-          description="consecutive days"
-          color="bg-green-500/20"
-        />
-
-        {/* Average Score */}
-        <StatCard
-          title="Average Score"
-          value={`${Math.round(dashboardStats.averageScore)}%`}
-          icon={<BarChart3 className="w-5 h-5 text-blue-400" />}
-          description="across all attempts"
-          color="bg-blue-500/20"
-        />
-
-        {/* Questions Answered */}
-        <StatCard
-          title="Questions Answered"
-          value={dashboardStats.questionsAnswered}
-          icon={<Target className="w-5 h-5 text-purple-400" />}
-          description="total attempts"
-          color="bg-purple-500/20"
-        />
-
-        {/* Accuracy */}
-        <StatCard
-          title="Accuracy Rate"
-          value={`${accuracy}%`}
-          icon={<Award className="w-5 h-5 text-yellow-400" />}
-          description={`${dashboardStats.correctAnswers} correct out of ${dashboardStats.questionsAnswered}`}
-          color="bg-yellow-500/20"
-        />
-
-        {/* Content Created */}
-        <div className="grid grid-cols-3 gap-3 pt-4">
-          <div className="text-center p-3 bg-white/5 rounded-lg border border-white/10">
-            <BookOpen className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-            <p className="text-lg font-bold text-white">{dashboardStats.totalQuizzes}</p>
-            <p className="text-xs text-gray-400">Quizzes</p>
-          </div>
-          
-          <div className="text-center p-3 bg-white/5 rounded-lg border border-white/10">
-            <Target className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-            <p className="text-lg font-bold text-white">{dashboardStats.totalExams}</p>
-            <p className="text-xs text-gray-400">Exams</p>
-          </div>
-          
-          <div className="text-center p-3 bg-white/5 rounded-lg border border-white/10">
-            <Brain className="w-6 h-6 text-green-400 mx-auto mb-2" />
-            <p className="text-lg font-bold text-white">{dashboardStats.totalFlashcards}</p>
-            <p className="text-xs text-gray-400">Flashcards</p>
-          </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="space-y-6"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-blue-400" />
+          Learning Statistics
+        </h3>
+        <div className="flex items-center gap-2 px-3 py-1 bg-slate-700/50 border border-slate-600/50 rounded-full">
+          <Trophy className="w-4 h-4 text-yellow-400" />
+          <span className="text-xs font-medium text-slate-300">Member for {memberSince}</span>
         </div>
       </div>
-    </Card>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {statsCards.map((card, index) => (
+          <StatCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            icon={card.icon}
+            progress={card.progress}
+            color={card.color}
+            bgColor={card.bgColor}
+            borderColor={card.borderColor}
+            iconBgColor={card.iconBgColor}
+            iconColor={card.iconColor}
+          />
+        ))}
+      </div>
+
+      {/* Achievement Section */}
+      <div className="bg-gradient-to-br from-yellow-600/20 to-orange-600/20 border border-yellow-500/30 rounded-xl p-6">
+        <h4 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+          <Award className="w-5 h-5 text-yellow-400" />
+          Recent Achievements
+        </h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { name: "First Quiz", icon: <BookOpen className="w-4 h-4" />, unlocked: dashboardStats.totalQuizzes > 0 },
+            { name: "Streak Master", icon: <Flame className="w-4 h-4" />, unlocked: dashboardStats.studyStreak >= 7 },
+            { name: "High Scorer", icon: <Star className="w-4 h-4" />, unlocked: dashboardStats.averageScore >= 80 },
+            { name: "Flashcard Pro", icon: <Brain className="w-4 h-4" />, unlocked: dashboardStats.totalFlashcards >= 10 }
+          ].map((achievement) => (
+            <motion.div 
+              key={achievement.name}
+              className="text-center"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center ${
+                achievement.unlocked 
+                  ? 'bg-gradient-to-br from-yellow-500 to-orange-500 shadow-lg' 
+                  : 'bg-slate-700/50 border border-slate-600/50'
+              }`}>
+                <div className={achievement.unlocked ? 'text-white' : 'text-gray-400'}>
+                  {achievement.icon}
+                </div>
+              </div>
+              <p className={`text-xs mt-2 font-medium ${
+                achievement.unlocked ? 'text-yellow-300' : 'text-gray-400'
+              }`}>
+                {achievement.name}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
   );
 } 

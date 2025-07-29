@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/loading";
 import { userService } from "@/lib/services/user.service";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { Save, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { Save, X, User, Mail, Building, GraduationCap } from "lucide-react";
 import type { AuthUser } from "@/lib/services/auth.service";
 
 interface ProfileFormProps {
@@ -118,42 +119,47 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
 
   if (!isEditing) {
     return (
-      <div className="space-y-4 sm:space-y-6">
-        <h3 className="text-base sm:text-lg font-semibold text-white">Profile Information</h3>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div>
-            <Label className="text-gray-400 text-xs sm:text-sm">First Name</Label>
-            <div className="mt-1 p-2 sm:p-3 bg-white/5 rounded-md border border-white/10 text-white text-sm sm:text-base">
-              {user.first_name || 'Not provided'}
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-400">First Name</Label>
+            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
+              <User className="w-4 h-4 text-blue-400" />
+              <span className="text-white">{user.first_name || 'Not provided'}</span>
             </div>
           </div>
           
-          <div>
-            <Label className="text-gray-400 text-xs sm:text-sm">Last Name</Label>
-            <div className="mt-1 p-2 sm:p-3 bg-white/5 rounded-md border border-white/10 text-white text-sm sm:text-base">
-              {user.last_name || 'Not provided'}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-400">Last Name</Label>
+            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
+              <User className="w-4 h-4 text-blue-400" />
+              <span className="text-white">{user.last_name || 'Not provided'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-gray-400">Email</Label>
+          <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
+            <Mail className="w-4 h-4 text-emerald-400" />
+            <span className="text-white">{user.email}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-400">Institution</Label>
+            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
+              <Building className="w-4 h-4 text-purple-400" />
+              <span className="text-white">{user.institution || 'Not provided'}</span>
             </div>
           </div>
           
-          <div>
-            <Label className="text-gray-400 text-xs sm:text-sm">Email</Label>
-            <div className="mt-1 p-2 sm:p-3 bg-white/5 rounded-md border border-white/10 text-white text-sm sm:text-base">
-              {user.email}
-            </div>
-          </div>
-          
-          <div>
-            <Label className="text-gray-400 text-xs sm:text-sm">Institution</Label>
-            <div className="mt-1 p-2 sm:p-3 bg-white/5 rounded-md border border-white/10 text-white text-sm sm:text-base">
-              {user.institution || 'Not provided'}
-            </div>
-          </div>
-          
-          <div className="sm:col-span-2">
-            <Label className="text-gray-400 text-xs sm:text-sm">Field of Study</Label>
-            <div className="mt-1 p-2 sm:p-3 bg-white/5 rounded-md border border-white/10 text-white text-sm sm:text-base">
-              {user.field_of_study || 'Not provided'}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-400">Field of Study</Label>
+            <div className="flex items-center gap-3 p-3 bg-slate-700/30 border border-slate-600/50 rounded-lg">
+              <GraduationCap className="w-4 h-4 text-orange-400" />
+              <span className="text-white">{user.field_of_study || 'Not provided'}</span>
             </div>
           </div>
         </div>
@@ -162,99 +168,139 @@ export function ProfileForm({ user, isEditing, setIsEditing, onMessage, onProfil
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-      <h3 className="text-base sm:text-lg font-semibold text-white">Edit Profile Information</h3>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <div>
-          <Label htmlFor="first_name" className="text-gray-400 text-xs sm:text-sm">
+    <motion.form 
+      onSubmit={handleSubmit}
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="first_name" className="text-sm font-medium text-gray-300">
             First Name *
           </Label>
-          <Input
-            id="first_name"
-            type="text"
-            value={formData.first_name}
-            onChange={(e) => handleInputChange('first_name', e.target.value)}
-            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400 text-sm sm:text-base"
-            placeholder="Enter your first name"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="first_name"
+              type="text"
+              value={formData.first_name}
+              onChange={(e) => handleInputChange('first_name', e.target.value)}
+              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              placeholder="Enter your first name"
+              required
+            />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400" />
+          </div>
         </div>
         
-        <div>
-          <Label htmlFor="last_name" className="text-gray-400 text-xs sm:text-sm">
+        <div className="space-y-2">
+          <Label htmlFor="last_name" className="text-sm font-medium text-gray-300">
             Last Name *
           </Label>
-          <Input
-            id="last_name"
-            type="text"
-            value={formData.last_name}
-            onChange={(e) => handleInputChange('last_name', e.target.value)}
-            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400 text-sm sm:text-base"
-            placeholder="Enter your last name"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="last_name"
+              type="text"
+              value={formData.last_name}
+              onChange={(e) => handleInputChange('last_name', e.target.value)}
+              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+              placeholder="Enter your last name"
+              required
+            />
+            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-400" />
+          </div>
         </div>
-        
-        <div>
-          <Label htmlFor="institution" className="text-gray-400 text-xs sm:text-sm">
-            Institution
-          </Label>
-          <Input
-            id="institution"
-            type="text"
-            value={formData.institution}
-            onChange={(e) => handleInputChange('institution', e.target.value)}
-            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400 text-sm sm:text-base"
-            placeholder="Enter your institution"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="field_of_study" className="text-gray-400 text-xs sm:text-sm">
-            Field of Study
-          </Label>
-          <Input
-            id="field_of_study"
-            type="text"
-            value={formData.field_of_study}
-            onChange={(e) => handleInputChange('field_of_study', e.target.value)}
-            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400 text-sm sm:text-base"
-            placeholder="Enter your field of study"
-          />
-        </div>
-        
-        <div className="sm:col-span-2">
-          <Label htmlFor="email" className="text-gray-400 text-xs sm:text-sm">
-            Email
-          </Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium text-gray-300">
+          Email Address
+        </Label>
+        <div className="relative">
           <Input
             id="email"
             type="email"
             value={user.email}
-            className="mt-1 bg-white/5 border-white/10 text-white placeholder-gray-400 text-sm sm:text-base"
             disabled
+            className="w-full bg-slate-700/40 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-gray-400 cursor-not-allowed"
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Email cannot be changed. Contact support if you need to update your email.
-          </p>
+          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-emerald-400" />
+        </div>
+        <p className="text-xs text-gray-500">Email address cannot be changed</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="institution" className="text-sm font-medium text-gray-300">
+            Institution
+          </Label>
+          <div className="relative">
+            <Input
+              id="institution"
+              type="text"
+              value={formData.institution}
+              onChange={(e) => handleInputChange('institution', e.target.value)}
+              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
+              placeholder="Enter your institution"
+            />
+            <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-purple-400" />
+          </div>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="field_of_study" className="text-sm font-medium text-gray-300">
+            Field of Study
+          </Label>
+          <div className="relative">
+            <Input
+              id="field_of_study"
+              type="text"
+              value={formData.field_of_study}
+              onChange={(e) => handleInputChange('field_of_study', e.target.value)}
+              className="w-full bg-slate-800/60 border-slate-600/60 rounded-lg px-4 py-3 pl-10 text-white placeholder-gray-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all duration-300"
+              placeholder="Enter your field of study"
+            />
+            <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-orange-400" />
+          </div>
         </div>
       </div>
-      
+
+      {/* Action Buttons */}
       <div className="flex items-center justify-end gap-3 pt-4">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="flex items-center gap-2 text-sm sm:text-base"
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
-          {loading ? (
-            <LoadingSpinner size="sm" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          Save Changes
-        </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="flex items-center gap-2 bg-slate-700/30 border-slate-600/50 text-white hover:bg-slate-700/50 hover:text-white"
+          >
+            <X className="w-4 h-4" />
+            Cancel
+          </Button>
+        </motion.div>
+        
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Button
+            type="submit"
+            disabled={loading}
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+          >
+            {loading ? (
+              <LoadingSpinner size="sm" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
+            {loading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </motion.div>
       </div>
-    </form>
+    </motion.form>
   );
 } 

@@ -51,7 +51,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, signOut, router }) => 
             : "bg-slate-800/60 hover:bg-slate-700/60 border-slate-700/60 text-slate-300 hover:text-white"
         } border`}
       >
-        <div className="h-7 w-7 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-lg flex items-center justify-center shadow-md ring-2 ring-blue-400/20">
+        <div className="h-7 w-7 bg-slate-800 rounded-lg flex items-center justify-center shadow-md ring-1 ring-slate-700">
           <span className="text-white font-semibold text-sm drop-shadow-sm">
             {getUserFirstName()?.[0]?.toUpperCase() || "U"}
           </span>
@@ -68,12 +68,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, signOut, router }) => 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className="absolute right-0 top-12 w-64 bg-slate-900/95 backdrop-blur-xl border border-slate-700/60 rounded-2xl shadow-2xl shadow-blue-900/20 z-50 overflow-hidden ring-1 ring-blue-400/10"
+            className="absolute right-0 top-12 w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden"
           >
             {/* User Info */}
-            <div className="p-4 border-b border-slate-700/60 bg-gradient-to-br from-slate-800/50 to-slate-900/50">
+            <div className="p-4 border-b border-slate-700 bg-slate-800">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg ring-2 ring-blue-400/20">
+                <div className="h-10 w-10 bg-slate-800 rounded-xl flex items-center justify-center shadow-lg ring-1 ring-slate-700">
                   <span className="text-white font-semibold drop-shadow-sm">
                     {getUserFirstName()?.[0]?.toUpperCase() || "U"}
                   </span>

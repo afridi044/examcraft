@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
 import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   // Create a new QueryClient instance for each component tree
@@ -54,9 +55,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-right" toastOptions={toastOptions} />
-      {/* React Query Devtools disabled for faster development */}
+      <ThemeProvider>
+        {children}
+        <Toaster position="top-right" toastOptions={toastOptions} />
+        {/* React Query Devtools disabled for faster development */}
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

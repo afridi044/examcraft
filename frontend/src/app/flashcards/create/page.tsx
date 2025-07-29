@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useBackendTopics } from "@/hooks/useBackendTopics";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
 import { PageLoading } from "@/components/ui/loading";
 import { toast } from "react-hot-toast";
@@ -66,6 +67,7 @@ function CreateFlashcardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
+  const { isDark } = useTheme();
   const { data: topics = [], isLoading: topicsLoading } = useBackendTopics();
   const generateAIFlashcards = useGenerateAIFlashcards();
 
@@ -638,7 +640,9 @@ function CreateFlashcardContent() {
                 </div>
                 <div className="space-y-2">
                   <motion.h3
-                    className="text-base sm:text-lg font-bold text-teal-300 flex items-center space-x-2"
+                    className={`text-base sm:text-lg font-bold flex items-center space-x-2 ${
+                      isDark ? 'text-teal-300' : 'text-teal-600'
+                    }`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={tipsInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
                     transition={{ delay: 0.1, duration: 0.5 }}
@@ -647,7 +651,9 @@ function CreateFlashcardContent() {
                     <span>Pro Tips</span>
                   </motion.h3>
                   <motion.ul
-                    className="text-sm text-gray-300 space-y-1"
+                    className={`text-sm space-y-1 ${
+                      isDark ? 'text-gray-300' : 'text-gray-700'
+                    }`}
                     initial={{ opacity: 0 }}
                     animate={tipsInView ? { opacity: 1 } : { opacity: 0 }}
                     transition={{ delay: 0.2, duration: 0.6 }}
