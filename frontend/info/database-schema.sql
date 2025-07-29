@@ -273,3 +273,55 @@ CREATE TABLE user_topic_progress (
 
 CREATE INDEX idx_user_topic_progress_user ON user_topic_progress(user_id);
 CREATE INDEX idx_user_topic_progress_topic ON user_topic_progress(topic_id);
+|
+
+
+-- Add to your database-schema.sql or run separately
+CREATE TABLE study_notes (
+    note_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    note_type VARCHAR(50) NOT NULL DEFAULT 'lecture_notes',
+    topic_id UUID REFERENCES topics(topic_id) ON DELETE SET NULL,
+    tags TEXT[],
+    word_count INTEGER DEFAULT 0,
+    is_public BOOLEAN DEFAULT false,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_study_notes_user ON study_notes(user_id);
+CREATE INDEX idx_study_notes_topic ON study_notes(topic_id);
+CREATE INDEX idx_study_notes_type ON study_notes(note_type);
+CREATE INDEX idx_study_notes_created ON study_notes(created_at);
+
+
+
+
+
+-- =============================================
+-- Books Table
+-- =============================================
+
+CREATE TABLE books (
+    book_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    subject VARCHAR(100) NOT NULL,
+    page_count INTEGER NOT NULL DEFAULT 0,
+    chapter_count INTEGER NOT NULL DEFAULT 0,
+    cover_color VARCHAR(50) NOT NULL DEFAULT 'from-blue-500 to-blue-600',
+    is_digital BOOLEAN NOT NULL DEFAULT TRUE,
+    format VARCHAR(20) NOT NULL DEFAULT 'pdf' CHECK (format IN ('pdf', 'epub', 'textbook', 'study-guide')),
+    url VARCHAR(512) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_books_subject ON books(subject);
+CREATE INDEX idx_books_format ON books(format);
+CREATE INDEX idx_books_created ON books(created_at);
+CREATE INDEX idx_books_digital ON books(is_digital);

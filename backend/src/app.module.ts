@@ -13,6 +13,7 @@ import { QuestionsModule } from './questions/questions.module';
 import { UsersModule } from './users/users.module';
 import { ExamsModule } from './exams/exams.module';
 import { AnswersModule } from './answers/answers.module';
+import { NotesModule } from './notes/notes.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import configuration from './config/configuration';
 
@@ -35,6 +36,7 @@ import configuration from './config/configuration';
     UsersModule,
     ExamsModule,
     AnswersModule,
+    NotesModule,
   ],
   controllers: [],
   providers: [
