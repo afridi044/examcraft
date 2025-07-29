@@ -92,3 +92,86 @@ export interface TopicProgress {
   questions_correct: number;
   last_activity: string;
 }
+
+// =============================================
+// API Response Types
+// =============================================
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T | null;
+  error?: string | null;
+  message?: string;
+}
+
+// =============================================
+// Library-Specific Types
+// =============================================
+
+export interface Quiz {
+  quiz_id: string;
+  title: string;
+  description?: string;
+  question_count: number;
+  completion_rate: number;
+  last_accessed: string;
+  difficulty: string;
+  topic?: {
+    topic_id: string;
+    name: string;
+  };
+}
+
+export interface Flashcard {
+  flashcard_id: string;
+  title: string;
+  card_count: number;
+  mastered: number;
+  next_review: string;
+  topic: string;
+  mastery_status: string;
+}
+
+export interface StudyNote {
+  note_id: string;
+  title: string;
+  content: string;
+  topic?: string;
+  word_count: number;
+  last_edited: string;
+  created_at: string;
+  updated_at?: string;
+  topics?: {
+    name: string;
+  };
+}
+
+
+
+export interface Book {
+  id: string;
+  title: string;
+  description: string;
+  subject: string;
+  pageCount: number;
+  chapterCount: number;
+  dateAdded: string;
+  coverColor: string;
+  isDigital: boolean;
+  format: 'pdf' | 'epub' | 'textbook' | 'study-guide';
+  url: string;
+}
+
+export interface StudyMaterial {
+  id: string;
+  title: string;
+  description: string;
+  category: 'template' | 'reference' | 'tool' | 'guide';
+  fileType: 'pdf' | 'docx' | 'xlsx' | 'web' | 'link';
+  fileSize: string;
+  downloadUrl: string;
+  previewUrl?: string;
+  dateAdded: string;
+  iconColor: string;
+  tags: string[];
+}

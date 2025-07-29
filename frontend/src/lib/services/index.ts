@@ -11,6 +11,8 @@ export { userService } from './user.service';
 export { topicService } from './topic.service';
 export { questionService } from './question.service';
 export { examService } from './exam.service';
+export { libraryService } from './library.service';
+export { notesService } from './notes.service';
 
 // Re-export API client for custom usage
 export { apiClient, APIClient } from '../api-client';

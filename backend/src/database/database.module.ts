@@ -7,6 +7,7 @@ import { ExamDatabaseService } from './services/exam-database.service';
 import { QuestionDatabaseService } from './services/question-database.service';
 import { AnalyticsDatabaseService } from './services/analytics-database.service';
 import { QuizReviewDatabaseService } from './services/quiz-review-database.service';
+import { NotesDatabaseService } from './services/notes-database.service';
 
 @Module({
   providers: [
@@ -18,6 +19,7 @@ import { QuizReviewDatabaseService } from './services/quiz-review-database.servi
     QuestionDatabaseService,
     AnalyticsDatabaseService,
     QuizReviewDatabaseService,
+    NotesDatabaseService,
   ],
   exports: [DatabaseService],
 })

@@ -8,6 +8,7 @@ import { ExamDatabaseService } from './services/exam-database.service';
 import { QuestionDatabaseService } from './services/question-database.service';
 import { AnalyticsDatabaseService } from './services/analytics-database.service';
 import { QuizReviewDatabaseService } from './services/quiz-review-database.service';
+import { NotesDatabaseService } from './services/notes-database.service';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit {
@@ -22,6 +23,7 @@ export class DatabaseService implements OnModuleInit {
     private questionService: QuestionDatabaseService,
     private analyticsService: AnalyticsDatabaseService,
     private quizReviewService: QuizReviewDatabaseService,
+    private notesService: NotesDatabaseService,
   ) {
     this.baseDatabaseService = new BaseDatabaseService(configService);
   }
@@ -42,6 +44,7 @@ export class DatabaseService implements OnModuleInit {
       this.questionService,
       this.analyticsService,
       this.quizReviewService,
+      this.notesService,
     ].forEach(service => {
       (service as any).supabase = supabase;
       (service as any).supabaseAdmin = supabaseAdmin;
@@ -330,7 +333,33 @@ export class DatabaseService implements OnModuleInit {
     return this.analyticsService.getUserBestWorstTopics(userId);
   }
 
+  // =============================================
+  // Notes Operations - Delegate to NotesDatabaseService
+  // =============================================
+  async getUserNotes(userId: string) {
+    return this.notesService.getUserNotes(userId);
+  }
+
+  async getNoteById(noteId: string, userId: string) {
+    return this.notesService.getNoteById(noteId, userId);
+  }
+
+  async createNote(input: any) {
+    return this.notesService.createNote(input);
+  }
+
+  async updateNote(noteId: string, input: any, userId: string) {
+    return this.notesService.updateNote(noteId, input, userId);
+  }
+
+  async deleteNote(noteId: string, userId: string) {
+    return this.notesService.deleteNote(noteId, userId);
+  }
+  // =============================================
+  // Study Time Analytics - Delegate to AnalyticsDatabaseService
+  // =============================================
   async getUserTotalStudyTime(userId: string) {
     return this.analyticsService.getUserTotalStudyTime(userId);
+
   }
 }
