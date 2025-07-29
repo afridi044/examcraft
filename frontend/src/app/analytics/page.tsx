@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   BarChart3, 
@@ -28,8 +28,16 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { DashboardHeader } from '@/components/features/dashboard/DashboardHeader';
 import { PageLoading } from '@/components/ui/loading';
 
+interface ActivityItem {
+  activity_count: number;
+}
+
+interface AccuracyItem {
+  total_attempts: number;
+  accuracy_percentage: number;
+}
+
 export default function AnalyticsPage() {
-  const [refreshKey, setRefreshKey] = useState(0);
   const { 
     data: analyticsData, 
     isLoading, 
@@ -38,29 +46,24 @@ export default function AnalyticsPage() {
   } = useComprehensiveAnalytics();
 
   const { 
-    data: topicStatsData, 
-    isLoading: topicStatsLoading, 
-    error: topicStatsError 
+    data: topicStatsData
   } = useTopicStats();
 
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
     refetch();
   };
 
   // Calculate summary stats
-  const totalActivities = analyticsData?.activityHeatmap?.reduce((sum, item) => sum + item.activity_count, 0) || 0;
-  const activeDays = analyticsData?.activityHeatmap?.filter(item => item.activity_count > 0).length || 0;
+  const activeDays = analyticsData?.activityHeatmap?.filter((item: ActivityItem) => item.activity_count > 0).length || 0;
   
   // Calculate total questions from accuracy breakdown data (only question answers)
-  const totalQuestions = analyticsData?.accuracyBreakdown?.byType?.reduce((sum, item) => sum + item.total_attempts, 0) || 0;
+  const totalQuestions = analyticsData?.accuracyBreakdown?.byType?.reduce((sum: number, item: AccuracyItem) => sum + item.total_attempts, 0) || 0;
   
   const averageAccuracy = analyticsData?.accuracyBreakdown?.byType?.length > 0 
-    ? Math.round(analyticsData.accuracyBreakdown.byType.reduce((sum, item) => sum + item.accuracy_percentage, 0) / analyticsData.accuracyBreakdown.byType.length)
+    ? Math.round(analyticsData.accuracyBreakdown.byType.reduce((sum: number, item: AccuracyItem) => sum + item.accuracy_percentage, 0) / analyticsData.accuracyBreakdown.byType.length)
     : 0;
-  const totalFlashcards = analyticsData?.flashcardAnalytics?.totalFlashcards || 0;
   
-    // Get total study time from backend calculation
+  // Get total study time from backend calculation
   const totalTimeSeconds = analyticsData?.totalStudyTimeSeconds || 0;
 
   if (isLoading) {
@@ -217,7 +220,7 @@ export default function AnalyticsPage() {
               </Card>
             </motion.div>
 
-            {/* Average Time Chart */}
+            {/* Accuracy Chart */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -225,12 +228,12 @@ export default function AnalyticsPage() {
             >
               <Card className="bg-slate-900/80 border-slate-800/80 p-4 sm:p-6 hover:bg-slate-900/40 transition-colors relative overflow-hidden">
                 <div className="flex items-center mb-4 sm:mb-6">
-                  <div className="p-2 bg-orange-500/20 rounded-lg mr-3 sm:mr-4">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-orange-400" />
+                  <div className="p-2 bg-green-500/20 rounded-lg mr-3 sm:mr-4">
+                    <Target className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-100">Average Time per Question</h3>
-                    <p className="text-sm text-gray-400">Time efficiency in answering questions</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-100">Accuracy Trends</h3>
+                    <p className="text-sm text-gray-400">Your learning accuracy over time</p>
                   </div>
                 </div>
                 <div className="h-64 sm:h-72 md:h-80 relative z-10 -ml-10">

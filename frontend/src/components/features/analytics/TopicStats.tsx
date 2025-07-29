@@ -122,7 +122,7 @@ export function TopicStats({ data }: TopicStatsProps) {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = new Date(dateString + 'Z');
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric',
@@ -131,7 +131,7 @@ export function TopicStats({ data }: TopicStatsProps) {
   };
 
   const getDaysSinceLastActivity = (dateString: string) => {
-    const lastActivity = new Date(dateString);
+    const lastActivity = new Date(dateString + 'Z');
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - lastActivity.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));

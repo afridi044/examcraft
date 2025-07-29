@@ -50,7 +50,7 @@ export default function QuizHistoryPage() {
   const [sortBy, setSortBy] = useState<"date" | "score" | "title">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterBy, setFilterBy] = useState<
-    "all" | "completed" | "incomplete" | "not_attempted" | "passed" | "failed"
+    "all" | "completed" | "not_taken" | "passed" | "failed"
   >("all");
   const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
 
@@ -58,8 +58,7 @@ export default function QuizHistoryPage() {
   const FILTER_OPTIONS: FilterOption[] = [
     { id: "all", label: "All Quizzes" },
     { id: "completed", label: "Completed" },
-    { id: "incomplete", label: "Incomplete" },
-    { id: "not_attempted", label: "Not Attempted" },
+    { id: "not_taken", label: "Not Taken" },
     { id: "passed", label: "Passed (≥70%)" },
     { id: "failed", label: "Failed (<70%)" },
   ];
@@ -114,6 +113,14 @@ export default function QuizHistoryPage() {
   // Calculate stats and filter attempts using utility functions
   const { stats, searchFiltered } = calculateQuizStats(safeQuizAttempts, searchTerm, filterBy);
   const filteredAttempts = filterAndSortAttempts(searchFiltered, filterBy, sortBy, sortOrder);
+
+  // Format average time for display
+  const formatAverageTime = (seconds: number) => {
+    if (seconds < 60) return `${Math.round(seconds)}s`;
+    const totalMinutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return remainingSeconds > 0 ? `${totalMinutes}m ${remainingSeconds}s` : `${totalMinutes}m`;
+  };
 
   const handleDeleteQuiz = useCallback(
     async (quizId: string, title: string) => {
@@ -237,7 +244,7 @@ export default function QuizHistoryPage() {
               className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
             >
               <StatCard
-                value={stats.completedQuizzes + stats.incompleteQuizzes > 0 ? `${stats.averageScore.toFixed(1)}%` : "--%"}
+                value={stats.completedQuizzes + stats.notTakenQuizzes > 0 ? `${stats.averageScore.toFixed(1)}%` : "--%"}
                 label="Average Score"
                 rightIcon={<Trophy className="h-6 w-6 text-white" />}
                 cardClass="bg-gradient-to-br from-[#0F9D58] to-[#0b6b43] border-none"
@@ -265,7 +272,7 @@ export default function QuizHistoryPage() {
               className="md:hover:scale-105 md:hover:-translate-y-1 transition-transform duration-200"
             >
               <StatCard
-                value={stats.completedQuizzes > 0 ? formatQuizTime(stats.averageTime) : "--"}
+                value={stats.completedQuizzes > 0 ? formatAverageTime(stats.averageTimeSeconds) : "--"}
                 label="Avg Time"
                 rightIcon={<Clock className="h-6 w-6 text-white" />}
                 cardClass="bg-gradient-to-br from-[#F2A900] to-[#b97b16] border-none"
@@ -296,7 +303,7 @@ export default function QuizHistoryPage() {
                 options={FILTER_OPTIONS}
                 selectedId={filterBy}
                 onSelect={(id) =>
-                  setFilterBy(id as "all" | "completed" | "incomplete" | "not_attempted" | "passed" | "failed")
+                  setFilterBy(id as "all" | "completed" | "not_taken" | "passed" | "failed")
                 }
               />
               <SortDropdown

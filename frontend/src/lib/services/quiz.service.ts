@@ -37,6 +37,8 @@ export const quizService = {
       question_types: ['multiple-choice'], // Default to multiple choice
       content_source: input.contentSource,
       additional_instructions: input.additionalInstructions,
+      // Note: is_timed and time_limit_minutes are handled frontend-only
+      // Backend doesn't support these fields yet
     };
     return apiClient.post<{
       quiz: QuizWithQuestions;
@@ -80,6 +82,21 @@ export const quizService = {
       time_taken_seconds: input.timeTaken || 0,
     };
     return apiClient.post<UserAnswer>('/quiz/submit-answer', backendPayload);
+  },
+
+  /**
+   * Mark a quiz as completed
+   */
+  async completeQuiz(input: {
+    quizId: string;
+    totalQuestions: number;
+    answeredQuestions: number;
+    correctAnswers: number;
+    scorePercentage: number;
+    timeSpentSeconds: number;
+    wasAutoSubmitted: boolean;
+  }): Promise<ApiResponse<any>> {
+    return apiClient.post<any>('/quiz/complete-quiz', input);
   },
 
   /**

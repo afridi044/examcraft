@@ -12,7 +12,7 @@ import {
   Pause,
   BookOpen,
 } from "lucide-react";
-  import { formatDate, getStatusBadge, getStatusIconConfig, getScoreColors, formatQuizTime } from "@/lib/utils/quiz-history";
+  import { formatDate, getStatusBadge, getStatusIconConfig, getScoreColors, formatQuizTime, formatQuizTimeFromSeconds } from "@/lib/utils/quiz-history";
 import type { QuizAttempt } from "@/types";
 
 
@@ -89,10 +89,6 @@ export const QuizAttemptCard: React.FC<QuizAttemptCardProps> = ({ attempt, onDel
               <div className={`text-lg sm:text-2xl font-bold ${scoreColors.text}`}>
                 {attempt.score_percentage.toFixed(0)}%
               </div>
-            ) : attempt.status === "incomplete" ? (
-              <div className="text-base sm:text-xl font-bold text-amber-400">
-                {Math.round(((attempt.answered_questions || 0) / attempt.total_questions) * 100)}%
-              </div>
             ) : (
               <div className="text-base sm:text-xl font-bold text-slate-500">
                 --
@@ -101,8 +97,6 @@ export const QuizAttemptCard: React.FC<QuizAttemptCardProps> = ({ attempt, onDel
             <div className="text-xs text-slate-400 mt-0.5">
               {attempt.status === "completed" 
                 ? (attempt.score_percentage >= 70 ? "Passed" : "Failed")
-                : attempt.status === "incomplete"
-                ? "In Progress"
                 : "Not Started"}
             </div>
           </div>
@@ -112,15 +106,17 @@ export const QuizAttemptCard: React.FC<QuizAttemptCardProps> = ({ attempt, onDel
             <div className="flex items-center space-x-1 sm:space-x-1.5">
               <Target className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>
-                {attempt.status === "incomplete" && attempt.answered_questions
-                  ? `${attempt.answered_questions}/${attempt.total_questions}`
-                  : `${attempt.correct_answers}/${attempt.total_questions}`}
+                {attempt.status === "completed"
+                  ? `${attempt.correct_answers}/${attempt.total_questions}`
+                  : `0/${attempt.total_questions}`}
               </span>
             </div>
             <div className="flex items-center space-x-1 sm:space-x-1.5">
               <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>
-                {formatQuizTime(attempt.time_spent_minutes)}
+                {attempt.status === "completed"
+                  ? formatQuizTimeFromSeconds(attempt.time_spent_seconds)
+                  : "0s"}
               </span>
             </div>
           </div>

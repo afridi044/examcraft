@@ -71,15 +71,15 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
   })) || [];
 
   // Transform review data for chart
-  const reviewData = recentReviews?.map(item => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { 
+  const chartData = recentReviews?.map(item => ({
+    date: new Date(item.date + 'Z').toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
     }),
-    reviewed: item.cards_reviewed || 0,
-    correct: item.correct_answers || 0,
-    accuracy: (item.cards_reviewed || 0) > 0 
-      ? Math.round(((item.correct_answers || 0) / (item.cards_reviewed || 1)) * 100)
+    cardsReviewed: item.cards_reviewed,
+    correctAnswers: item.correct_answers,
+    accuracy: item.cards_reviewed > 0 
+      ? Math.round((item.correct_answers / item.cards_reviewed) * 100) 
       : 0,
   })) || [];
 
@@ -231,7 +231,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
       )}
 
       {/* Recent Review Activity */}
-      {reviewData.length > 0 && (
+      {chartData.length > 0 && (
         <div className="mt-6 space-y-4">
           <div>
             <h4 className="text-lg font-semibold text-gray-100 mb-2">Flashcard Creation Activity</h4>
@@ -240,7 +240,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
           <div className="-ml-10">
             <ResponsiveContainer width="100%" height={200}>
               <BarChart 
-                data={reviewData} 
+                data={chartData} 
                 style={{ background: 'transparent' }} 
                 background={{ fill: 'transparent' }} 
                 className="h-[160px] sm:h-[180px]"
@@ -304,7 +304,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
                 }}
               />
               <Bar
-                dataKey="reviewed"
+                dataKey="cardsReviewed"
                 fill="#3b82f6"
                 radius={[4, 4, 0, 0]}
                 name="Cards Created"
@@ -323,7 +323,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
         </div>
         <div className="bg-purple-500/10 border border-purple-500/20 p-3 rounded-lg text-center">
           <p className="text-xs font-medium text-purple-300 mb-1">Active Days</p>
-          <p className="text-lg font-bold text-purple-400">{reviewData.length}</p>
+          <p className="text-lg font-bold text-purple-400">{chartData.length}</p>
         </div>
       </div>
     </motion.div>

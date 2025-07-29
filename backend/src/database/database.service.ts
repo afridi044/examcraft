@@ -89,6 +89,21 @@ export class DatabaseService implements OnModuleInit {
     return this.quizService.getUserQuizAttempts(userId);
   }
 
+  async recordQuizCompletion(
+    userId: string,
+    quizId: string,
+    completionData: {
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    }
+  ) {
+    return this.quizService.recordQuizCompletion(userId, quizId, completionData);
+  }
+
   async searchQuizzes(query: string, userId: string) {
     return this.quizService.searchQuizzes(query, userId);
   }

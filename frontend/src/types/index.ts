@@ -17,14 +17,16 @@ export interface QuizAttempt {
   title: string;
   created_at: string;
   completed_at?: string | null;
-  status: "completed" | "incomplete" | "not_attempted" | "empty";
+  status: "completed" | "not_taken";
   total_questions: number;
   answered_questions?: number;
   correct_answers: number;
   score_percentage: number;
-  time_spent_minutes: number;
+  time_spent_seconds: number;
   topic_name?: string;
   completion_status: string;
+  is_timed?: boolean;
+  time_limit_minutes?: number;
 }
 
 export interface QuizReviewData {
@@ -36,6 +38,8 @@ export interface QuizReviewData {
       topic_id: string;
       name: string;
     };
+    is_timed?: boolean;
+    time_limit_minutes?: number;
   };
   questions: Array<{
     question_id: string;

@@ -6,30 +6,26 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { useInvalidateBackendQuiz } from "@/hooks/useBackendQuiz";
+import { useBackendQuizWithQuestions, useInvalidateBackendQuiz } from "@/hooks/useBackendQuiz";
 import { useInvalidateBackendDashboard } from "@/hooks/useBackendDashboard";
 import { useInvalidateFlashcards } from "@/hooks/useBackendFlashcards";
-import { useBackendQuizWithQuestions } from "@/hooks/useBackendQuiz";
+import { quizService } from "@/lib/services";
+import { toast } from "react-hot-toast";
+import { TimeSettingsModal } from "@/components/ui/TimeSettingsModal";
 import { QuizTakingQuestionCard } from "@/components/features/quiz/QuizTakingQuestionCard";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { PageLoading } from "@/components/ui/loading";
 import { QuizResultsScreen } from "@/components/ui/QuizResultsScreen";
 
-import { quizService } from "@/lib/services";
 import {
   Clock,
   XCircle,
   ArrowLeft,
   ArrowRight,
   Flag,
-  Trophy,
   BookOpen,
   Loader2,
-  Star,
-  Target,
-  CheckCircle,
 } from "lucide-react";
-import { toast } from "react-hot-toast";
 
 interface UserAnswer {
   question_id: string;
@@ -46,6 +42,9 @@ interface QuizResult {
   total_questions: number;
   time_taken: string;
   answers: UserAnswer[];
+  is_timed?: boolean;
+  time_limit_minutes?: number;
+  was_auto_submitted?: boolean;
 }
 
 export default function TakeQuizPage() {
@@ -80,6 +79,17 @@ export default function TakeQuizPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [timeElapsed, setTimeElapsed] = useState(0);
+  
+  // Time limit state
+  const [isTimed, setIsTimed] = useState(false);
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [isTimeExpired, setIsTimeExpired] = useState(false);
+  const [timeWarningShown, setTimeWarningShown] = useState(false);
+
+  // Modal state
+  const [showTimeSettingsModal, setShowTimeSettingsModal] = useState(false);
+  const [quizStarted, setQuizStarted] = useState(false);
 
   // OPTIMIZED: Memoized derived values
   const {
@@ -109,107 +119,56 @@ export default function TakeQuizPage() {
     };
   }, [quiz?.questions, currentQuestionIndex, userAnswers]);
 
-  // OPTIMIZED: Timer with reduced update frequency and memoized callback
-  const updateTimer = useCallback(() => {
-    if (!quizStartTime) return;
-    const newTimeElapsed = Math.floor(
-      (Date.now() - quizStartTime.getTime()) / 1000
-    );
-    setTimeElapsed((prev) => (prev !== newTimeElapsed ? newTimeElapsed : prev));
-  }, [quizStartTime]);
-
-  useEffect(() => {
-    if (!quizStartTime) return;
-
-    const timer = setInterval(updateTimer, 1000);
-    return () => clearInterval(timer);
-  }, [updateTimer]);
-
-  // Initialize quiz
-  useEffect(() => {
-    if (quiz && !quizStartTime) {
-      setQuizStartTime(new Date());
-      setQuestionStartTime(new Date());
-    }
-  }, [quiz, quizStartTime]);
-
-  // Update question start time when question changes
-  useEffect(() => {
-    setQuestionStartTime(new Date());
-  }, [currentQuestionIndex]);
-
-  // OPTIMIZED: Memoized time formatting
+  // OPTIMIZED: Memoized time formatting with improved edge case handling
   const formatTime = useCallback((seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
+    // Handle edge case where seconds might be slightly off due to timing precision
+    const roundedSeconds = Math.round(seconds);
+    const minutes = Math.floor(roundedSeconds / 60);
+    const remainingSeconds = roundedSeconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }, []);
 
-  // Don't render anything while redirecting
-  if (!userLoading && !currentUser) {
-    return null;
-  }
-
-  const handleAnswerSelect = useCallback(
-    (optionId: string, textAnswer?: string) => {
-      if (!currentQuestion || !questionStartTime) return;
-
-      const timeTaken = Math.floor(
-        (Date.now() - questionStartTime.getTime()) / 1000
-      );
-      const correctOption = currentQuestion.question_options?.find(
-        (opt: any) => opt.is_correct
-      );
-      const isCorrect = Boolean(
-        correctOption?.option_id === optionId ||
-        (textAnswer &&
-          correctOption?.content.toLowerCase() === textAnswer.toLowerCase())
-      );
-
-      const answer: UserAnswer = {
-        question_id: currentQuestion.question_id,
-        selected_option_id: optionId || undefined, // Convert empty string to undefined
-        text_answer: textAnswer || undefined, // Convert empty string to undefined
-        is_correct: isCorrect,
-        time_taken_seconds: timeTaken,
-      };
-
-      setUserAnswers((prev) =>
-        new Map(prev).set(currentQuestion.question_id, answer)
-      );
-    },
-    [currentQuestion, questionStartTime]
-  );
-
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
-    }
-  };
-
+  // Handle quiz submission
   const handleSubmitQuiz = async () => {
     if (!currentUser || !quiz || !quizStartTime) return;
 
     setIsSubmitting(true);
     try {
+      // Ensure all questions are answered (fill in missing answers as incorrect)
+      const allAnswers = new Map(userAnswers);
+      
+      // Add missing answers as incorrect
+      questions.forEach((question: { question_id: string }) => {
+        if (!allAnswers.has(question.question_id)) {
+          const answer: UserAnswer = {
+            question_id: question.question_id,
+            selected_option_id: undefined,
+            text_answer: undefined,
+            is_correct: false,
+            time_taken_seconds: 0,
+          };
+          allAnswers.set(question.question_id, answer);
+        }
+      });
+
       // Calculate results
       const totalQuestions = questions.length;
-      const correctAnswers = Array.from(userAnswers.values()).filter(
+      const correctAnswers = Array.from(allAnswers.values()).filter(
         (a) => a.is_correct
       ).length;
       const score = Math.round((correctAnswers / totalQuestions) * 100);
-      const totalTimeSeconds = Math.floor(
+      
+      // Always record the actual elapsed time for both timed and untimed quizzes
+      // Calculate the actual elapsed time at submission moment to avoid stale state
+      const actualElapsedSeconds = Math.round(
         (Date.now() - quizStartTime.getTime()) / 1000
       );
+      const totalTimeSeconds = isTimeExpired ? timeLimitSeconds : actualElapsedSeconds;
+      
+
 
       // OPTIMIZED: Batch submit answers with minimal logging
-      const submitPromises = Array.from(userAnswers.values()).map(
+      const submitPromises = Array.from(allAnswers.values()).map(
         async (answer) => {
           // MIGRATED: Use backend quiz service instead of frontend API route
           const response = await quizService.submitAnswer({
@@ -234,6 +193,25 @@ export default function TakeQuizPage() {
       // Wait for all submissions to complete
       await Promise.all(submitPromises);
 
+      // Mark quiz as completed
+      const completionResponse = await quizService.completeQuiz({
+        quizId: quizId,
+        totalQuestions: totalQuestions,
+        answeredQuestions: Array.from(allAnswers.values()).filter(a => 
+          a.selected_option_id || a.text_answer
+        ).length,
+        correctAnswers: correctAnswers,
+        scorePercentage: score,
+        timeSpentSeconds: totalTimeSeconds, // Pass time in seconds
+        wasAutoSubmitted: isTimeExpired,
+      });
+
+      if (!completionResponse.success) {
+        throw new Error(
+          completionResponse.error || 'Failed to mark quiz as completed'
+        );
+      }
+
       // Invalidate caches to ensure fresh data on navigation
       invalidateBackendQuiz(quizId);
       invalidateBackendDashboard();
@@ -246,7 +224,10 @@ export default function TakeQuizPage() {
         correct_answers: correctAnswers,
         total_questions: totalQuestions,
         time_taken: formatTime(totalTimeSeconds),
-        answers: Array.from(userAnswers.values()),
+        answers: Array.from(allAnswers.values()),
+        is_timed: isTimed,
+        time_limit_minutes: timeLimitSeconds ? Math.ceil(timeLimitSeconds / 60) : undefined,
+        was_auto_submitted: isTimeExpired,
       };
 
       setQuizResult(result);
@@ -257,6 +238,166 @@ export default function TakeQuizPage() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // OPTIMIZED: Timer with improved precision and edge case handling
+  const updateTimer = useCallback(() => {
+    if (!quizStartTime) return;
+    
+    if (isTimed) {
+      // Countdown timer for timed quizzes with improved precision
+      const elapsedMilliseconds = Date.now() - quizStartTime.getTime();
+      const elapsedSeconds = Math.round(elapsedMilliseconds / 1000);
+      const remaining = Math.max(0, timeLimitSeconds - elapsedSeconds);
+      setTimeRemaining(remaining);
+      
+      // Also update timeElapsed for timed quizzes (for recording actual time spent)
+      setTimeElapsed(elapsedSeconds);
+      
+      // Check if time expired - handle edge case where elapsedSeconds might be slightly off
+      if ((remaining <= 0 || elapsedSeconds >= timeLimitSeconds) && !isTimeExpired) {
+        setIsTimeExpired(true);
+        // When time expires, ensure the elapsed time is set to the full time limit
+        setTimeElapsed(timeLimitSeconds);
+        // Auto-submit when time expires
+        setTimeout(() => {
+          if (!isSubmitting) {
+            handleSubmitQuiz();
+          }
+        }, 100);
+      }
+      
+      // For timed quizzes, if we're very close to the time limit (within 1 second), 
+      // round up to the full time limit to avoid precision issues
+      if (isTimed && elapsedSeconds >= timeLimitSeconds - 1 && elapsedSeconds < timeLimitSeconds) {
+        setTimeElapsed(timeLimitSeconds);
+      }
+      
+      // Show warnings when time is running low
+      if (!timeWarningShown && remaining > 0) {
+        const percentageRemaining = (remaining / timeLimitSeconds) * 100;
+        if (percentageRemaining <= 5 && remaining <= 30) {
+          toast.error("⚠️ Time is running out! Quiz will auto-submit soon.");
+          setTimeWarningShown(true);
+        } else if (percentageRemaining <= 10 && remaining <= 60) {
+          toast("⏰ Less than 10% time remaining!", { duration: 3000 });
+          setTimeWarningShown(true);
+        } else if (percentageRemaining <= 25 && remaining <= 180) {
+          toast("⏱️ 25% time remaining", { duration: 3000 });
+          setTimeWarningShown(true);
+        }
+      }
+    } else {
+      // Elapsed timer for untimed quizzes - calculate more precisely
+      const newTimeElapsed = Math.round(
+        (Date.now() - quizStartTime.getTime()) / 1000
+      );
+      setTimeElapsed(newTimeElapsed);
+    }
+  }, [quizStartTime, isTimed, timeLimitSeconds, isTimeExpired, isSubmitting, timeWarningShown, handleSubmitQuiz]);
+
+  useEffect(() => {
+    if (!quizStartTime) return;
+
+    // Update timer more frequently for better accuracy (every 100ms instead of 1000ms)
+    const timer = setInterval(updateTimer, 100);
+    return () => clearInterval(timer);
+  }, [updateTimer]);
+
+  // Initialize quiz and time limit
+  useEffect(() => {
+    if (quiz && !quizStartTime && !quizStarted) {
+      // Show time settings modal first
+      setShowTimeSettingsModal(true);
+    }
+  }, [quiz, quizStartTime, quizStarted]);
+
+  // Handle time settings from modal
+  const handleStartQuiz = (isTimed: boolean, timeLimitMinutes: number) => {
+    setQuizStartTime(new Date());
+    setQuestionStartTime(new Date());
+    setQuizStarted(true);
+    setShowTimeSettingsModal(false);
+    
+    // Initialize time limit from modal settings
+    if (isTimed && timeLimitMinutes > 0) {
+      setIsTimed(true);
+      const limitSeconds = timeLimitMinutes * 60;
+      setTimeLimitSeconds(limitSeconds);
+      setTimeRemaining(limitSeconds);
+    }
+  };
+
+  // Update question start time when question changes
+  useEffect(() => {
+    setQuestionStartTime(new Date());
+  }, [currentQuestionIndex]);
+
+  // Get current time display
+  const getCurrentTimeDisplay = useCallback(() => {
+    if (isTimed) {
+      return formatTime(timeRemaining);
+    } else {
+      return formatTime(timeElapsed);
+    }
+  }, [isTimed, timeRemaining, timeElapsed, formatTime]);
+
+  // Get timer color based on time remaining
+  const getTimerColor = useCallback(() => {
+    if (!isTimed) return "text-gray-300";
+    
+    const percentageRemaining = (timeRemaining / timeLimitSeconds) * 100;
+    if (percentageRemaining <= 10) return "text-red-400";
+    if (percentageRemaining <= 25) return "text-yellow-400";
+    return "text-green-400";
+  }, [isTimed, timeRemaining, timeLimitSeconds]);
+
+  const handleAnswerSelect = useCallback(
+    (optionId: string, textAnswer?: string) => {
+      if (!currentQuestion || !questionStartTime) return;
+
+      const timeTaken = Math.floor(
+        (Date.now() - questionStartTime.getTime()) / 1000
+      );
+      const correctOption = currentQuestion.question_options?.find(
+        (opt: { option_id: string; is_correct: boolean }) => opt.is_correct
+      );
+      const isCorrect = Boolean(
+        correctOption?.option_id === optionId ||
+        (textAnswer &&
+          correctOption?.content.toLowerCase() === textAnswer.toLowerCase())
+      );
+
+      const answer: UserAnswer = {
+        question_id: currentQuestion.question_id,
+        selected_option_id: optionId || undefined, // Convert empty string to undefined
+        text_answer: textAnswer || undefined, // Convert empty string to undefined
+        is_correct: isCorrect,
+        time_taken_seconds: timeTaken,
+      };
+
+      setUserAnswers((prev) =>
+        new Map(prev).set(currentQuestion.question_id, answer)
+      );
+    },
+    [currentQuestion, questionStartTime]
+  );
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
+
+  const handleNextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
     }
   };
 
@@ -312,6 +453,9 @@ export default function TakeQuizPage() {
           correctAnswers={quizResult.correct_answers}
           totalQuestions={quizResult.total_questions}
           timeTaken={quizResult.time_taken}
+          isTimed={quizResult.is_timed}
+          timeLimitMinutes={quizResult.time_limit_minutes}
+          wasAutoSubmitted={quizResult.was_auto_submitted}
           primaryAction={{
             label: "View Detailed Review",
             onClick: () => router.push(`/quiz/review/${quizId}`),
@@ -347,11 +491,16 @@ export default function TakeQuizPage() {
           </div>}
           rightContent={
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-gray-300">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm sm:text-base">
-                  {formatTime(timeElapsed)}
+              <div className="flex items-center space-x-2">
+                <Clock className={`h-4 w-4 ${getTimerColor()}`} />
+                <span className={`text-sm sm:text-base font-medium ${getTimerColor()}`}>
+                  {getCurrentTimeDisplay()}
                 </span>
+                {isTimed && (
+                  <span className="text-xs text-gray-400">
+                    / {formatTime(timeLimitSeconds)}
+                  </span>
+                )}
               </div>
               <div className="text-gray-300 text-sm sm:text-base">
                 {currentQuestionIndex + 1} / {questions.length}
@@ -454,6 +603,15 @@ export default function TakeQuizPage() {
           )}
         </div>
       </div>
+
+      {/* Time Settings Modal */}
+      <TimeSettingsModal
+        isOpen={showTimeSettingsModal}
+        onClose={() => setShowTimeSettingsModal(false)}
+        onStart={handleStartQuiz}
+        numQuestions={questions.length}
+        quizTitle={quiz?.title || "Quiz"}
+      />
     </DashboardLayout>
   );
 }

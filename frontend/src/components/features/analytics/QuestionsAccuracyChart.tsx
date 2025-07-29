@@ -40,15 +40,12 @@ export function QuestionsAccuracyChart({ data }: QuestionsAccuracyChartProps) {
 
   // Transform data for charts
   const chartData = data.map(item => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { 
+    date: new Date(item.date + 'Z').toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
     }),
     questions: item.total_questions,
     correct: item.correct_answers,
-    accuracy: item.total_questions > 0 
-      ? Math.round((item.correct_answers / item.total_questions) * 100) 
-      : 0,
   }));
 
   return (
@@ -58,10 +55,6 @@ export function QuestionsAccuracyChart({ data }: QuestionsAccuracyChartProps) {
           <linearGradient id="questionsGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-          </linearGradient>
-          <linearGradient id="accuracyGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -125,15 +118,6 @@ export function QuestionsAccuracyChart({ data }: QuestionsAccuracyChartProps) {
           strokeWidth={2}
           className="sm:stroke-[3px]"
           name="Questions"
-        />
-        <Area
-          type="monotone"
-          dataKey="accuracy"
-          stroke="#10b981"
-          fill="url(#accuracyGradient)"
-          strokeWidth={2}
-          className="sm:stroke-[3px]"
-          name="Accuracy %"
         />
       </AreaChart>
     </ResponsiveContainer>

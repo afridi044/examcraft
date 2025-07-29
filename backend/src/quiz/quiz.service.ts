@@ -64,6 +64,22 @@ export class QuizService {
     return await this.databaseService.submitAnswer(answerInput);
   }
 
+  async recordQuizCompletion(
+    userId: string,
+    quizId: string,
+    completionData: {
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    }
+  ): Promise<ApiResponse<any>> {
+    this.logger.log(`🏁 Recording quiz completion for user: ${userId}, quiz: ${quizId}`);
+    return await this.databaseService.recordQuizCompletion(userId, quizId, completionData);
+  }
+
   async createQuiz(
     createQuizDto: CreateQuizDto,
     userId: string,

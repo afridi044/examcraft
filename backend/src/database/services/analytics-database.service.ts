@@ -168,26 +168,26 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         const quizAnswers = answersByQuiz.get(quiz.quiz_id) || [];
         const questionCount = questionsByQuiz.get(quiz.quiz_id) || 0;
         
-        // If all questions are answered, it's a completion
-        if (quizAnswers.length >= questionCount && questionCount > 0) {
-          // Find the latest answer timestamp
-          const latestAnswer = quizAnswers.reduce((latest, answer) => 
-            answer.created_at > latest.created_at ? answer : latest
-          );
-          
-          // Calculate score
-          const correctAnswers = quizAnswers.filter(answer => answer.is_correct).length;
-          const score = Math.round((correctAnswers / questionCount) * 100);
+        // Check if quiz has a completion record
+        const { data: completionData, error: completionError } = await this.supabase
+          .from('quiz_completions')
+          .select('completed_at, score_percentage')
+          .eq('user_id', userId)
+          .eq('quiz_id', quiz.quiz_id)
+          .single();
 
+        if (!completionError && completionData) {
+          // Quiz is completed - use completion data
           quizCompletionActivities.push({
             id: quiz.quiz_id,
             type: 'quiz' as const,
             title: `Completed "${quiz.title}" quiz`,
-            score,
-            completed_at: latestAnswer.created_at,
+            score: completionData.score_percentage,
+            completed_at: completionData.completed_at,
             topic: quiz.topics?.name || undefined,
           });
         }
+        // Removed legacy fallback logic - we now rely on explicit completion records
       }
 
       // Process all activities and combine them
@@ -746,42 +746,41 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     score_percentage: number;
     total_questions: number;
     correct_answers: number;
+    time_spent_seconds: number;
   }>>> {
     try {
       this.logger.log(`📈 Getting quiz performance trend for user: ${userId}`);
 
-      // Get quiz attempts with scores
+      // Get quiz completions with quiz details
       const { data, error } = await this.supabase
-        .from(TABLE_NAMES.QUIZZES)
+        .from('quiz_completions')
         .select(`
           quiz_id,
-          title,
-          created_at,
-          user_answers!inner(
-            is_correct,
-            question_id
+          completed_at,
+          score_percentage,
+          total_questions,
+          correct_answers,
+          time_spent_seconds,
+          quizzes!inner(
+            title
           )
         `)
         .eq('user_id', userId)
-        .order('created_at', { ascending: true });
+        .order('completed_at', { ascending: true });
 
       if (error) {
         return this.handleError(error, 'getUserQuizPerformanceTrend');
       }
 
-      const performanceData = (data || []).map((quiz) => {
-        const answers = quiz.user_answers || [];
-        const totalQuestions = answers.length;
-        const correctAnswers = answers.filter((a: any) => a.is_correct).length;
-        const scorePercentage = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
-
+      const performanceData = (data || []).map((completion) => {
         return {
-          date: quiz.created_at.split('T')[0],
-          quiz_id: quiz.quiz_id,
-          title: quiz.title,
-          score_percentage: scorePercentage,
-          total_questions: totalQuestions,
-          correct_answers: correctAnswers,
+          date: completion.completed_at.split('T')[0],
+          quiz_id: completion.quiz_id,
+          title: completion.quizzes?.title || 'Unknown Quiz',
+          score_percentage: completion.score_percentage,
+          total_questions: completion.total_questions,
+          correct_answers: completion.correct_answers,
+          time_spent_seconds: completion.time_spent_seconds || 0,
         };
       });
 

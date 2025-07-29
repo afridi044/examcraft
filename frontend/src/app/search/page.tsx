@@ -103,7 +103,7 @@ export default function SearchPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString + 'Z').toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -112,7 +112,7 @@ export default function SearchPage() {
 
   const getTimeAgo = (dateString: string) => {
     const now = new Date();
-    const date = new Date(dateString);
+    const date = new Date(dateString + 'Z');
     const diffInMs = now.getTime() - date.getTime();
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
     

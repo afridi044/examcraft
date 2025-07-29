@@ -20,7 +20,7 @@ export function ProfileHeader({ user, isEditing, setIsEditing }: ProfileHeaderPr
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString + 'Z').toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

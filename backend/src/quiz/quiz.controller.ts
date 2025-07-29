@@ -93,6 +93,33 @@ export class QuizController {
     return await this.quizService.submitAnswer(submitAnswerDto, user.id);
   }
 
+  @Post('complete-quiz')
+  @ApiOperation({ summary: 'Mark a quiz as completed' })
+  @ApiResponse({ status: 201, description: 'Quiz marked as completed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  async completeQuiz(
+    @Body() completionData: {
+      quizId: string;
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    },
+    @User() user: AuthUser
+  ) {
+    this.logger.log(`🏁 Marking quiz as completed: ${completionData.quizId}`);
+    return await this.quizService.recordQuizCompletion(user.id, completionData.quizId, {
+      totalQuestions: completionData.totalQuestions,
+      answeredQuestions: completionData.answeredQuestions,
+      correctAnswers: completionData.correctAnswers,
+      scorePercentage: completionData.scorePercentage,
+      timeSpentSeconds: completionData.timeSpentSeconds,
+      wasAutoSubmitted: completionData.wasAutoSubmitted,
+    });
+  }
+
   @Post()
   @ApiOperation({ summary: 'Create a new quiz' })
   @ApiResponse({ status: 201, description: 'Quiz created successfully' })
