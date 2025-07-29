@@ -159,7 +159,31 @@ CREATE INDEX idx_user_answers_session ON user_answers(session_id);
 CREATE INDEX idx_user_answers_quiz ON user_answers(quiz_id);
 
 -- =============================================
--- ards
+-- Quiz Completions
+-- =============================================
+
+CREATE TABLE quiz_completions (
+    completion_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    quiz_id UUID NOT NULL REFERENCES quizzes(quiz_id) ON DELETE CASCADE,
+    completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total_questions INTEGER NOT NULL,
+    answered_questions INTEGER NOT NULL,
+    correct_answers INTEGER NOT NULL,
+    score_percentage INTEGER NOT NULL,
+    time_spent_seconds INTEGER NOT NULL,
+    was_auto_submitted BOOLEAN NOT NULL DEFAULT FALSE,
+    UNIQUE(user_id, quiz_id)
+);
+
+CREATE INDEX idx_quiz_completions_user ON quiz_completions(user_id);
+CREATE INDEX idx_quiz_completions_quiz ON quiz_completions(quiz_id);
+CREATE INDEX idx_quiz_completions_completed_at ON quiz_completions(completed_at);
+
+-- =============================================
+-- Flashcards
+-- =============================================
+
 CREATE TABLE flashcards (
     flashcard_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,

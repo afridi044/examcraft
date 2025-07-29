@@ -6,7 +6,7 @@ import { useBackendDashboardStats, useBackendRecentActivity, useBackendTopicProg
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDate, getActivityIcon } from "@/lib/utils/dashboard";
+import { formatDate, getActivityIcon, getActivityIconFromTitle } from "@/lib/utils/dashboard";
 import { 
   Clock, 
   BarChart3, 
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                 icon={<BarChart3 className="h-5 w-5 text-emerald-300" />}
                 title="View Progress"
                 description="Track your achievements"
-                href="/dashboard/quiz-history"
+                href="/analytics"
                 cardClass="hover:border-emerald-500/40"
                 iconClass="bg-emerald-500/20 border border-emerald-500/40 group-hover:bg-emerald-500/30"
               />
@@ -342,7 +342,7 @@ export default function DashboardPage() {
                         className="md:hover:scale-[1.01] transition-transform duration-200"
                       >
                         <RecentActivityItem
-                          icon={React.createElement(getActivityIcon(activity.type), { className: "h-4 w-4 text-blue-400" })}
+                          icon={React.createElement(getActivityIconFromTitle(activity.title), { className: "h-4 w-4 text-blue-400" })}
                           title={activity.title}
                           date={formatDate(activity.completed_at)}
                           score={activity.score}
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                       <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                     </div>
                     <p className="text-gray-400 text-sm font-medium">No recent activity</p>
-                    <p className="text-gray-500 text-xs mt-0.5">Complete quizzes to see your activity here</p>
+                    <p className="text-gray-500 text-xs mt-0.5">Create and complete quizzes to see your activity here</p>
                   </div>
                 )}
               </CardContent>

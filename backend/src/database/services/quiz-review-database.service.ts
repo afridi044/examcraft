@@ -165,8 +165,20 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
         totalQuestions > 0
           ? Math.round((correctAnswers / totalQuestions) * 100)
           : 0;
-      // Calculate total time from only the most recent answers (from answerMap)
-      const totalTime = Array.from(answerMap.values()).reduce(
+      // Get total quiz time from quiz completion record
+      const { data: quizCompletion, error: completionError } = await this.supabase
+        .from('quiz_completions')
+        .select('time_spent_seconds')
+        .eq('user_id', userId)
+        .eq('quiz_id', quizId)
+        .single();
+
+      if (completionError) {
+        this.logger.warn(`No quiz completion record found for quiz ${quizId}`);
+      }
+
+      // Use quiz completion time if available, otherwise fall back to summing question times
+      const totalTime = quizCompletion?.time_spent_seconds || Array.from(answerMap.values()).reduce(
         (sum: number, ans) => sum + (ans.time_taken_seconds || 0),
         0,
       );

@@ -57,6 +57,13 @@ export const analyticsService = {
   },
 
   /**
+   * Get detailed topic progress analysis with parent-child relationships
+   */
+  async getTopicStats(): Promise<any> {
+    return apiClient.get('/analytics/topic-stats');
+  },
+
+  /**
    * Get comprehensive analytics data (all data in one call)
    */
   async getComprehensiveAnalytics(): Promise<any> {

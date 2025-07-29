@@ -52,9 +52,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   // Navigation items
   const navigationItems = [
     { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-    { name: "Analytics", href: "/analytics", icon: TrendingUp },
     { name: "Quizes", href: "/dashboard/quiz-history", icon: BookOpen },
     { name: "Flashcards", href: "/flashcards", icon: Brain },
+    { name: "Analytics", href: "/analytics", icon: TrendingUp },
     { name: "Your Library", href: "/library", icon: FolderOpen },
     { name: "Profile", href: "/profile", icon: User },
     { name: "Settings", href: "/settings", icon: Settings },
@@ -84,7 +84,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-900">
       {/* Top Navigation Bar */}
-      <TopNavbar setIsSidebarOpen={setIsSidebarOpen} isSidebarOpen={isSidebarOpen} />
+      <TopNavbar 
+        setIsSidebarOpen={setIsSidebarOpen} 
+        isSidebarOpen={isSidebarOpen} 
+        hideSearchBar={pathname === '/search'}
+      />
 
       {/* Sidebar */}
       <DashboardSidebar

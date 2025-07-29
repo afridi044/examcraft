@@ -63,6 +63,22 @@ export class AnalyticsService {
   }
 
   /**
+   * Get detailed topic progress analysis with parent-child relationships
+   */
+  async getTopicStats(userId: string): Promise<ApiResponse<any>> {
+    this.logger.log(`📊 Getting detailed topic stats for user: ${userId}`);
+    return this.databaseService.getAllTopicProgress(userId);
+  }
+
+  /**
+   * Get total study time from user answers
+   */
+  async getUserTotalStudyTime(userId: string): Promise<ApiResponse<number>> {
+    this.logger.log(`⏱️ Getting total study time for user: ${userId}`);
+    return this.databaseService.getUserTotalStudyTime(userId);
+  }
+
+  /**
    * Get comprehensive analytics data for the analytics page
    * This combines multiple analytics endpoints for efficient frontend loading
    */
@@ -85,6 +101,7 @@ export class AnalyticsService {
         quizTrendResult,
         flashcardResult,
         topicsResult,
+        totalTimeResult,
       ] = await Promise.all([
         this.getUserProgressOverTime(userId),
         this.getUserActivityHeatmap(userId),
@@ -92,6 +109,7 @@ export class AnalyticsService {
         this.getUserQuizPerformanceTrend(userId),
         this.getUserFlashcardAnalytics(userId),
         this.getUserBestWorstTopics(userId),
+        this.getUserTotalStudyTime(userId),
       ]);
 
       // Check if any request failed
@@ -101,7 +119,8 @@ export class AnalyticsService {
         !accuracyResult.success ||
         !quizTrendResult.success ||
         !flashcardResult.success ||
-        !topicsResult.success
+        !topicsResult.success ||
+        !totalTimeResult.success
       ) {
         const error = 
           progressResult.error || 
@@ -109,7 +128,8 @@ export class AnalyticsService {
           accuracyResult.error || 
           quizTrendResult.error || 
           flashcardResult.error || 
-          topicsResult.error;
+          topicsResult.error ||
+          totalTimeResult.error;
         
         return {
           success: false,
@@ -125,6 +145,7 @@ export class AnalyticsService {
         quizPerformanceTrend: quizTrendResult.data || [],
         flashcardAnalytics: flashcardResult.data || {},
         bestWorstTopics: topicsResult.data || {},
+        totalStudyTimeSeconds: totalTimeResult.data || 0,
       };
 
       this.logger.log(`✅ Successfully retrieved comprehensive analytics data`);

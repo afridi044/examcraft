@@ -106,6 +106,11 @@ export class FlashcardsService {
     return this.databaseService.getUserFlashcards(userId);
   }
 
+  async searchFlashcards(query: string, userId: string): Promise<ApiResponse<any[]>> {
+    this.logger.log(`🔍 Searching flashcards for user: ${userId}, query: ${query}`);
+    return await this.databaseService.searchFlashcards(query, userId);
+  }
+
   async generateAiFlashcards(dto: GenerateAiFlashcardsDto, userId: string): Promise<
     ApiResponse<{
       flashcards: any[];

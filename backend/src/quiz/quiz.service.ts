@@ -31,6 +31,11 @@ export class QuizService {
     return await this.databaseService.getUserQuizAttempts(userId);
   }
 
+  async searchQuizzes(query: string, userId: string): Promise<ApiResponse<any[]>> {
+    this.logger.log(`🔍 Searching quizzes for user: ${userId}, query: ${query}`);
+    return await this.databaseService.searchQuizzes(query, userId);
+  }
+
   async getQuizWithQuestions(
     quizId: string,
   ): Promise<ApiResponse<QuizWithQuestions>> {
@@ -57,6 +62,22 @@ export class QuizService {
     };
 
     return await this.databaseService.submitAnswer(answerInput);
+  }
+
+  async recordQuizCompletion(
+    userId: string,
+    quizId: string,
+    completionData: {
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    }
+  ): Promise<ApiResponse<any>> {
+    this.logger.log(`🏁 Recording quiz completion for user: ${userId}, quiz: ${quizId}`);
+    return await this.databaseService.recordQuizCompletion(userId, quizId, completionData);
   }
 
   async createQuiz(

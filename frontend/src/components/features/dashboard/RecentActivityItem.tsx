@@ -13,11 +13,21 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
   date,
   score,
 }) => {
+  // Determine score class based on activity type and score
   let scoreClass = "";
+  let showScore = false;
+  
   if (typeof score === "number") {
-    if (score >= 80) scoreClass = "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400";
-    else if (score >= 60) scoreClass = "bg-amber-500/10 border border-amber-500/20 text-amber-400";
-    else scoreClass = "bg-red-500/10 border border-red-500/20 text-red-400";
+    showScore = true;
+    if (title.toLowerCase().includes('completed') && title.toLowerCase().includes('quiz')) {
+      // Quiz completion scores
+      if (score >= 80) scoreClass = "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400";
+      else if (score >= 60) scoreClass = "bg-amber-500/10 border border-amber-500/20 text-amber-400";
+      else scoreClass = "bg-red-500/10 border border-red-500/20 text-red-400";
+    } else {
+      // Default for other activities
+      scoreClass = "bg-slate-500/10 border border-slate-500/20 text-slate-400";
+    }
   }
 
   return (
@@ -29,7 +39,7 @@ export const RecentActivityItem: React.FC<RecentActivityItemProps> = ({
         <h4 className="text-gray-100 font-medium text-xs sm:text-sm truncate">{title}</h4>
         <p className="text-gray-400 text-xs mt-0.5">{date}</p>
       </div>
-      {typeof score === "number" && (
+      {showScore && (
         <div className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md text-xs font-medium ${scoreClass}`}>
           {score}%
         </div>

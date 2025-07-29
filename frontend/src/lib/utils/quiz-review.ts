@@ -1,8 +1,25 @@
-// Time formatting utility
+// Time formatting utility - improved to show more user-friendly format
 export function formatTime(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
+  if (seconds <= 0) return "0s";
+  
+  // If less than 60 seconds, show as seconds
+  if (seconds < 60) {
+    return `${Math.round(seconds)}s`;
+  }
+  
+  // For times 1 minute and above, show as "Xm Ys" format
+  const totalMinutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  
+  if (totalMinutes < 60) {
+    // For times under 1 hour, show as "Xm Ys"
+    return remainingSeconds > 0 ? `${totalMinutes}m ${remainingSeconds}s` : `${totalMinutes}m`;
+  }
+  
+  // For times over 1 hour, show hours and minutes
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
 }
 
 // Difficulty configuration

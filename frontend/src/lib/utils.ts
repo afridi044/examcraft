@@ -7,7 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 // Format date to a readable string
 export function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString("en-US", {
+  const dateObj = typeof date === 'string' ? new Date(date + 'Z') : new Date(date);
+  return dateObj.toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -16,7 +17,8 @@ export function formatDate(date: string | Date): string {
 
 // Format date with time
 export function formatDateTime(date: string | Date): string {
-  return new Date(date).toLocaleString("en-US", {
+  const dateObj = typeof date === 'string' ? new Date(date + 'Z') : new Date(date);
+  return dateObj.toLocaleString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -28,7 +30,8 @@ export function formatDateTime(date: string | Date): string {
 // Calculate time elapsed since a given date (e.g. "2 days ago")
 export function timeAgo(date: string | Date): string {
   const now = new Date();
-  const past = new Date(date);
+  // Parse the date string as UTC and convert to local time
+  const past = typeof date === 'string' ? new Date(date + 'Z') : new Date(date);
   const diffTime = Math.abs(now.getTime() - past.getTime());
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
   const diffHours = Math.floor(diffTime / (1000 * 60 * 60));

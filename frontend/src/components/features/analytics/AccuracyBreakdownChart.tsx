@@ -7,14 +7,11 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  Tooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { Target, BarChart3 } from 'lucide-react';
+import { Target } from 'lucide-react';
 
 interface AccuracyData {
   byDifficulty: Array<{
@@ -28,8 +25,6 @@ interface AccuracyData {
 interface AccuracyBreakdownChartProps {
   data: AccuracyData;
 }
-
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
 export function AccuracyBreakdownChart({ data }: AccuracyBreakdownChartProps) {
   if (!data || !data.byDifficulty?.length) {
@@ -67,14 +62,14 @@ export function AccuracyBreakdownChart({ data }: AccuracyBreakdownChartProps) {
       className="w-full h-full flex flex-col"
     >
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-blue-300 mb-1">Total Attempts</p>
-          <p className="text-2xl font-bold text-blue-400">{totalAttempts}</p>
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-6 sm:mb-10">
+        <div className="bg-blue-500/10 border border-blue-500/20 p-2 sm:p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-blue-300 mb-0.5">Total Attempts</p>
+          <p className="text-sm sm:text-lg font-bold text-blue-400">{totalAttempts}</p>
         </div>
-        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-green-300 mb-1">Average Accuracy</p>
-          <p className="text-2xl font-bold text-green-400">{averageAccuracy}%</p>
+        <div className="bg-green-500/10 border border-green-500/20 p-2 sm:p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-green-300 mb-0.5">Average Accuracy</p>
+          <p className="text-sm sm:text-lg font-bold text-green-400">{averageAccuracy}%</p>
         </div>
       </div>
 
@@ -85,80 +80,79 @@ export function AccuracyBreakdownChart({ data }: AccuracyBreakdownChartProps) {
             <h4 className="text-lg font-semibold text-gray-100 mb-2">By Difficulty Level</h4>
             <p className="text-sm text-gray-400 mb-4">How well you perform at different difficulty levels</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Bar Chart */}
-            <div>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={difficultyData} style={{ background: 'transparent' }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#9ca3af" 
-                    fontSize={11}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    stroke="#9ca3af" 
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#f9fafb',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                    }}
-                    labelStyle={{ color: '#9ca3af', fontWeight: '600' }}
-                  />
-                  <Bar
-                    dataKey="accuracy"
-                    fill="#10b981"
-                    radius={[4, 4, 0, 0]}
-                    name="Accuracy %"
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Pie Chart */}
-            <div>
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart style={{ background: 'transparent' }}>
-                  <Pie
-                    data={difficultyData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, accuracy }) => `${name}: ${accuracy}%`}
-                    outerRadius={60}
-                    fill="#8884d8"
-                    dataKey="accuracy"
-                  >
-                    {difficultyData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#f9fafb',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                    }}
-                    labelStyle={{ color: '#9ca3af', fontWeight: '600' }}
-                    formatter={(value: any, name: any, props: any) => [
-                      `${value}%`,
-                      `${props.payload.name}`
-                    ]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="-ml-10">
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart 
+                data={difficultyData} 
+                style={{ background: 'transparent' }} 
+                background={{ fill: 'transparent' }} 
+                className="h-[180px] sm:h-[200px]"
+                margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#9ca3af" 
+                  fontSize={12}
+                  className="text-xs sm:text-sm"
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis 
+                  stroke="#9ca3af" 
+                  fontSize={12}
+                  className="text-xs sm:text-sm"
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <Tooltip 
+                  wrapperStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                  contentStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                  cursor={false}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload || payload.length === 0) return null;
+                    
+                    return (
+                      <div
+                        className="bg-slate-900/95 backdrop-blur-sm border border-slate-700/60 rounded-lg shadow-xl shadow-black/20 px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium text-slate-200 z-50"
+                        style={{
+                          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+                          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        }}
+                      >
+                        {label && (
+                          <div className="text-slate-300 font-semibold mb-0.5 sm:mb-1 text-xs sm:text-sm">
+                            {label}
+                          </div>
+                        )}
+                        {payload.map((entry: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between gap-2 sm:gap-3">
+                            <div className="flex items-center gap-1.5 sm:gap-2">
+                              <div 
+                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full"
+                                style={{ backgroundColor: entry.color || '#3b82f6' }}
+                              />
+                              <span className="text-slate-300 text-xs sm:text-sm">
+                                {entry.name}
+                              </span>
+                            </div>
+                            <span className="text-slate-100 font-bold text-xs sm:text-sm">
+                              {entry.value}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="accuracy"
+                  fill="#3b82f6"
+                  radius={[4, 4, 0, 0]}
+                  className="sm:radius-[6px,6px,0,0]"
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       )}

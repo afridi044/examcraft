@@ -13,21 +13,25 @@ import {
   Crown, 
   Bell, 
   Sparkles,
-  Menu
+  Menu,
+  X
 } from "lucide-react";
 import { UserMenu } from "@/components/ui/user-menu";
+import { MobileSearchModal } from "@/components/ui/mobile-search-modal";
 
 interface TopNavbarProps {
   setIsSidebarOpen: (open: boolean) => void;
   isSidebarOpen: boolean;
+  hideSearchBar?: boolean;
 }
 
-export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
+export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbarProps) {
   const router = useRouter();
   const { user, signOut } = useBackendAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Handle scroll effect for premium blur/shadow
@@ -61,6 +65,7 @@ export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsMobileSearchOpen(false); // Close mobile search modal
     }
   };
 
@@ -108,43 +113,45 @@ export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
           </div>
 
           {/* Center Section - Search Bar */}
-          <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
-            <form onSubmit={handleSearch} className="w-full">
-              <div className="relative w-full group">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-600/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative">
-                  <Input
-                    type="search"
-                    placeholder="Search quizzes, exams, flashcards, or ask AI..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-12 pl-12 pr-4 bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl font-medium transition-all duration-300 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
-                  />
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
-                    <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-slate-700/60 border border-slate-600/60 text-slate-400 text-xs rounded-md shadow-sm">
-                      ⌘K
-                    </kbd>
-                    <Sparkles className="h-3 w-3 text-blue-400/70 ml-1 hidden sm:block" />
+          {!hideSearchBar && (
+            <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
+              <form onSubmit={handleSearch} className="w-full">
+                <div className="relative w-full group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-600/20 rounded-2xl blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <div className="relative">
+                    <Input
+                      type="search"
+                      placeholder="Search quizzes, exams, flashcards, or ask AI..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-12 pl-12 pr-4 bg-slate-800/60 border-slate-700/60 text-slate-200 placeholder-slate-400 focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 rounded-2xl font-medium transition-all duration-300 focus:bg-slate-800/80 shadow-inner shadow-slate-900/70"
+                    />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-blue-400 transition-colors" />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center space-x-1">
+                      <kbd className="hidden sm:inline-flex items-center px-2 py-1 bg-slate-700/60 border border-slate-600/60 text-slate-400 text-xs rounded-md shadow-sm">
+                        ⌘K
+                      </kbd>
+                      <Sparkles className="h-3 w-3 text-blue-400/70 ml-1 hidden sm:block" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </form>
-          </div>
+              </form>
+            </div>
+          )}
 
           {/* Right Section */}
           <div className="flex items-center gap-x-3">
             {/* Search for mobile/tablet */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="lg:hidden bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white transition-all duration-300 rounded-xl h-10 w-10 shadow-md"
-              onClick={() => {
-                /* Add mobile search modal logic */
-              }}
-            >
-              <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
-            </Button>
+            {!hideSearchBar && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white transition-all duration-300 rounded-xl h-10 w-10 shadow-md"
+                onClick={() => setIsMobileSearchOpen(true)}
+              >
+                <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              </Button>
+            )}
 
 
 
@@ -167,6 +174,12 @@ export function TopNavbar({ setIsSidebarOpen }: TopNavbarProps) {
       </motion.div>
       {/* Spacer to push content below navbar */}
       <div className="h-4" aria-hidden="true"></div>
+
+      {/* Premium Mobile Search Modal */}
+      <MobileSearchModal 
+        open={isMobileSearchOpen} 
+        onOpenChange={setIsMobileSearchOpen} 
+      />
     </>
   );
 }

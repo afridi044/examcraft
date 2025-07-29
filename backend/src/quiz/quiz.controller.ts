@@ -60,6 +60,18 @@ export class QuizController {
     return await this.quizService.getUserQuizAttempts(user.id);
   }
 
+  @Get('search')
+  @ApiOperation({ summary: 'Search quizzes for the authenticated user' })
+  @ApiQuery({ name: 'q', description: 'Search query', example: 'JavaScript' })
+  @ApiResponse({
+    status: 200,
+    description: 'Search results retrieved successfully',
+  })
+  async searchQuizzes(@Query('q') query: string, @User() user: AuthUser) {
+    this.logger.log(`🔍 Searching quizzes for user: ${user.id}, query: ${query}`);
+    return await this.quizService.searchQuizzes(query, user.id);
+  }
+
   @Get(':quizId')
   @ApiOperation({ summary: 'Get quiz with questions by ID' })
   @ApiParam({ name: 'quizId', description: 'Quiz ID', example: 'uuid-quiz-id' })
@@ -79,6 +91,33 @@ export class QuizController {
       `📝 Submitting answer for question: ${submitAnswerDto.question_id}`,
     );
     return await this.quizService.submitAnswer(submitAnswerDto, user.id);
+  }
+
+  @Post('complete-quiz')
+  @ApiOperation({ summary: 'Mark a quiz as completed' })
+  @ApiResponse({ status: 201, description: 'Quiz marked as completed successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
+  async completeQuiz(
+    @Body() completionData: {
+      quizId: string;
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    },
+    @User() user: AuthUser
+  ) {
+    this.logger.log(`🏁 Marking quiz as completed: ${completionData.quizId}`);
+    return await this.quizService.recordQuizCompletion(user.id, completionData.quizId, {
+      totalQuestions: completionData.totalQuestions,
+      answeredQuestions: completionData.answeredQuestions,
+      correctAnswers: completionData.correctAnswers,
+      scorePercentage: completionData.scorePercentage,
+      timeSpentSeconds: completionData.timeSpentSeconds,
+      wasAutoSubmitted: completionData.wasAutoSubmitted,
+    });
   }
 
   @Post()

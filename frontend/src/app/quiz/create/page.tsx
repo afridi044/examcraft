@@ -66,6 +66,19 @@ export default function CreateQuizPage() {
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const { data: topics = [], isLoading: topicsLoading } = useBackendTopics() as { data: Array<{ topic_id: string; name: string }>, isLoading: boolean };
 
+  // EARLY REDIRECT: Check authentication immediately after render
+  useEffect(() => {
+    if (!userLoading && !currentUser) {
+      setSignOutMessage();
+      router.push("/auth/signin");
+    }
+  }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
+
   // Intersection observer for scroll animations
   const [headerRef, headerInView] = useInView({ threshold: 0.1, triggerOnce: true });
   const [formRef, formInView] = useInView({ threshold: 0.1, triggerOnce: true });
@@ -90,20 +103,6 @@ export default function CreateQuizPage() {
     window.addEventListener('resize', updateWindowSize);
     return () => window.removeEventListener('resize', updateWindowSize);
   }, []);
-
-  // Redirect if not authenticated
-  // EARLY REDIRECT: Check authentication immediately after render
-  useEffect(() => {
-    if (!userLoading && !currentUser) {
-      setSignOutMessage();
-      router.push("/auth/signin");
-    }
-  }, [userLoading, currentUser, router, setSignOutMessage]);
-
-  // Don't render anything while redirecting
-  if (!userLoading && !currentUser) {
-    return null;
-  }
 
   // Simple loading check
   const isLoading = userLoading || topicsLoading;
@@ -236,16 +235,10 @@ export default function CreateQuizPage() {
                 value: generatedQuiz.num_questions.toString(),
                 color: "text-green-400"
               },
-              {
-                icon: <Clock className="h-4 w-4" />,
-                label: "min",
-                value: `~${Math.ceil(generatedQuiz.num_questions * 1.5)}`,
-                color: "text-blue-400"
-              }
-            ]
+            ],
           }}
           primaryAction={{
-            label: "Take Quiz Now",
+            label: "Take Quiz",
             onClick: () => router.push(`/quiz/take/${generatedQuiz.quiz_id}`),
             icon: <Zap className="h-5 w-5" />
           }}
@@ -508,11 +501,11 @@ export default function CreateQuizPage() {
                 </div>
               </motion.div>
 
-              {/* Content & Instructions */}
+              {/* Additional Instructions */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                transition={{ delay: 0.4, duration: 0.6 }}
+                transition={{ delay: 0.35, duration: 0.6 }}
               >
                 <div className="flex items-center space-x-3 mb-4 sm:mb-6">
                   <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">

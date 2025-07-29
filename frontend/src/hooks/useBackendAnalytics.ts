@@ -16,6 +16,8 @@ export const ANALYTICS_QUERY_KEYS = {
     [...ANALYTICS_QUERY_KEYS.all, 'flashcard-analytics'] as const,
   bestWorstTopics: () => 
     [...ANALYTICS_QUERY_KEYS.all, 'best-worst-topics'] as const,
+  topicStats: () => 
+    [...ANALYTICS_QUERY_KEYS.all, 'topic-stats'] as const,
   comprehensive: () => 
     [...ANALYTICS_QUERY_KEYS.all, 'comprehensive'] as const,
 };
@@ -127,6 +129,25 @@ export function useBestWorstTopics() {
         throw new Error(response.error || 'Failed to fetch best/worst topics');
       }
       return response.data || {};
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes cache time
+    refetchOnWindowFocus: false,
+  });
+}
+
+/**
+ * Hook to get detailed topic progress analysis with parent-child relationships
+ */
+export function useTopicStats() {
+  return useQuery({
+    queryKey: ANALYTICS_QUERY_KEYS.topicStats(),
+    queryFn: async () => {
+      const response = await analyticsService.getTopicStats();
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch topic stats');
+      }
+      return response.data || [];
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes cache time

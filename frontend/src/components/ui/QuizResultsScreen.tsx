@@ -11,6 +11,9 @@ export interface QuizResultsScreenProps {
   correctAnswers: number;
   totalQuestions: number;
   timeTaken: string;
+  isTimed?: boolean;
+  timeLimitMinutes?: number;
+  wasAutoSubmitted?: boolean;
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -37,6 +40,9 @@ export function QuizResultsScreen({
   correctAnswers,
   totalQuestions,
   timeTaken,
+  isTimed = false,
+  timeLimitMinutes,
+  wasAutoSubmitted = false,
   primaryAction,
   secondaryActions = [],
   showConfetti = false
@@ -172,6 +178,23 @@ export function QuizResultsScreen({
             </div>
           </div>
         </motion.div>
+
+        {/* Auto-submit notification */}
+        {wasAutoSubmitted && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.3, duration: 0.4 }}
+            className="flex justify-center"
+          >
+            <div className="flex items-center space-x-2 bg-orange-500/20 px-4 py-3 rounded-lg border border-orange-500/30">
+              <Clock className="h-4 w-4 text-orange-400" />
+              <span className="text-sm font-medium text-orange-300">
+                Quiz was auto-submitted when time expired
+              </span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Action Buttons */}
         {(primaryAction || secondaryActions.length > 0) && (

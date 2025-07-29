@@ -2,18 +2,16 @@
 
 import React from 'react';
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
+  Tooltip,
 } from 'recharts';
 import { motion } from 'framer-motion';
-import { BarChart3, TrendingUp } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 interface QuizPerformanceData {
   date: string;
@@ -22,6 +20,7 @@ interface QuizPerformanceData {
   score_percentage: number;
   total_questions: number;
   correct_answers: number;
+  time_spent_seconds: number;
 }
 
 interface QuizPerformanceChartProps {
@@ -43,24 +42,31 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
     );
   }
 
-  // Transform data for charts
-  const chartData = data.map(item => ({
-    date: new Date(item.date).toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    }),
+  // Transform data for charts - show quizzes on x-axis
+  const chartData = data.map((item, index) => ({
+    quiz: item.title.length > 15 ? item.title.substring(0, 15) + '...' : item.title,
+    fullTitle: item.title,
     score: item.score_percentage,
-    title: item.title,
-    totalQuestions: item.total_questions,
-    correctAnswers: item.correct_answers,
+    questions: item.total_questions,
+    correct: item.correct_answers,
+    timeSpent: item.time_spent_seconds,
+    quizNumber: index + 1,
   }));
 
   const averageScore = chartData.length > 0 
     ? Math.round(chartData.reduce((sum, item) => sum + item.score, 0) / chartData.length)
     : 0;
   const totalQuizzes = chartData.length;
-  const bestScore = Math.max(...chartData.map(item => item.score));
-  const totalQuestions = chartData.reduce((sum, item) => sum + item.totalQuestions, 0);
+  
+  // Calculate average time in seconds first, then convert to minutes and seconds
+  const totalSeconds = chartData.length > 0 
+    ? chartData.reduce((sum, item) => sum + item.timeSpent, 0) / chartData.length
+    : 0;
+  const averageMinutes = Math.floor(totalSeconds / 60);
+  const averageSeconds = Math.floor(totalSeconds % 60);
+  const averageTimeDisplay = averageMinutes > 0 
+    ? `${averageMinutes}m ${averageSeconds}s`
+    : `${averageSeconds}s`;
 
   return (
     <motion.div
@@ -70,111 +76,186 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
       className="w-full h-full flex flex-col"
     >
       {/* Summary Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-orange-500/10 border border-orange-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-orange-300 mb-1">Average Score</p>
-          <p className="text-2xl font-bold text-orange-400">{averageScore}%</p>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-lg text-center">
+          <p className="text-xs font-medium text-orange-300 mb-1">Total Quizzes</p>
+          <p className="text-lg font-bold text-orange-400">{totalQuizzes}</p>
         </div>
-        <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-blue-300 mb-1">Total Quizzes</p>
-          <p className="text-2xl font-bold text-blue-400">{totalQuizzes}</p>
+        <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg text-center">
+          <div className="flex items-center justify-center">
+            <div>
+              <p className="text-xs font-medium text-blue-300 mb-1">Average Time</p>
+              <p className="text-lg font-bold text-blue-400">{averageTimeDisplay}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Performance Trend Chart */}
       <div className="flex-1 space-y-4">
         <div>
-          <h4 className="text-lg font-semibold text-gray-100 mb-2">Performance Trend</h4>
-          <p className="text-sm text-gray-400 mb-4">Your quiz scores over time</p>
+          <h4 className="text-lg font-semibold text-gray-100 mb-2">Quiz Performance</h4>
+          <p className="text-sm text-gray-400 mb-4">Your scores for each completed quiz</p>
         </div>
-        <ResponsiveContainer width="100%" height={200}>
-          <LineChart data={chartData} style={{ background: 'transparent' }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis 
-              dataKey="date" 
-              stroke="#9ca3af" 
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis 
-              stroke="#9ca3af" 
-              fontSize={12}
-              tickLine={false}
-              axisLine={false}
-              domain={[0, 100]}
-            />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: '#1f2937',
-                border: '1px solid #374151',
-                borderRadius: '8px',
-                color: '#f9fafb',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-              }}
-              labelStyle={{ color: '#9ca3af', fontWeight: '600' }}
-              formatter={(value: any, name: any, props: any) => [
-                `${value}%`,
-                `${props.payload.title}`
-              ]}
-            />
-            <Line
-              type="monotone"
-              dataKey="score"
-              stroke="#f59e0b"
-              strokeWidth={3}
-              dot={{ fill: '#f59e0b', strokeWidth: 2, r: 5 }}
-              activeDot={{ r: 8, stroke: '#f59e0b', strokeWidth: 2 }}
-              name="Score %"
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <div className="-ml-10">
+          <ResponsiveContainer width="100%" height={280} className="sm:h-[300px] md:h-[320px]">
+            <BarChart 
+              data={chartData} 
+              style={{ background: 'transparent' }}
+              margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+              <XAxis 
+                dataKey="quiz" 
+                stroke="#9ca3af" 
+                fontSize={10}
+                className="text-xs sm:text-sm"
+                tickLine={false}
+                axisLine={false}
+                tick={false}
+              />
+              <YAxis 
+                stroke="#9ca3af" 
+                fontSize={10}
+                className="text-xs sm:text-sm"
+                tickLine={false}
+                axisLine={false}
+                domain={[0, 100]}
+              />
+              <Tooltip 
+                wrapperStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                contentStyle={{ backgroundColor: 'transparent', border: 'none' }}
+                cursor={false}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || payload.length === 0) return null;
+                  
+                  const data = payload[0]?.payload;
+                  return (
+                    <div
+                      className="bg-slate-900/95 backdrop-blur-sm border border-slate-700/60 rounded-lg shadow-xl shadow-black/20 px-3 py-2 text-sm font-medium text-slate-200 z-50"
+                      style={{
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                      }}
+                    >
+                      <div className="text-slate-300 font-semibold mb-1">
+                        {data?.fullTitle || label}
+                      </div>
+                      {payload.map((entry: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: entry.color || '#f59e0b' }}
+                            />
+                            <span className="text-slate-300">
+                              {entry.name}
+                            </span>
+                          </div>
+                          <span className="text-slate-100 font-bold">
+                            {entry.value}%
+                          </span>
+                        </div>
+                      ))}
+                      {data && (
+                        <div className="mt-2 pt-2 border-t border-slate-600/50 text-xs text-slate-400">
+                          <div>Questions: {data.questions}</div>
+                          <div>Correct: {data.correct}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }}
+              />
+              <Bar
+                dataKey="score"
+                fill="#f59e0b"
+                radius={[4, 4, 0, 0]}
+                name="Score %"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* Additional Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
-        <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-green-300 mb-1">Best Score</p>
-          <p className="text-xl font-bold text-green-400">{bestScore}%</p>
-        </div>
-        <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-lg text-center">
-          <p className="text-sm font-medium text-purple-300 mb-1">Total Questions</p>
-          <p className="text-xl font-bold text-purple-400">{totalQuestions}</p>
-        </div>
-      </div>
+      {/* Best and Worst Score Cards */}
+      {chartData.length > 0 && (
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {/* Best Score Card */}
+          <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-green-300">Best Score</p>
+              <p className="text-lg font-bold text-green-400">
+                {Math.max(...chartData.map(item => item.score))}%
+              </p>
+            </div>
+            <div className="text-xs text-gray-400">
+              <p className="font-medium text-gray-300 mb-1">
+                {chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.fullTitle}
+              </p>
+              <p className="text-gray-400">
+                {chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.correct}/{chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.questions} correct
+              </p>
+            </div>
+          </div>
 
-      {/* Recent Quiz Performance */}
+          {/* Worst Score Card */}
+          <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-red-300">Worst Score</p>
+              <p className="text-lg font-bold text-red-400">
+                {Math.min(...chartData.map(item => item.score))}%
+              </p>
+            </div>
+            <div className="text-xs text-gray-400">
+              <p className="font-medium text-gray-300 mb-1">
+                {chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.fullTitle}
+              </p>
+              <p className="text-gray-400">
+                {chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.correct}/{chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.questions} correct
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Quizzes Scroll Box */}
       {chartData.length > 0 && (
         <div className="mt-6">
-          <h4 className="text-sm font-semibold text-gray-100 mb-3">Recent Quizzes</h4>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            {chartData.slice(-5).reverse().map((quiz, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center justify-between p-3 bg-slate-700/40 rounded-lg"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-100 truncate">
-                    {quiz.title}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {quiz.correctAnswers}/{quiz.totalQuestions} correct
-                  </p>
-                </div>
-                <div className="text-right ml-4">
-                  <p className={`text-sm font-bold ${
-                    quiz.score >= 80 ? 'text-green-400' :
-                    quiz.score >= 60 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
-                    {quiz.score}%
-                  </p>
-                  <p className="text-xs text-gray-400">{quiz.date}</p>
-                </div>
-              </motion.div>
-            ))}
+          <div className="mb-3">
+            <h4 className="text-sm font-semibold text-gray-100">Recent Quizzes</h4>
+          </div>
+          <div className="bg-slate-900/80 border border-slate-700/50 rounded-lg p-4">
+            <div className="max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
+              <div className="space-y-3 px-2">
+                {chartData.slice(-5).reverse().map((quiz, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-4 bg-slate-800/60 rounded-lg hover:bg-slate-800/80 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 pr-6">
+                      <p className="text-sm font-semibold text-white truncate">
+                        {quiz.fullTitle}
+                      </p>
+                      <p className="text-xs text-slate-300 mt-1">
+                        {quiz.correct}/{quiz.questions} correct
+                      </p>
+                    </div>
+                    <div className="text-right pl-4">
+                      <p className={`text-sm font-bold ${
+                        quiz.score >= 80 ? 'text-emerald-400' :
+                        quiz.score >= 60 ? 'text-amber-400' : 'text-rose-400'
+                      }`}>
+                        {quiz.score}%
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        {Math.floor(quiz.timeSpent / 60)}m {quiz.timeSpent % 60}s
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

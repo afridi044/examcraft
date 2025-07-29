@@ -35,21 +35,147 @@ export class QuizDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📊 Getting quiz attempts for user: ${userId}`);
 
-      // OPTIMIZED: Single database function call replaces 3 queries + complex processing
-      const { data: quizHistory, error } = await this.supabase.rpc(
-        'get_user_quiz_attempts',
-        { p_user_id: userId },
-      );
+      // Get all quizzes for the user
+      const { data: quizzes, error: quizzesError } = await this.supabase
+        .from(TABLE_NAMES.QUIZZES)
+        .select(`
+          quiz_id,
+          title,
+          description,
+          created_at,
+          topics(name)
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        this.logger.error('❌ Error fetching quiz attempts:', error);
-        return this.handleError(error, 'getUserQuizAttempts');
+      if (quizzesError) {
+        this.logger.error('❌ Error fetching quizzes:', quizzesError);
+        return this.handleError(quizzesError, 'getUserQuizAttempts');
       }
 
-      this.logger.log(`✅ Retrieved ${quizHistory?.length || 0} quiz attempts`);
-      return this.handleSuccess(quizHistory || []);
+      // Get quiz completions for this user
+      const { data: completions, error: completionsError } = await this.supabase
+        .from('quiz_completions')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (completionsError) {
+        this.logger.error('❌ Error fetching quiz completions:', completionsError);
+        return this.handleError(completionsError, 'getUserQuizAttempts');
+      }
+
+      // Create a map of quiz completions
+      const completionMap = new Map();
+      (completions || []).forEach(completion => {
+        completionMap.set(completion.quiz_id, completion);
+      });
+
+      // Transform quizzes into quiz attempts
+      const quizAttempts = (quizzes || []).map(quiz => {
+        const completion = completionMap.get(quiz.quiz_id);
+        
+        if (completion) {
+          // Quiz is completed
+          return {
+            quiz_id: quiz.quiz_id,
+            title: quiz.title,
+            created_at: quiz.created_at,
+            completed_at: completion.completed_at,
+            status: "completed",
+            total_questions: completion.total_questions,
+            answered_questions: completion.answered_questions,
+            correct_answers: completion.correct_answers,
+            score_percentage: completion.score_percentage,
+            time_spent_seconds: completion.time_spent_seconds,
+            topic_name: quiz.topics?.name,
+            completion_status: "completed",
+            is_timed: false, // TODO: Add timed quiz support
+            time_limit_minutes: null,
+          };
+        } else {
+          // Quiz is not taken
+          return {
+            quiz_id: quiz.quiz_id,
+            title: quiz.title,
+            created_at: quiz.created_at,
+            completed_at: null,
+            status: "not_taken",
+            total_questions: 0, // Will be populated when quiz is taken
+            answered_questions: 0,
+            correct_answers: 0,
+            score_percentage: 0,
+            time_spent_seconds: 0,
+            topic_name: quiz.topics?.name,
+            completion_status: "not_taken",
+            is_timed: false,
+            time_limit_minutes: null,
+          };
+        }
+      });
+
+      this.logger.log(`✅ Retrieved ${quizAttempts.length} quiz attempts`);
+      return this.handleSuccess(quizAttempts);
     } catch (error) {
       return this.handleError(error, 'getUserQuizAttempts');
+    }
+  }
+
+  async searchQuizzes(query: string, userId: string): Promise<ApiResponse<any[]>> {
+    try {
+      this.logger.log(`🔍 Searching quizzes for user: ${userId}, query: ${query}`);
+
+      const searchTerm = `%${query}%`;
+
+      // Search quizzes by title only
+      const { data: quizzes, error } = await this.supabase
+        .from(TABLE_NAMES.QUIZZES)
+        .select(`
+          quiz_id,
+          title,
+          description,
+          created_at,
+          topics(name)
+        `)
+        .eq('user_id', userId)
+        .ilike('title', searchTerm)
+        .order('created_at', { ascending: false });
+
+      // Get quiz attempt information for each quiz
+      if (quizzes && quizzes.length > 0) {
+        const quizIds = quizzes.map(q => q.quiz_id);
+        
+        // Get quiz completions for these quizzes to determine completion status
+        const { data: quizCompletions, error: completionsError } = await this.supabase
+          .from('quiz_completions')
+          .select('quiz_id, completed_at')
+          .eq('user_id', userId)
+          .in('quiz_id', quizIds);
+
+        if (!completionsError && quizCompletions) {
+          // Create a map of quiz completions
+          const completionMap = new Map();
+          quizCompletions.forEach(completion => {
+            completionMap.set(completion.quiz_id, completion);
+          });
+
+          // Add completion status to each quiz
+          quizzes.forEach(quiz => {
+            const completion = completionMap.get(quiz.quiz_id);
+            (quiz as any).has_attempt = !!completion;
+            (quiz as any).last_attempt_date = completion?.completed_at || null;
+          });
+        }
+      }
+
+      if (error) {
+        this.logger.error('❌ Error searching quizzes:', error);
+        return this.handleError(error, 'searchQuizzes');
+      }
+
+      this.logger.log(`✅ Found ${quizzes?.length || 0} matching quizzes`);
+      return this.handleSuccess(quizzes || []);
+    } catch (error) {
+      return this.handleError(error, 'searchQuizzes');
     }
   }
 
@@ -158,6 +284,47 @@ export class QuizDatabaseService extends BaseDatabaseService {
       return this.handleSuccess(data);
     } catch (error) {
       return this.handleError(error, 'submitAnswer');
+    }
+  }
+
+  async recordQuizCompletion(
+    userId: string,
+    quizId: string,
+    completionData: {
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    }
+  ): Promise<ApiResponse<any>> {
+    try {
+      this.logger.log(`🏁 Recording quiz completion for quiz: ${quizId}`);
+
+      const { data, error } = await this.supabase
+        .from('quiz_completions')
+        .upsert({
+          user_id: userId,
+          quiz_id: quizId,
+          total_questions: completionData.totalQuestions,
+          answered_questions: completionData.answeredQuestions,
+          correct_answers: completionData.correctAnswers,
+          score_percentage: completionData.scorePercentage,
+          time_spent_seconds: completionData.timeSpentSeconds, // Store as seconds
+          was_auto_submitted: completionData.wasAutoSubmitted,
+        }, {
+          onConflict: 'user_id,quiz_id'
+        })
+        .select()
+        .single();
+
+      if (error) return this.handleError(error, 'recordQuizCompletion');
+
+      this.logger.log(`✅ Quiz completion recorded successfully`);
+      return this.handleSuccess(data);
+    } catch (error) {
+      return this.handleError(error, 'recordQuizCompletion');
     }
   }
 

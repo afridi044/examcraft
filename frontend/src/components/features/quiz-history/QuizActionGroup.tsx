@@ -14,16 +14,8 @@ const ACTION_CONFIG = {
     { variant: "retake" as const, icon: Play, href: (id: string) => `/quiz/take/${id}`, text: "Retake" },
     { variant: "delete" as const, icon: Trash2, onClick: true, text: "Delete" },
   ],
-  incomplete: [
-    { variant: "continue" as const, icon: Play, href: (id: string) => `/quiz/take/${id}`, text: "Continue Quiz" },
-    { variant: "delete" as const, icon: Trash2, onClick: true, text: "Delete" },
-  ],
-  not_attempted: [
+  not_taken: [
     { variant: "start" as const, icon: Play, href: (id: string) => `/quiz/take/${id}`, text: "Start Quiz" },
-    { variant: "delete" as const, icon: Trash2, onClick: true, text: "Delete" },
-  ],
-  empty: [
-    { variant: "disabled" as const, icon: AlertCircle, text: "No Questions" },
     { variant: "delete" as const, icon: Trash2, onClick: true, text: "Delete" },
   ],
 };

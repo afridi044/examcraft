@@ -36,23 +36,7 @@ const ACTION_CONFIG = {
       className: "text-red-400 hover:text-red-300"
     },
   ],
-  incomplete: [
-    { 
-      id: "continue", 
-      icon: Play, 
-      label: "Continue Quiz", 
-      href: (id: string) => `/quiz/take/${id}`,
-      className: "text-green-400 hover:text-green-300"
-    },
-    { 
-      id: "delete", 
-      icon: Trash2, 
-      label: "Delete Quiz", 
-      onClick: true,
-      className: "text-red-400 hover:text-red-300"
-    },
-  ],
-  not_attempted: [
+  not_taken: [
     { 
       id: "start", 
       icon: Play, 
@@ -68,13 +52,14 @@ const ACTION_CONFIG = {
       className: "text-red-400 hover:text-red-300"
     },
   ],
-  empty: [
+  // Fallback for any other status
+  default: [
     { 
-      id: "disabled", 
-      icon: AlertCircle, 
-      label: "No Questions Available", 
-      disabled: true,
-      className: "text-gray-500"
+      id: "start", 
+      icon: Play, 
+      label: "Start Quiz", 
+      href: (id: string) => `/quiz/take/${id}`,
+      className: "text-green-400 hover:text-green-300"
     },
     { 
       id: "delete", 
@@ -97,7 +82,23 @@ export const QuizActionsDropdown: React.FC<QuizActionsDropdownProps> = ({
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const actions = ACTION_CONFIG[attempt.status] || [];
+  // Debug: Log the status to see what we're getting
+  console.log('QuizActionsDropdown - attempt status:', attempt.status);
+
+  // Map old status values to new ones for backward compatibility
+  const getNormalizedStatus = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "completed";
+      case "not_taken":
+        return "not_taken";
+      default:
+        return "not_taken";
+    }
+  };
+
+  const normalizedStatus = getNormalizedStatus(attempt.status);
+  const actions = ACTION_CONFIG[normalizedStatus] || ACTION_CONFIG.default || [];
 
   // Handle click outside to close dropdown
   useEffect(() => {

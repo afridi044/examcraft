@@ -92,6 +92,25 @@ export class DatabaseService implements OnModuleInit {
     return this.quizService.getUserQuizAttempts(userId);
   }
 
+  async recordQuizCompletion(
+    userId: string,
+    quizId: string,
+    completionData: {
+      totalQuestions: number;
+      answeredQuestions: number;
+      correctAnswers: number;
+      scorePercentage: number;
+      timeSpentSeconds: number;
+      wasAutoSubmitted: boolean;
+    }
+  ) {
+    return this.quizService.recordQuizCompletion(userId, quizId, completionData);
+  }
+
+  async searchQuizzes(query: string, userId: string) {
+    return this.quizService.searchQuizzes(query, userId);
+  }
+
   async getQuizWithQuestions(quizId: string) {
     return this.quizService.getQuizWithQuestions(quizId);
   }
@@ -144,6 +163,10 @@ export class DatabaseService implements OnModuleInit {
 
   async getUserFlashcards(userId: string) {
     return this.flashcardService.getUserFlashcards(userId);
+  }
+
+  async searchFlashcards(query: string, userId: string) {
+    return this.flashcardService.searchFlashcards(query, userId);
   }
 
   async getFlashcardById(flashcardId: string) {
@@ -271,6 +294,10 @@ export class DatabaseService implements OnModuleInit {
     return this.analyticsService.getTopicProgress(userId);
   }
 
+  async getAllTopicProgress(userId: string) {
+    return this.analyticsService.getAllTopicProgress(userId);
+  }
+
   async calculateStudyStreak(userId: string) {
     return this.analyticsService.calculateStudyStreak(userId);
   }
@@ -327,5 +354,12 @@ export class DatabaseService implements OnModuleInit {
 
   async deleteNote(noteId: string, userId: string) {
     return this.notesService.deleteNote(noteId, userId);
+  }
+  // =============================================
+  // Study Time Analytics - Delegate to AnalyticsDatabaseService
+  // =============================================
+  async getUserTotalStudyTime(userId: string) {
+    return this.analyticsService.getUserTotalStudyTime(userId);
+
   }
 }

@@ -103,46 +103,103 @@ describe('QuizDatabaseService', () => {
   });
 
   describe('getUserQuizAttempts', () => {
-    it('should return user quiz attempts successfully', async () => {
+    it('should return quiz attempts successfully', async () => {
       const userId = 'user-123';
-      const mockAttempts = [
-        { quiz_id: 'quiz-1', score: 85 },
-        { quiz_id: 'quiz-2', score: 92 },
+      const mockQuizzes = [
+        {
+          quiz_id: 'quiz-1',
+          title: 'Test Quiz 1',
+          description: 'Test Description 1',
+          created_at: '2023-01-01T00:00:00Z',
+          topics: { name: 'Test Topic 1' },
+        },
+        {
+          quiz_id: 'quiz-2',
+          title: 'Test Quiz 2',
+          description: 'Test Description 2',
+          created_at: '2023-01-02T00:00:00Z',
+          topics: { name: 'Test Topic 2' },
+        },
       ];
 
-      supabase.rpc.mockResolvedValueOnce({
-        data: mockAttempts,
-        error: null,
+      const mockCompletions = [
+        {
+          quiz_id: 'quiz-1',
+          completed_at: '2023-01-01T01:00:00Z',
+          total_questions: 10,
+          answered_questions: 10,
+          correct_answers: 8,
+          score_percentage: 80,
+          time_spent_minutes: 15,
+        },
+      ];
+
+      // Mock quizzes query
+      supabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValueOnce({
+          eq: jest.fn().mockReturnValueOnce({
+            order: jest.fn().mockResolvedValueOnce({
+              data: mockQuizzes,
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      // Mock completions query
+      supabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValueOnce({
+          eq: jest.fn().mockReturnValueOnce({
+            data: mockCompletions,
+            error: null,
+          }),
+        }),
       });
 
       const result = await service.getUserQuizAttempts(userId);
 
-      expect(supabase.rpc).toHaveBeenCalledWith('get_user_quiz_attempts', {
-        p_user_id: userId,
-      });
+      expect(supabase.from).toHaveBeenCalledWith(TABLE_NAMES.QUIZZES);
+      expect(supabase.from).toHaveBeenCalledWith('quiz_completions');
       expect(mockLogger.log).toHaveBeenCalledWith(
         `📊 Getting quiz attempts for user: ${userId}`
       );
       expect(mockLogger.log).toHaveBeenCalledWith(
-        `✅ Retrieved ${mockAttempts.length} quiz attempts`
+        `✅ Retrieved ${mockQuizzes.length} quiz attempts`
       );
       expect(result.success).toBe(true);
-      expect(result.data).toEqual(mockAttempts);
+      expect(result.data).toHaveLength(2);
+      
+      // Check that completed quiz has correct data
+      const completedQuiz = result.data.find(q => q.quiz_id === 'quiz-1');
+      expect(completedQuiz?.status).toBe('completed');
+      expect(completedQuiz?.score_percentage).toBe(80);
+      
+      // Check that non-completed quiz has correct data
+      const nonCompletedQuiz = result.data.find(q => q.quiz_id === 'quiz-2');
+      expect(nonCompletedQuiz?.status).toBe('not_taken');
+      expect(nonCompletedQuiz?.score_percentage).toBe(0);
     });
 
     it('should handle database error', async () => {
       const userId = 'user-123';
       const mockError = { message: 'Database error' };
 
-      supabase.rpc.mockResolvedValueOnce({
-        data: null,
-        error: mockError,
+      // Mock quizzes query with error
+      supabase.from.mockReturnValueOnce({
+        select: jest.fn().mockReturnValueOnce({
+          eq: jest.fn().mockReturnValueOnce({
+            order: jest.fn().mockResolvedValueOnce({
+              data: null,
+              error: mockError,
+            }),
+          }),
+        }),
       });
 
       const result = await service.getUserQuizAttempts(userId);
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        '❌ Error fetching quiz attempts:',
+        '❌ Error fetching quizzes:',
         mockError
       );
       expect(result.success).toBe(false);
