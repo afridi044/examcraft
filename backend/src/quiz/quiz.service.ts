@@ -116,19 +116,48 @@ export class QuizService {
 
     try {
       // ------------------------------------------------
-      // 1. Ensure topic
+      // 1. Ensure topic and handle subtopic logic
       // ------------------------------------------------
       let topicId = generateQuizDto.topic_id;
-      if (!topicId && generateQuizDto.custom_topic) {
-        const topicInput: CreateTopicInput = {
-          name: generateQuizDto.custom_topic,
-          description: `Custom topic: ${generateQuizDto.custom_topic}`,
-        };
-        const topicRes = await this.databaseService.createTopic(topicInput);
-        if (!topicRes.success || !topicRes.data) {
-          throw new Error(topicRes.error || 'Failed to create topic');
+      let finalTopicName = generateQuizDto.topic_name;
+
+      // Handle subtopic logic
+      if (generateQuizDto.subtopic_name && generateQuizDto.topic_id) {
+        // Check if subtopic already exists under the parent topic
+        const existingSubtopicRes = await this.databaseService.findSubtopicByNameAndParent(
+          generateQuizDto.subtopic_name,
+          generateQuizDto.topic_id
+        );
+
+        if (!existingSubtopicRes.success) {
+          throw new Error(existingSubtopicRes.error || 'Failed to check for existing subtopic');
         }
-        topicId = topicRes.data.topic_id;
+
+        if (existingSubtopicRes.data) {
+          // Subtopic exists, use it
+          topicId = existingSubtopicRes.data.topic_id;
+          finalTopicName = `${generateQuizDto.topic_name} - ${generateQuizDto.subtopic_name}`;
+          this.logger.log(`📝 Using existing subtopic: ${generateQuizDto.subtopic_name}`);
+        } else {
+          // Create new subtopic under the parent topic
+          const subtopicRes = await this.databaseService.createSubtopic(
+            generateQuizDto.subtopic_name,
+            generateQuizDto.topic_id
+          );
+
+          if (!subtopicRes.success || !subtopicRes.data) {
+            throw new Error(subtopicRes.error || 'Failed to create subtopic');
+          }
+
+          topicId = subtopicRes.data.topic_id;
+          finalTopicName = `${generateQuizDto.topic_name} - ${generateQuizDto.subtopic_name}`;
+          this.logger.log(`✨ Created new subtopic: ${generateQuizDto.subtopic_name} under ${generateQuizDto.topic_name}`);
+        }
+      } else if (generateQuizDto.topic_id) {
+        // Using existing topic without subtopic
+        finalTopicName = generateQuizDto.topic_name;
+      } else {
+        throw new Error('topic_id is required');
       }
 
       // ------------------------------------------------
@@ -139,7 +168,7 @@ export class QuizService {
         title: generateQuizDto.title,
         description:
           generateQuizDto.description ||
-          `AI-generated quiz on ${generateQuizDto.topic_name}`,
+          `AI-generated quiz on ${finalTopicName}`,
         topic_id: topicId,
       };
       const quizRes = await this.databaseService.createQuiz(quizInput);
@@ -157,7 +186,7 @@ export class QuizService {
       }
 
       const buildPrompt = (): string => {
-        return `Generate ${generateQuizDto.num_questions} ${generateQuizDto.question_types.join(', ')} questions about ${generateQuizDto.topic_name} (difficulty ${generateQuizDto.difficulty}/5). Respond ONLY in valid JSON with structure: {\n  "questions": [\n    {\n      "question": string,\n      "type": "multiple-choice",\n      "options": string[],\n      "correct_answer": number,\n      "explanation": string,\n      "difficulty": number\n    }\n  ]\n}`;
+        return `Generate ${generateQuizDto.num_questions} ${generateQuizDto.question_types.join(', ')} questions about ${finalTopicName} (difficulty ${generateQuizDto.difficulty}/5). Respond ONLY in valid JSON with structure: {\n  "questions": [\n    {\n      "question": string,\n      "type": "multiple-choice",\n      "options": string[],\n      "correct_answer": number,\n      "explanation": string,\n      "difficulty": number\n    }\n  ]\n}`;
       };
 
       let aiQuestions: AIQuestion[] = [];

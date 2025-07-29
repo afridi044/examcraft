@@ -13,12 +13,30 @@ export class TopicsService {
     return this.db.getAllTopics();
   }
 
+  getTopicsWithSubtopicCount(): Promise<ApiResponse<Array<TopicRow & { subtopic_count: number }>>> {
+    return this.db.getTopicsWithSubtopicCount();
+  }
+
   getTopicById(id: string): Promise<ApiResponse<TopicRow>> {
     return this.db.getTopicById(id);
   }
 
   createTopic(input: CreateTopicInput): Promise<ApiResponse<TopicRow>> {
     return this.db.createTopic(input);
+  }
+
+  findSubtopicByNameAndParent(
+    subtopicName: string,
+    parentTopicId: string,
+  ): Promise<ApiResponse<TopicRow | null>> {
+    return this.db.findSubtopicByNameAndParent(subtopicName, parentTopicId);
+  }
+
+  createSubtopic(
+    subtopicName: string,
+    parentTopicId: string,
+  ): Promise<ApiResponse<TopicRow>> {
+    return this.db.createSubtopic(subtopicName, parentTopicId);
   }
 
   updateTopic(

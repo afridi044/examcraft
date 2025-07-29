@@ -267,6 +267,18 @@ export class DatabaseService implements OnModuleInit {
     return this.questionService.getAllTopics();
   }
 
+  async getTopicsWithSubtopicCount() {
+    return this.questionService.getTopicsWithSubtopicCount();
+  }
+
+  async findSubtopicByNameAndParent(subtopicName: string, parentTopicId: string) {
+    return this.questionService.findSubtopicByNameAndParent(subtopicName, parentTopicId);
+  }
+
+  async createSubtopic(subtopicName: string, parentTopicId: string) {
+    return this.questionService.createSubtopic(subtopicName, parentTopicId);
+  }
+
   async getTopicById(topicId: string) {
     return this.questionService.getTopicById(topicId);
   }

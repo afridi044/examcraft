@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsUUID,
   IsNotEmpty,
+  ValidateIf,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -22,15 +23,15 @@ export class GenerateQuizDto {
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ description: 'Existing topic ID' })
+  @ApiPropertyOptional({ description: 'Existing topic ID (parent topic)' })
   @IsOptional()
   @IsUUID()
   topic_id?: string;
 
-  @ApiPropertyOptional({ description: 'Custom topic name' })
+  @ApiPropertyOptional({ description: 'Subtopic name (child of selected topic)' })
   @IsOptional()
   @IsString()
-  custom_topic?: string;
+  subtopic_name?: string;
 
   @ApiProperty({ description: 'Topic name for AI prompt' })
   @IsString()
@@ -62,4 +63,13 @@ export class GenerateQuizDto {
   @IsOptional()
   @IsString()
   additional_instructions?: string;
+
+  // Custom validation to ensure proper topic selection
+  @ValidateIf((o) => !o.topic_id)
+  @IsNotEmpty({ message: 'topic_id is required' })
+  _topicValidation?: string;
+
+  @ValidateIf((o) => o.subtopic_name && !o.topic_id)
+  @IsNotEmpty({ message: 'Parent topic_id is required when providing subtopic_name' })
+  _subtopicValidation?: string;
 }

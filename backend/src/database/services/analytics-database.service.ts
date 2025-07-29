@@ -88,6 +88,13 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     }
   }
 
+  // Helper function to adjust timestamp by adding 6 hours to convert from UTC to local time
+  private adjustTimestamp(timestamp: string): string {
+    const date = new Date(timestamp);
+    date.setHours(date.getHours() + 6);
+    return date.toISOString();
+  }
+
   async getRecentActivity(
     userId: string,
     limit: number = 10,
@@ -197,7 +204,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
           id: `create_${quiz.quiz_id}`, // Unique key for creation
           type: 'quiz' as const,
           title: `Created "${quiz.title}" quiz`,
-          completed_at: quiz.created_at,
+          completed_at: this.adjustTimestamp(quiz.created_at),
           topic: quiz.topics?.name || undefined,
         })),
 
@@ -205,6 +212,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         ...quizCompletionActivities.map(activity => ({
           ...activity,
           id: `complete_${activity.id}`, // Unique key for completion
+          completed_at: this.adjustTimestamp(activity.completed_at),
         })),
       ];
 

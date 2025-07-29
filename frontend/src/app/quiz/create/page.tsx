@@ -35,7 +35,7 @@ interface QuizForm {
   title: string;
   description: string;
   topic_id: string;
-  custom_topic: string;
+  subtopic_name: string;
   difficulty: number;
   num_questions: number;
   content_source: string;
@@ -46,7 +46,7 @@ const DEFAULT_FORM: QuizForm = {
   title: "",
   description: "",
   topic_id: "",
-  custom_topic: "",
+  subtopic_name: "",
   difficulty: 3,
   num_questions: 10,
   content_source: "",
@@ -111,13 +111,13 @@ export default function CreateQuizPage() {
     setForm(prev => {
       const newForm = { ...prev, [field]: value };
 
-      // Enforce mutual exclusivity between topic_id and custom_topic
+      // Enforce mutual exclusivity between topic_id and subtopic_name
       if (field === 'topic_id' && value) {
-        // If selecting an existing topic, clear custom topic
-        newForm.custom_topic = '';
-      } else if (field === 'custom_topic' && value) {
-        // If entering a custom topic, clear existing topic selection
-        newForm.topic_id = '';
+        // If selecting an existing topic, clear subtopic
+        newForm.subtopic_name = '';
+      } else if (field === 'subtopic_name' && value) {
+        // If entering a subtopic, ensure we have a parent topic selected
+        // Don't clear topic_id as it's required for subtopics
       }
 
       return newForm;
@@ -129,16 +129,22 @@ export default function CreateQuizPage() {
       toast.error("Quiz title is required");
       return false;
     }
-    if (!form.topic_id && !form.custom_topic.trim()) {
-      toast.error("Please select a topic or enter a custom topic");
+    
+    // Check topic selection logic
+    const hasTopicId = !!form.topic_id;
+    const hasSubtopic = !!form.subtopic_name.trim();
+    
+    // Must have topic_id, and optionally subtopic_name
+    if (!hasTopicId) {
+      toast.error("Please select a topic");
       return false;
     }
-    if (form.topic_id && form.custom_topic.trim()) {
-      toast.error("Please select either an existing topic OR enter a custom topic, not both");
+    
+    if (hasSubtopic && !hasTopicId) {
+      toast.error("Please select a parent topic when entering a subtopic");
       return false;
     }
-    // Number of questions validation is no longer needed since we use predefined options
-    // The Select component ensures only valid values (5-50) can be selected
+    
     return true;
   };
 
@@ -147,9 +153,17 @@ export default function CreateQuizPage() {
 
     setIsGenerating(true);
     try {
-      const topic = form.topic_id
-        ? topics?.find((t: { topic_id: string; name: string }) => t.topic_id === form.topic_id)?.name || form.custom_topic
-        : form.custom_topic;
+      let topic = '';
+      let topicId = form.topic_id;
+      let subtopicName = form.subtopic_name;
+
+      if (form.subtopic_name.trim()) {
+        // Using subtopic - topic will be parent topic name
+        topic = topics?.find((t: { topic_id: string; name: string }) => t.topic_id === form.topic_id)?.name || '';
+      } else if (form.topic_id) {
+        // Using existing topic
+        topic = topics?.find((t: { topic_id: string; name: string }) => t.topic_id === form.topic_id)?.name || '';
+      }
 
       const response = await quizService.generateQuiz({
         title: form.title || `${topic} Quiz`,
@@ -158,7 +172,7 @@ export default function CreateQuizPage() {
         difficulty: form.difficulty === 1 ? 'easy' : form.difficulty <= 3 ? 'medium' : 'hard',
         questionCount: form.num_questions,
         topicId: form.topic_id,
-        customTopic: form.custom_topic,
+        subtopicName: form.subtopic_name,
         contentSource: form.content_source,
         additionalInstructions: form.additional_instructions,
       });
@@ -354,26 +368,17 @@ export default function CreateQuizPage() {
                   </div>
                 </div>
                 {/* Topic Selection */}
-                <div className="space-y-4 mt-4">
-                  <Label className="text-gray-300">Topic</Label>
+                <div className="space-y-4 mt-8">
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="topic" className="text-sm text-gray-400 flex items-center space-x-2">
-                        <span>Select from existing topics</span>
-                        {form.custom_topic && (
-                          <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-1 rounded">
-                            Will clear custom topic
-                          </span>
-                        )}
+                      <Label htmlFor="topic" className="text-gray-300">
+                        Topic
                       </Label>
                       <Select
                         value={form.topic_id}
                         onValueChange={(value) => updateForm("topic_id", value)}
                       >
-                        <SelectTrigger className={`transition-colors ${form.custom_topic
-                          ? 'border-orange-400/50 bg-orange-400/5'
-                          : 'border-gray-600'
-                          }`}>
+                        <SelectTrigger className="border-gray-600">
                           <SelectValue placeholder="Choose a topic..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -386,38 +391,27 @@ export default function CreateQuizPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="custom_topic" className="text-sm text-gray-400 flex items-center space-x-2">
-                        <span>Or enter custom topic</span>
-                        {form.topic_id && (
-                          <span className="text-xs text-orange-400 bg-orange-400/10 px-2 py-1 rounded">
-                            Will clear selection
-                          </span>
-                        )}
+                      <Label htmlFor="subtopic_name" className="text-gray-300">
+                        Subtopic (optional)
                       </Label>
                       <Input
-                        id="custom_topic"
-                        value={form.custom_topic}
-                        onChange={(e) => updateForm("custom_topic", e.target.value)}
+                        id="subtopic_name"
+                        value={form.subtopic_name}
+                        onChange={(e) => updateForm("subtopic_name", e.target.value)}
                         placeholder="e.g., React Hooks"
-                        className={`bg-gray-700/50 border text-white placeholder:text-gray-400 transition-colors ${form.topic_id
-                          ? 'border-orange-400/50 bg-orange-400/5'
-                          : 'border-gray-600'
-                          }`}
+                        className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
                       />
                     </div>
                   </div>
-                  {(form.topic_id || form.custom_topic) && (
-                    <div className={`text-xs p-2 rounded border transition-colors ${form.topic_id && form.custom_topic.trim()
-                      ? 'text-red-400 bg-red-400/10 border-red-400/30'
+                  {(form.topic_id || form.subtopic_name) && (
+                    <div className={`text-xs p-2 rounded border transition-colors ${(form.topic_id && form.subtopic_name.trim())
+                      ? 'text-gray-400 bg-gray-700/30 border-gray-600'
                       : 'text-gray-400 bg-gray-700/30 border-gray-600'
                       }`}>
                       <span className="font-medium">
-                        {form.topic_id && form.custom_topic.trim() ? 'Error:' : 'Note:'}
+                        Note:
                       </span>
-                      {form.topic_id && form.custom_topic.trim()
-                        ? ' You cannot select both an existing topic and enter a custom topic. Please choose one option.'
-                        : ' You can only select one option - either an existing topic or a custom topic.'
-                      }
+                      You can select a parent topic and optionally enter a subtopic to create a more focused quiz.
                     </div>
                   )}
                 </div>
@@ -595,6 +589,7 @@ export default function CreateQuizPage() {
                   >
                     {[
                       "Provide detailed content for more accurate questions",
+                      "Use subtopics to create focused, specialized quizzes",
                       "Mix question types for better learning experience",
                       "Use specific additional instructions for targeted results",
                       "Start with 10-15 questions for optimal quiz length"

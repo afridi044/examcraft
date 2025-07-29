@@ -50,4 +50,11 @@ export const topicService = {
     // Backend determines user from JWT token
     return apiClient.get<TopicWithProgress[]>('/dashboard/progress');
   },
+
+  /**
+   * Get topics with subtopic counts
+   */
+  async getTopicsWithSubtopicCount(): Promise<ApiResponse<Array<Topic & { subtopic_count: number }>>> {
+    return apiClient.get<Array<Topic & { subtopic_count: number }>>('/topics/with-subtopic-count');
+  },
 }; 

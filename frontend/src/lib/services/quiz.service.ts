@@ -21,7 +21,7 @@ export const quizService = {
     difficulty: 'easy' | 'medium' | 'hard';
     questionCount: number;
     topicId?: string;
-    customTopic?: string;
+    subtopicName?: string;
     contentSource?: string;
     additionalInstructions?: string;
   }): Promise<any> {
@@ -31,7 +31,7 @@ export const quizService = {
       description: input.description || `AI-generated quiz on ${input.topic}`,
       topic_name: input.topic,
       topic_id: input.topicId,
-      custom_topic: input.customTopic,
+      subtopic_name: input.subtopicName,
       difficulty: input.difficulty === 'easy' ? 1 : input.difficulty === 'medium' ? 3 : 5,
       num_questions: input.questionCount,
       question_types: ['multiple-choice'], // Default to multiple choice

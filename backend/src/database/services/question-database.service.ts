@@ -217,4 +217,71 @@ export class QuestionDatabaseService extends BaseDatabaseService {
       return this.handleError(error, 'deleteTopic');
     }
   }
+
+  async findSubtopicByNameAndParent(
+    subtopicName: string,
+    parentTopicId: string,
+  ): Promise<ApiResponse<TopicRow | null>> {
+    try {
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select('*')
+        .eq('name', subtopicName)
+        .eq('parent_topic_id', parentTopicId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        return this.handleError(error, 'findSubtopicByNameAndParent');
+      }
+      return this.handleSuccess(data || null);
+    } catch (error) {
+      return this.handleError(error, 'findSubtopicByNameAndParent');
+    }
+  }
+
+  async createSubtopic(
+    subtopicName: string,
+    parentTopicId: string,
+  ): Promise<ApiResponse<TopicRow>> {
+    try {
+      const { data, error } = await this.supabaseAdmin
+        .from(TABLE_NAMES.TOPICS)
+        .insert({
+          name: subtopicName,
+          parent_topic_id: parentTopicId,
+        })
+        .select()
+        .single();
+
+      if (error) return this.handleError(error, 'createSubtopic');
+      return this.handleSuccess(data);
+    } catch (error) {
+      return this.handleError(error, 'createSubtopic');
+    }
+  }
+
+  async getTopicsWithSubtopicCount(): Promise<ApiResponse<Array<TopicRow & { subtopic_count: number }>>> {
+    try {
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select(`
+          *,
+          subtopics:topics!topics_parent_topic_id_fkey(count)
+        `)
+        .is('parent_topic_id', null) // Only parent topics
+        .order('name');
+
+      if (error) return this.handleError(error, 'getTopicsWithSubtopicCount');
+      
+      // Transform the data to include subtopic count
+      const transformedData = data?.map(topic => ({
+        ...topic,
+        subtopic_count: topic.subtopics?.[0]?.count || 0,
+      })) || [];
+
+      return this.handleSuccess(transformedData);
+    } catch (error) {
+      return this.handleError(error, 'getTopicsWithSubtopicCount');
+    }
+  }
 }
