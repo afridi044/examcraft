@@ -85,7 +85,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
 
 
 
-  if (viewMode === "list") {
+    if (viewMode === "list") {
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -100,13 +100,27 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
           
           <CardContent className="p-4 sm:p-6 relative">
-            <div className="flex items-start space-x-3 sm:space-x-4">
-              <div className="relative flex-shrink-0">
-                <div className={`h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br ${book.coverColor} rounded-xl flex items-center justify-center shadow-lg`}>
-                  <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            <div className="flex flex-col sm:flex-row sm:items-start space-y-3 sm:space-y-0 sm:space-x-3 sm:space-x-4">
+              <div className="flex items-center justify-between sm:justify-start">
+                <div className="relative flex-shrink-0">
+                  <div className={`h-10 w-10 sm:h-12 sm:w-12 bg-gradient-to-br ${book.coverColor} rounded-xl flex items-center justify-center shadow-lg`}>
+                    <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <Sparkles className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />
+                  </div>
                 </div>
-                <div className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                  <Sparkles className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />
+                <div className="flex items-center space-x-0 flex-shrink-0 sm:hidden">
+                  <div className="relative group/tooltip">
+                    <Button size="sm" variant="ghost" className="h-10 w-10 p-0 hover:bg-blue-500/20 hover:text-blue-400" onClick={handleViewBook}>
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="relative group/tooltip">
+                    <Button size="sm" variant="ghost" className="h-10 w-10 p-0 hover:bg-purple-500/20 hover:text-purple-400" onClick={handleShareBook}>
+                      <Share2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="flex-1 min-w-0 flex flex-col">
@@ -127,11 +141,11 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
                   </div>
                   <div className="flex items-center space-x-1">
                     <Calendar className="h-3 w-3 text-amber-400 flex-shrink-0" />
-                    <span className="text-xs text-amber-300 font-medium bg-amber-500/10 px-2 py-1 rounded-full truncate max-w-20 sm:max-w-24">{formatDate(book.dateAdded)}</span>
+                    <span className="text-xs text-amber-300 font-medium bg-amber-500/10 px-2 py-1 rounded-full">{formatDate(book.dateAdded)}</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+              <div className="hidden sm:flex items-center space-x-1 flex-shrink-0">
                 <div className="relative group/tooltip">
                   <Button size="sm" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-blue-500/20 hover:text-blue-400" onClick={handleViewBook}>
                     <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -145,7 +159,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
                 <div className="relative group/tooltip">
                   <Button size="sm" variant="ghost" className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-purple-500/20 hover:text-purple-400" onClick={handleShareBook}>
                     <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                </Button>
+                  </Button>
                   <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-slate-600 shadow-lg">
                     Share Book
                     <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
@@ -183,10 +197,10 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
                 <Sparkles className="h-1.5 w-1.5 sm:h-2 sm:w-2 text-white" />
               </div>
             </div>
-            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
+            <div className="flex space-x-0 flex-shrink-0">
               <div className="relative group/tooltip">
-                <Button size="sm" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-blue-500/20 hover:text-blue-400" onClick={handleViewBook}>
-                  <Eye className="h-3 w-3" />
+                <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 p-0 hover:bg-blue-500/20 hover:text-blue-400" onClick={handleViewBook}>
+                  <Eye className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
                 <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-slate-600 shadow-lg">
                   View Book
@@ -195,8 +209,8 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
               </div>
               
               <div className="relative group/tooltip">
-                <Button size="sm" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 p-0 hover:bg-purple-500/20 hover:text-purple-400" onClick={handleShareBook}>
-                  <Share2 className="h-3 w-3" />
+                <Button size="sm" variant="ghost" className="h-9 w-9 sm:h-10 sm:w-10 p-0 hover:bg-purple-500/20 hover:text-purple-400" onClick={handleShareBook}>
+                  <Share2 className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
                 <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-slate-600 shadow-lg">
                   Share Book
@@ -238,29 +252,9 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
             <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-slate-700/50">
               <div className="flex items-center space-x-1 min-w-0">
                 <Calendar className="h-3 w-3 text-amber-400 flex-shrink-0" />
-                <span className="text-xs text-amber-300 font-medium bg-amber-500/10 px-2 py-1 rounded-full truncate max-w-16 sm:max-w-20">{formatDate(book.dateAdded)}</span>
+                <span className="text-xs text-amber-300 font-medium bg-amber-500/10 px-2 py-1 rounded-full">{formatDate(book.dateAdded)}</span>
               </div>
-              <div className="flex space-x-1 flex-shrink-0">
-                <div className="relative group/tooltip">
-                  <Button size="sm" variant="ghost" className="h-6 w-6 sm:h-7 sm:w-7 p-0 hover:bg-blue-500/20 hover:text-blue-400" onClick={handleViewBook}>
-                    <Eye className="h-3 w-3" />
-                  </Button>
-                  <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-slate-600 shadow-lg">
-                    View Book
-                    <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
-                  </div>
-                </div>
-                
-                <div className="relative group/tooltip">
-                  <Button size="sm" variant="ghost" className="h-6 w-6 sm:h-7 sm:w-7 p-0 hover:bg-purple-500/20 hover:text-purple-400" onClick={handleShareBook}>
-                    <Share2 className="h-3 w-3" />
-                </Button>
-                  <div className="absolute bottom-full right-0 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10 border border-slate-600 shadow-lg">
-                    Share Book
-                    <div className="absolute top-full right-2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-800"></div>
-                  </div>
-                </div>
-              </div>
+
             </div>
           </div>
         </CardContent>

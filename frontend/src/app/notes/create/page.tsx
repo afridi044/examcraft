@@ -169,7 +169,7 @@ export default function CreateNotePage() {
   };
 
   const navigateToLibrary = () => {
-    router.push("/library");
+    router.push("/library?tab=notes");
   };
 
   const wordCount = form.content.split(/\s+/).filter(word => word.length > 0).length;

@@ -3,10 +3,13 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { EmptyState } from "./EmptyState";
 import { NoteCard } from "./NoteCard";
+import { NoteDetailView } from "./NoteDetailView";
 import { BookCard } from "./BookCard";
 import { StudyMaterialCard } from "./StudyMaterialCard";
-import { useBackendLibraryNotes } from "@/hooks/useBackendLibrary";
+import { useBackendLibraryNotes, useInvalidateBackendLibrary } from "@/hooks/useBackendLibrary";
 import { useBooks } from "@/hooks/useBooks";
+import { libraryService } from "@/lib/services/library.service";
+import { toast } from "react-hot-toast";
 import type { StudyNote } from "@/types";
 
 interface LibraryContentProps {
@@ -21,20 +24,100 @@ export const LibraryContent: React.FC<LibraryContentProps> = ({
   viewMode,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedNote, setSelectedNote] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   // Real data from hooks
   const notesQuery = useBackendLibraryNotes();
   const booksQuery = useBooks();
+  const invalidateLibrary = useInvalidateBackendLibrary();
 
-  const notes = notesQuery.data?.map((note: StudyNote) => ({
-    id: note?.note_id || "",
-    title: note?.title || "Untitled Note",
-    content: note?.content || "",
-    topic: (note as any)?.topics?.name || note?.topic || "General",
-    wordCount: note?.word_count || 0,
-    lastEdited: note?.updated_at || note?.last_edited || "Unknown",
-  })) || [];
+  const notes = notesQuery.data?.map((note: StudyNote) => {
+    const fullNote = note as any;
+    return {
+      id: note?.note_id || "",
+      title: note?.title || "Untitled Note",
+      content: note?.content || "",
+      topic: fullNote?.topics?.name || note?.topic || "General",
+      wordCount: note?.word_count || 0,
+      lastEdited: note?.updated_at || note?.last_edited || "Unknown",
+      // Add full note data for detail view
+      note_id: note?.note_id || "",
+      note_type: fullNote?.note_type || "lecture_notes",
+      tags: fullNote?.tags || [],
+      is_public: fullNote?.is_public || false,
+      created_at: fullNote?.created_at || "",
+      updated_at: note?.updated_at || "",
+      user_id: fullNote?.user_id || "",
+      topics: fullNote?.topics,
+      word_count: note?.word_count || 0,
+    };
+  }) || [];
 
   const books = booksQuery.data || [];
+
+  // Note viewing handlers
+  const handleViewNote = (note: any) => {
+    setSelectedNote(note);
+  };
+
+  const handleBackToNotes = () => {
+    setSelectedNote(null);
+  };
+
+
+
+  const handleDeleteNote = async (noteId: string) => {
+    setIsDeleting(true);
+    try {
+      const response = await libraryService.deleteNote(noteId);
+      
+      if (response.success) {
+        // Invalidate and refetch the notes data to update the UI
+        invalidateLibrary();
+        // Go back to notes list if we're in detail view
+        setSelectedNote(null);
+        // Note: Toast messages are handled by the NoteCard component
+      } else {
+        console.error('Failed to delete note:', response.error);
+        toast.error("Failed to delete note. Please try again.", {
+          duration: 4000,
+          style: {
+            background: '#EF4444',
+            color: '#ffffff',
+            border: '1px solid #DC2626',
+            borderRadius: '12px',
+            padding: '16px',
+            fontSize: '14px',
+            fontWeight: '500',
+          },
+          iconTheme: {
+            primary: '#ffffff',
+            secondary: '#EF4444',
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      toast.error("An error occurred while deleting the note. Please try again.", {
+        duration: 4000,
+        style: {
+          background: '#EF4444',
+          color: '#ffffff',
+          border: '1px solid #DC2626',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500',
+        },
+        iconTheme: {
+          primary: '#ffffff',
+          secondary: '#EF4444',
+        },
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Mock study materials data organized by categories
   const studyMaterials = [
@@ -277,7 +360,7 @@ export const LibraryContent: React.FC<LibraryContentProps> = ({
             title: "No study notes yet",
             description: "Capture your learning insights and key concepts",
             actionLabel: "Add Notes",
-            actionHref: "/library/notes/create",
+            actionHref: "/notes/create",
           },
         };
 
@@ -299,9 +382,7 @@ export const LibraryContent: React.FC<LibraryContentProps> = ({
   
   // Filter items based on search and category
   const filteredItems = content.items.filter((item: any) => {
-    const matchesSearch = item?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item?.subject?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
+    const matchesSearch = item?.title?.toLowerCase().includes(searchQuery.toLowerCase()) || false;
     
     // For materials, also filter by category
     if (activeTab === "materials") {
@@ -311,6 +392,30 @@ export const LibraryContent: React.FC<LibraryContentProps> = ({
     
     return matchesSearch;
   });
+
+  // Show note detail view if a note is selected
+  if (activeTab === "notes" && selectedNote) {
+    return (
+      <NoteDetailView
+        note={selectedNote}
+        onBack={handleBackToNotes}
+        onDelete={handleDeleteNote}
+        isDeleting={isDeleting}
+      />
+    );
+  }
+
+  // Show loading state when notes are being refetched after deletion
+  if (activeTab === "notes" && notesQuery.isFetching && !notesQuery.data) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Refreshing notes...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (filteredItems.length === 0) {
     return (
@@ -397,6 +502,8 @@ export const LibraryContent: React.FC<LibraryContentProps> = ({
                 key={item.id}
                 note={item}
                 viewMode={viewMode}
+                onView={handleViewNote}
+                onDelete={handleDeleteNote}
               />
             );
 

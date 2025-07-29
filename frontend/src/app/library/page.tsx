@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { LibraryHeader } from "@/components/features/library/LibraryHeader";
 import { LibraryTabs } from "@/components/features/library/LibraryTabs";
@@ -17,8 +17,14 @@ type LibraryTab = "notes" | "materials" | "books";
 
 export default function LibraryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const [activeTab, setActiveTab] = useState<LibraryTab>("books");
+  
+  // Get initial tab from URL parameter
+  const initialTab = searchParams.get("tab") as LibraryTab;
+  const [activeTab, setActiveTab] = useState<LibraryTab>(
+    initialTab && ["notes", "materials", "books"].includes(initialTab) ? initialTab : "books"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -29,6 +35,14 @@ export default function LibraryPage() {
       router.push("/auth/signin");
     }
   }, [userLoading, currentUser, router, setSignOutMessage]);
+
+  // Handle URL parameter changes for tab
+  useEffect(() => {
+    const tabParam = searchParams.get("tab") as LibraryTab;
+    if (tabParam && ["notes", "materials", "books"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   // Don't render anything while redirecting
   if (!userLoading && !currentUser) {
@@ -47,6 +61,8 @@ export default function LibraryPage() {
       </DashboardLayout>
     );
   }
+
+
 
                 return (
                 <DashboardLayout>
