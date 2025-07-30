@@ -17,6 +17,14 @@ export class TopicsService {
     return this.db.getTopicsWithSubtopicCount();
   }
 
+  getParentTopics(): Promise<ApiResponse<TopicRow[]>> {
+    return this.db.getParentTopics();
+  }
+
+  getSubtopicsByParent(parentTopicId: string): Promise<ApiResponse<TopicRow[]>> {
+    return this.db.getSubtopicsByParent(parentTopicId);
+  }
+
   getTopicById(id: string): Promise<ApiResponse<TopicRow>> {
     return this.db.getTopicById(id);
   }

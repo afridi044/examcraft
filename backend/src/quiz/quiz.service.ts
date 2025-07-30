@@ -186,7 +186,77 @@ export class QuizService {
       }
 
       const buildPrompt = (): string => {
-        return `Generate ${generateQuizDto.num_questions} ${generateQuizDto.question_types.join(', ')} questions about ${finalTopicName} (difficulty ${generateQuizDto.difficulty}/5). Respond ONLY in valid JSON with structure: {\n  "questions": [\n    {\n      "question": string,\n      "type": "multiple-choice",\n      "options": string[],\n      "correct_answer": number,\n      "explanation": string,\n      "difficulty": number\n    }\n  ]\n}`;
+        const difficultyDescriptions = {
+          1: "Beginner level - Basic concepts, definitions, and fundamental knowledge. Questions should test basic understanding and recall.",
+          2: "Easy level - Simple applications and straightforward concepts. Questions should test comprehension and basic application.",
+          3: "Medium level - Moderate complexity with some analysis required. Questions should test understanding and moderate application.",
+          4: "Hard level - Complex scenarios requiring analysis and synthesis. Questions should test higher-order thinking skills.",
+          5: "Expert level - Advanced concepts requiring deep understanding and critical thinking. Questions should test mastery and expert-level application."
+        };
+
+        const difficultyDescription = difficultyDescriptions[generateQuizDto.difficulty as keyof typeof difficultyDescriptions] || difficultyDescriptions[3];
+
+        let contentContext = "";
+        if (generateQuizDto.content_source && generateQuizDto.content_source.trim()) {
+          contentContext = `\n\nCONTENT CONTEXT: Use the following study material as the primary source for generating questions:\n${generateQuizDto.content_source}\n\nIMPORTANT: Base your questions primarily on this provided content. If the content doesn't cover enough material for ${generateQuizDto.num_questions} questions, supplement with general knowledge about ${finalTopicName}, but prioritize the provided content.`;
+        }
+
+        let additionalInstructions = "";
+        if (generateQuizDto.additional_instructions && generateQuizDto.additional_instructions.trim()) {
+          additionalInstructions = `\n\nSPECIFIC INSTRUCTIONS: ${generateQuizDto.additional_instructions}`;
+        }
+
+        return `You are an expert educational content creator specializing in creating high-quality multiple-choice questions for academic assessments.
+
+TASK: Generate ${generateQuizDto.num_questions} multiple-choice questions about "${finalTopicName}"
+
+DIFFICULTY LEVEL: ${generateQuizDto.difficulty}/5 - ${difficultyDescription}
+
+QUALITY REQUIREMENTS:
+1. Each question must have exactly 4 options (A, B, C, D)
+2. Only ONE option should be correct
+3. All incorrect options must be plausible and educational
+4. Avoid "all of the above" or "none of the above" options
+5. Questions should be clear, unambiguous, and well-written
+6. Each question should test a distinct concept or skill
+7. Avoid repetitive question patterns
+8. Ensure questions are appropriate for the specified difficulty level
+
+QUESTION STRUCTURE GUIDELINES:
+- Question stems should be clear and complete
+- Options should be grammatically consistent
+- Correct answers should be distributed across all positions (A, B, C, D)
+- Explanations should be educational and help learners understand the concept
+- Questions should progress from basic to more complex within the difficulty level
+
+TOPIC FOCUS: ${finalTopicName}${contentContext}${additionalInstructions}
+
+RESPONSE FORMAT: Respond ONLY with valid JSON in this exact structure:
+{
+  "questions": [
+    {
+      "question": "Clear, complete question text ending with a question mark?",
+      "type": "multiple-choice",
+      "options": [
+        "Option A - First choice",
+        "Option B - Second choice", 
+        "Option C - Third choice",
+        "Option D - Fourth choice"
+      ],
+      "correct_answer": 0,
+      "explanation": "Educational explanation of why this answer is correct and why others are incorrect. Include key concepts and learning points.",
+      "difficulty": ${generateQuizDto.difficulty}
+    }
+  ]
+}
+
+IMPORTANT: 
+- Start your response with { and end with }
+- Include exactly ${generateQuizDto.num_questions} questions
+- Use correct_answer: 0 for option A, 1 for B, 2 for C, 3 for D
+- Ensure all questions are relevant to "${finalTopicName}"
+- Make explanations educational and helpful for learning
+- Vary question types and cognitive levels within the difficulty range`;
       };
 
       let aiQuestions: AIQuestion[] = [];
@@ -209,11 +279,11 @@ export class QuizService {
                   {
                     role: 'system',
                     content:
-                      'You are an expert educational content creator. You must respond with ONLY valid JSON - no markdown, no explanations, no additional text. Start your response with { and end with }. Generate quiz questions in the exact JSON format requested.',
+                      'You are an expert educational content creator specializing in assessment design and curriculum development. Your role is to create high-quality, pedagogically sound multiple-choice questions that effectively assess student learning.\n\nCRITICAL REQUIREMENTS:\n- Respond ONLY with valid JSON - no markdown, no explanations, no additional text\n- Start your response with { and end with }\n- Follow the exact JSON structure specified in the user prompt\n- Ensure all questions are educationally valuable and well-crafted\n- Maintain consistency in question quality and difficulty\n- Focus on creating questions that promote learning and understanding\n- Avoid ambiguous or poorly worded questions\n- Ensure all distractors (incorrect options) are plausible and educational',
                   },
                   { role: 'user', content: buildPrompt() },
                 ],
-                temperature: 0.7,
+                temperature: 0.3,
                 max_tokens: 4000,
               }),
             },

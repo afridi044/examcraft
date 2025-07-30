@@ -129,28 +129,57 @@ export class FlashcardsService {
 
       // Create or get topic
       let topicId = dto.topic_id;
-      this.logger.log(`🤖 AI Generation - Initial topic_id: ${topicId}, custom_topic: ${dto.custom_topic}`);
+      let finalTopicName = dto.topic_name;
+      this.logger.log(`🤖 AI Generation - Initial topic_id: ${topicId}, subtopic_name: ${dto.subtopic_name}`);
 
-      if (!topicId && dto.custom_topic) {
-        this.logger.log(`🔧 Creating custom topic for AI generation: ${dto.custom_topic}`);
-        const topicInput: CreateTopicInput = {
-          name: dto.custom_topic,
-          description: `Custom topic: ${dto.custom_topic}`,
-        };
-        const topicRes = await this.databaseService.createTopic(topicInput);
-        if (topicRes.success && topicRes.data) {
-          topicId = topicRes.data.topic_id;
-          this.logger.log(`✅ Created custom topic with ID: ${topicId}`);
-        } else {
-          this.logger.error('Failed to create custom topic:', topicRes.error);
+      // Handle subtopic logic
+      if (dto.subtopic_name && dto.topic_id) {
+        // Check if subtopic already exists under the parent topic
+        const existingSubtopicRes = await this.databaseService.findSubtopicByNameAndParent(
+          dto.subtopic_name,
+          dto.topic_id
+        );
+
+        if (!existingSubtopicRes.success) {
+          throw new Error(existingSubtopicRes.error || 'Failed to check for existing subtopic');
         }
+
+        if (existingSubtopicRes.data) {
+          // Subtopic exists, use it
+          topicId = existingSubtopicRes.data.topic_id;
+          finalTopicName = `${dto.topic_name} - ${dto.subtopic_name}`;
+          this.logger.log(`📝 Using existing subtopic: ${dto.subtopic_name}`);
+        } else {
+          // Create new subtopic under the parent topic
+          const subtopicRes = await this.databaseService.createSubtopic(
+            dto.subtopic_name,
+            dto.topic_id
+          );
+
+          if (!subtopicRes.success || !subtopicRes.data) {
+            throw new Error(subtopicRes.error || 'Failed to create subtopic');
+          }
+
+          topicId = subtopicRes.data.topic_id;
+          finalTopicName = `${dto.topic_name} - ${dto.subtopic_name}`;
+          this.logger.log(`✨ Created new subtopic: ${dto.subtopic_name} under ${dto.topic_name}`);
+        }
+      } else if (dto.topic_id) {
+        // Using existing topic without subtopic
+        finalTopicName = dto.topic_name;
+      } else {
+        throw new Error('topic_id is required');
       }
 
       this.logger.log(`📋 AI Generation - Final topic_id for flashcards: ${topicId}`);
 
-      // Generate flashcards using AI service
+      // Generate flashcards using AI service with final topic name
+      const enhancedDto = {
+        ...dto,
+        topic_name: finalTopicName
+      };
       const aiFlashcards =
-        await this.aiFlashcardService.generateFlashcardsWithAI(dto);
+        await this.aiFlashcardService.generateFlashcardsWithAI(enhancedDto);
 
       // Create flashcards in database
       const createdFlashcards: any[] = [];
@@ -197,7 +226,7 @@ export class FlashcardsService {
         data: {
           flashcards: createdFlashcards,
           topic_id: topicId,
-          topic_name: dto.topic_name,
+          topic_name: finalTopicName,
           generated_count: createdFlashcards.length,
           requested_count: dto.num_flashcards,
           errors: errors.length > 0 ? errors : undefined,

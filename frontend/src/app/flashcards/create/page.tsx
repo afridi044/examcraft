@@ -27,9 +27,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubtopicAutocomplete } from "@/components/ui/subtopic-autocomplete";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
-import { useBackendTopics } from "@/hooks/useBackendTopics";
+import { useBackendParentTopics } from "@/hooks/useBackendTopics";
 import { useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
 import { PageLoading } from "@/components/ui/loading";
 import { toast } from "react-hot-toast";
@@ -37,7 +38,7 @@ import { SuccessScreen } from "@/components/ui/SuccessScreen";
 
 interface FlashcardForm {
   topic_id: string;
-  custom_topic: string;
+  subtopic_name: string;
   num_flashcards: number;
   difficulty: number;
   content_source: string;
@@ -46,7 +47,7 @@ interface FlashcardForm {
 
 const DEFAULT_FORM: FlashcardForm = {
   topic_id: "",
-  custom_topic: "",
+  subtopic_name: "",
   num_flashcards: 10,
   difficulty: 3,
   content_source: "",
@@ -66,7 +67,7 @@ function CreateFlashcardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const { data: topics = [], isLoading: topicsLoading } = useBackendTopics();
+  const { data: topics = [], isLoading: topicsLoading } = useBackendParentTopics();
   const generateAIFlashcards = useGenerateAIFlashcards();
 
   // Scroll to top when navigating
@@ -112,11 +113,6 @@ function CreateFlashcardContent() {
     }
   }, [userLoading, currentUser, router, setSignOutMessage]);
 
-  // Don't render anything while redirecting
-  if (!userLoading && !currentUser) {
-    return null;
-  }
-
   // Set initial topic if preselected
   useEffect(() => {
     if (preselectedTopicId && topics.length > 0) {
@@ -132,23 +128,49 @@ function CreateFlashcardContent() {
   // Simple loading check
   const isLoading = userLoading || topicsLoading;
 
+  // Don't render anything while redirecting
+  if (!userLoading && !currentUser) {
+    return null;
+  }
+
   const updateForm = (field: keyof FlashcardForm, value: string | number) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm(prev => {
+      const newForm = { ...prev, [field]: value };
+
+      // Enforce mutual exclusivity between topic_id and subtopic_name
+      if (field === 'topic_id' && value) {
+        // If selecting an existing topic, clear subtopic
+        newForm.subtopic_name = '';
+      } else if (field === 'subtopic_name' && value) {
+        // If entering a subtopic, ensure we have a parent topic selected
+        // Don't clear topic_id as it's required for subtopics
+      }
+
+      return newForm;
+    });
   };
 
   const getTopicName = () => {
     if (form.topic_id) {
       return topics?.find((t: any) => t.topic_id === form.topic_id)?.name || "";
     }
-    return form.custom_topic.trim();
+    return "";
   };
 
   const validateForm = () => {
-    const topicName = getTopicName();
-    if (!topicName) {
-      toast.error("Please select a topic or enter a custom topic");
+    const hasTopicId = !!form.topic_id;
+    const hasSubtopic = !!form.subtopic_name.trim();
+
+    if (!hasTopicId) {
+      toast.error("Please select a topic");
       return false;
     }
+
+    if (hasSubtopic && !hasTopicId) {
+      toast.error("Please select a parent topic when entering a subtopic");
+      return false;
+    }
+
     if (form.num_flashcards < 1 || form.num_flashcards > 50) {
       toast.error("Number of flashcards must be between 1 and 50");
       return false;
@@ -161,7 +183,16 @@ function CreateFlashcardContent() {
 
     setIsGenerating(true);
     try {
-      const topicName = getTopicName();
+      let topicName = '';
+      
+      if (form.subtopic_name.trim()) {
+        // Using subtopic - topic will be parent topic name
+        topicName = topics?.find((t: any) => t.topic_id === form.topic_id)?.name || '';
+      } else if (form.topic_id) {
+        // Using existing topic
+        topicName = topics?.find((t: any) => t.topic_id === form.topic_id)?.name || '';
+      }
+
       const difficultyMap = { 1: 'easy', 2: 'easy', 3: 'medium', 4: 'hard', 5: 'hard' } as const;
       const difficulty = difficultyMap[form.difficulty as keyof typeof difficultyMap] || 'medium';
 
@@ -170,6 +201,7 @@ function CreateFlashcardContent() {
         count: form.num_flashcards,
         difficulty,
         topicId: form.topic_id || undefined,
+        subtopicName: form.subtopic_name,
       });
 
       toast.success(`Successfully generated ${result.length} flashcard${result.length !== 1 ? "s" : ""}!`);
@@ -194,16 +226,6 @@ function CreateFlashcardContent() {
   const resetForm = () => {
     setGeneratedFlashcards(null);
     setForm(DEFAULT_FORM);
-  };
-
-  const handleTopicSelection = (topicId: string) => {
-    updateForm("topic_id", topicId);
-    updateForm("custom_topic", "");
-  };
-
-  const handleCustomTopic = (customTopic: string) => {
-    updateForm("custom_topic", customTopic);
-    updateForm("topic_id", "");
   };
 
   // React Select options and styling
@@ -394,54 +416,42 @@ function CreateFlashcardContent() {
                     animate={formInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                     transition={{ delay: 0.3, duration: 0.6 }}
                   >
-                    <Label className="text-gray-300">Topic</Label>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="topic" className="text-sm text-gray-400">Select from existing topics</Label>
-                        <ReactSelect
-                          id="topic"
-                          options={topicOptions}
-                          value={topicOptions.find((option: any) => option.value === form.topic_id) || null}
-                          onChange={(selectedOption) => {
-                            handleTopicSelection(selectedOption?.value || "");
-                          }}
-                          styles={selectStyles}
-                          placeholder="Choose a topic..."
-                          isClearable
-                          isSearchable
-                          className="react-select-container"
-                          classNamePrefix="react-select"
+                        <Label htmlFor="topic" className="text-gray-300">
+                          Topic
+                        </Label>
+                        <Select
+                          value={form.topic_id}
+                          onValueChange={(value) => updateForm("topic_id", value)}
                         >
-                          <SelectTrigger className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200">
+                          <SelectTrigger className="border-gray-600">
                             <SelectValue placeholder="Choose a topic..." />
                           </SelectTrigger>
-                          <SelectContent className="bg-gray-700/50 border-gray-600 text-white">
-                            {topicOptions.map((option: any) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                <div className="flex items-center space-x-2">
-                                  {option.icon}
-                                  <span>{option.label}</span>
-                                </div>
+                          <SelectContent>
+                            {topics?.map((topic: any) => (
+                              <SelectItem key={topic.topic_id} value={topic.topic_id}>
+                                {topic.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
-                        </ReactSelect>
+                        </Select>
                       </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="custom_topic" className="text-sm text-gray-400">Or enter custom topic</Label>
-                        <div>
-                          <Input
-                            id="custom_topic"
-                            value={form.custom_topic}
-                            onChange={(e) => handleCustomTopic(e.target.value)}
-                            placeholder="e.g., Machine Learning Basics"
-                            className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400 min-h-[44px] transition-all duration-200"
-                            disabled={!!form.topic_id}
-                          />
-                        </div>
-                      </div>
+                      <SubtopicAutocomplete
+                        value={form.subtopic_name}
+                        onChange={(value) => updateForm("subtopic_name", value)}
+                        parentTopicId={form.topic_id}
+                        placeholder="e.g., React Hooks"
+                      />
                     </div>
+                    {(form.topic_id || form.subtopic_name) && (
+                      <div className="text-xs p-2 rounded border transition-colors text-gray-400 bg-gray-700/30 border-gray-600">
+                        <span className="font-medium">
+                          Note:
+                        </span>
+                        You can select a parent topic and optionally enter a subtopic to create more focused flashcards.
+                      </div>
+                    )}
                   </motion.div>
                 </div>
 
@@ -654,6 +664,8 @@ function CreateFlashcardContent() {
                   >
                     {[
                       "Provide detailed content for more accurate flashcards",
+                      "Use subtopics to create focused, specialized flashcards",
+                      "Flashcards are organized by parent topics in your library",
                       "Use specific topics for better targeted learning",
                       "Include clear instructions for optimal AI generation",
                       "Start with 10-15 flashcards for effective study sessions"

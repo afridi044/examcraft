@@ -45,6 +45,30 @@ export class TopicsController {
     return res;
   }
 
+  @Get('parent')
+  @ApiOperation({ summary: 'Get only parent topics' })
+  @ApiResponse({
+    status: 200,
+    description: 'Parent topics retrieved successfully',
+  })
+  async getParentTopics() {
+    this.logger.log('📚 Getting parent topics only');
+    const res = await this.topicsService.getParentTopics();
+    return res;
+  }
+
+  @Get('parent/:parentId/subtopics')
+  @ApiOperation({ summary: 'Get subtopics for a parent topic' })
+  @ApiResponse({
+    status: 200,
+    description: 'Subtopics retrieved successfully',
+  })
+  async getSubtopicsByParent(@Param('parentId') parentId: string) {
+    this.logger.log(`📚 Getting subtopics for parent topic: ${parentId}`);
+    const res = await this.topicsService.getSubtopicsByParent(parentId);
+    return res;
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get topic by ID' })
   async getById(@Param('id') id: string) {

@@ -6,6 +6,8 @@ import {
   IsArray,
   Min,
   Max,
+  ValidateIf,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class GenerateAiFlashcardsDto {
@@ -15,7 +17,7 @@ export class GenerateAiFlashcardsDto {
 
   @IsString()
   @IsOptional()
-  custom_topic?: string;
+  subtopic_name?: string;
 
   @IsString()
   topic_name: string;
@@ -37,4 +39,13 @@ export class GenerateAiFlashcardsDto {
   @IsString()
   @IsOptional()
   additional_instructions?: string;
+
+  // Custom validation to ensure proper topic selection
+  @ValidateIf((o) => !o.topic_id)
+  @IsNotEmpty({ message: 'topic_id is required' })
+  _topicValidation?: string;
+
+  @ValidateIf((o) => o.subtopic_name && !o.topic_id)
+  @IsNotEmpty({ message: 'Parent topic_id is required when providing subtopic_name' })
+  _subtopicValidation?: string;
 }

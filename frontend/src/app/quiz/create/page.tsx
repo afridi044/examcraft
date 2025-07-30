@@ -8,8 +8,9 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubtopicAutocomplete } from "@/components/ui/subtopic-autocomplete";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { useBackendTopics } from "@/hooks/useBackendTopics";
+import { useBackendParentTopics } from "@/hooks/useBackendTopics";
 import { quizService } from "@/lib/services";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
@@ -64,7 +65,7 @@ const DIFFICULTY_LEVELS = [
 export default function CreateQuizPage() {
   const router = useRouter();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
-  const { data: topics = [], isLoading: topicsLoading } = useBackendTopics() as { data: Array<{ topic_id: string; name: string }>, isLoading: boolean };
+  const { data: topics = [], isLoading: topicsLoading } = useBackendParentTopics() as { data: Array<{ topic_id: string; name: string }>, isLoading: boolean };
 
   // EARLY REDIRECT: Check authentication immediately after render
   useEffect(() => {
@@ -390,18 +391,12 @@ export default function CreateQuizPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="subtopic_name" className="text-gray-300">
-                        Subtopic (optional)
-                      </Label>
-                      <Input
-                        id="subtopic_name"
-                        value={form.subtopic_name}
-                        onChange={(e) => updateForm("subtopic_name", e.target.value)}
-                        placeholder="e.g., React Hooks"
-                        className="bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
-                      />
-                    </div>
+                    <SubtopicAutocomplete
+                      value={form.subtopic_name}
+                      onChange={(value) => updateForm("subtopic_name", value)}
+                      parentTopicId={form.topic_id}
+                      placeholder="e.g., React Hooks"
+                    />
                   </div>
                   {(form.topic_id || form.subtopic_name) && (
                     <div className={`text-xs p-2 rounded border transition-colors ${(form.topic_id && form.subtopic_name.trim())

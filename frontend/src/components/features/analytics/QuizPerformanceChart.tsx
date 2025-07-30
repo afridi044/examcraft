@@ -180,40 +180,56 @@ export function QuizPerformanceChart({ data }: QuizPerformanceChartProps) {
 
       {/* Best and Worst Score Cards */}
       {chartData.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
           {/* Best Score Card */}
-          <div className="bg-green-500/10 border border-green-500/20 p-3 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-medium text-green-300">Best Score</p>
-              <p className="text-lg font-bold text-green-400">
+          <div className="bg-green-500/10 border border-green-500/20 p-2.5 sm:p-3 rounded-lg hover:bg-green-500/15 transition-colors">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full flex-shrink-0"></div>
+                <p className="text-xs font-medium text-green-300">Best Score</p>
+              </div>
+              <p className="text-lg sm:text-lg font-bold text-green-400">
                 {Math.max(...chartData.map(item => item.score))}%
               </p>
             </div>
-            <div className="text-xs text-gray-400">
-              <p className="font-medium text-gray-300 mb-1">
+            <div className="space-y-1 sm:space-y-1">
+              <p className="text-xs font-semibold text-gray-100 truncate">
                 {chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.fullTitle}
               </p>
-              <p className="text-gray-400">
-                {chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.correct}/{chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.questions} correct
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  {chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.correct}/{chartData.find(item => item.score === Math.max(...chartData.map(item => item.score)))?.questions} correct
+                </p>
+                <div className="text-xs text-green-400 font-medium">
+                  Perfect!
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Worst Score Card */}
-          <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-medium text-red-300">Worst Score</p>
-              <p className="text-lg font-bold text-red-400">
+          <div className="bg-red-500/10 border border-red-500/20 p-2.5 sm:p-3 rounded-lg hover:bg-red-500/15 transition-colors">
+            <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></div>
+                <p className="text-xs font-medium text-red-300">Worst Score</p>
+              </div>
+              <p className="text-lg sm:text-lg font-bold text-red-400">
                 {Math.min(...chartData.map(item => item.score))}%
               </p>
             </div>
-            <div className="text-xs text-gray-400">
-              <p className="font-medium text-gray-300 mb-1">
+            <div className="space-y-1 sm:space-y-1">
+              <p className="text-xs font-semibold text-gray-100 truncate">
                 {chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.fullTitle}
               </p>
-              <p className="text-gray-400">
-                {chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.correct}/{chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.questions} correct
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-400">
+                  {chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.correct}/{chartData.find(item => item.score === Math.min(...chartData.map(item => item.score)))?.questions} correct
+                </p>
+                <div className="text-xs text-red-400 font-medium">
+                  Needs Work
+                </div>
+              </div>
             </div>
           </div>
         </div>

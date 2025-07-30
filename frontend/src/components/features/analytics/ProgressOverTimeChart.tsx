@@ -71,8 +71,8 @@ export function ProgressOverTimeChart({ data }: ProgressOverTimeChartProps) {
         {/* Questions & Accuracy Chart */}
         <div className="space-y-3 sm:space-y-4">
           <div>
-            <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-1 sm:mb-2">Questions & Accuracy</h4>
-            <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">Daily learning activity and performance</p>
+            <h4 className="text-base sm:text-lg font-semibold text-gray-100 mb-1 sm:mb-2">Question Creation Trends</h4>
+            <p className="text-xs sm:text-sm text-gray-400 mb-3 sm:mb-4">Daily question creation activity</p>
           </div>
           <ResponsiveContainer width="100%" height={160} className="sm:h-[200px] md:h-[240px] xl:h-[280px]">
             <AreaChart data={chartData} style={{ background: 'transparent' }} background={{ fill: 'transparent' }}>

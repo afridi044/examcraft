@@ -233,48 +233,112 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📈 Getting topic progress for user: ${userId}`);
 
-      // Get topic progress directly from user_topic_progress table - ONLY PARENT TOPICS
-      this.logger.log(`🔍 Querying user_topic_progress for user: ${userId} (parent topics only)`);
-      
-      const { data, error } = await this.supabase
+      // Step 1: Get all topics with their hierarchy information
+      const { data: allTopics, error: topicsError } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select(`
+          topic_id,
+          name,
+          parent_topic_id
+        `)
+        .order('name', { ascending: true });
+
+      if (topicsError) {
+        this.logger.error(`❌ Error fetching topics: ${topicsError.message}`, topicsError);
+        return this.handleError(topicsError, 'getTopicProgress - topics query');
+      }
+
+      // Step 2: Get user progress data for all topics
+      const { data: progressData, error: progressError } = await this.supabase
         .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
         .select(`
           topic_id,
           proficiency_level,
           questions_attempted,
           questions_correct,
-          last_activity,
-          topics(name, parent_topic_id)
+          last_activity
         `)
-        .eq('user_id', userId)
-        .is('topics.parent_topic_id', null) // Only parent topics (no parent)
-        .order('last_activity', { ascending: false });
+        .eq('user_id', userId);
 
-      this.logger.log(`📊 Raw query result: ${JSON.stringify({ 
-        dataLength: data?.length || 0, 
-        error: error?.message || null,
-        firstItem: data?.[0] || null 
-      })}`);
-
-      if (error) {
-        this.logger.error(`❌ Error fetching topic progress: ${error.message}`, error);
-        return this.handleError(error, 'getTopicProgress');
+      if (progressError) {
+        this.logger.error(`❌ Error fetching user progress: ${progressError.message}`, progressError);
+        return this.handleError(progressError, 'getTopicProgress - progress query');
       }
 
-      // Convert to TopicProgress format
-      const topicProgress: TopicProgress[] = (data || []).map((item) => ({
-        topic_id: item.topic_id,
-        topic_name: item.topics?.name || 'Unknown Topic',
-        progress_percentage: Math.round((item.proficiency_level || 0) * 100),
-        questions_attempted: item.questions_attempted || 0,
-        questions_correct: item.questions_correct || 0,
-        last_activity: item.last_activity,
-      }));
+      this.logger.log(`📊 Found progress data for ${progressData?.length || 0} topics`);
+
+      // Step 3: Create a map of progress data for quick lookup
+      const progressMap = new Map<string, any>();
+      (progressData || []).forEach(progress => {
+        progressMap.set(progress.topic_id, progress);
+      });
+
+      // Step 4: Get only parent topics (topics with no parent_topic_id)
+      const parentTopics = (allTopics || []).filter(topic => !topic.parent_topic_id);
+
+      // Step 5: For each parent topic, aggregate statistics from parent + all subtopics
+      const aggregatedTopicProgress: TopicProgress[] = [];
+
+      for (const parentTopic of parentTopics) {
+        // Get parent topic progress
+        const parentProgress = progressMap.get(parentTopic.topic_id);
+        
+        // Get all subtopics under this parent
+        const subtopics = (allTopics || []).filter(topic => topic.parent_topic_id === parentTopic.topic_id);
+        
+        // Aggregate statistics from parent + all subtopics
+        let totalQuestionsAttempted = parentProgress?.questions_attempted || 0;
+        let totalQuestionsCorrect = parentProgress?.questions_correct || 0;
+        let latestActivity = parentProgress?.last_activity || null;
+        let totalProficiency = parentProgress?.proficiency_level || 0;
+        let topicsWithProgress = parentProgress ? 1 : 0;
+
+        // Add subtopic statistics
+        for (const subtopic of subtopics) {
+          const subtopicProgress = progressMap.get(subtopic.topic_id);
+          if (subtopicProgress) {
+            totalQuestionsAttempted += subtopicProgress.questions_attempted || 0;
+            totalQuestionsCorrect += subtopicProgress.questions_correct || 0;
+            totalProficiency += subtopicProgress.proficiency_level || 0;
+            topicsWithProgress++;
+            
+            // Update latest activity if subtopic has more recent activity
+            if (subtopicProgress.last_activity) {
+              if (!latestActivity || new Date(subtopicProgress.last_activity) > new Date(latestActivity)) {
+                latestActivity = subtopicProgress.last_activity;
+              }
+            }
+          }
+        }
+
+        // Only include parent topics that have any progress (either parent or subtopics)
+        if (totalQuestionsAttempted > 0) {
+          // Calculate aggregated proficiency (average of all topics with progress)
+          const avgProficiency = topicsWithProgress > 0 ? totalProficiency / topicsWithProgress : 0;
+          
+          aggregatedTopicProgress.push({
+            topic_id: parentTopic.topic_id,
+            topic_name: parentTopic.name,
+            progress_percentage: Math.round(avgProficiency * 100),
+            questions_attempted: totalQuestionsAttempted,
+            questions_correct: totalQuestionsCorrect,
+            last_activity: latestActivity,
+          });
+        }
+      }
+
+      // Step 6: Sort by most recent activity
+      aggregatedTopicProgress.sort((a, b) => {
+        if (!a.last_activity && !b.last_activity) return 0;
+        if (!a.last_activity) return 1;
+        if (!b.last_activity) return -1;
+        return new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime();
+      });
 
       this.logger.log(
-        `✅ Retrieved progress for ${topicProgress.length} topics from user_topic_progress table`,
+        `✅ Retrieved aggregated progress for ${aggregatedTopicProgress.length} parent topics (including subtopic statistics)`,
       );
-      return this.handleSuccess(topicProgress);
+      return this.handleSuccess(aggregatedTopicProgress);
     } catch (error) {
       return this.handleError(error, 'getTopicProgress');
     }
@@ -935,6 +999,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
 
   /**
    * Get all topic progress data (parent and child topics) for detailed analysis
+   * This method queries ALL topics and includes progress data where available
    */
   async getAllTopicProgress(
     userId: string
@@ -947,92 +1012,125 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     questions_attempted: number;
     questions_correct: number;
     accuracy_percentage: number;
-    last_activity: string;
+    last_activity: string | null;
   }>>> {
     try {
       this.logger.log(`📈 Getting all topic progress for user: ${userId}`);
 
-      // First, let's test if we can get basic data from user_topic_progress
-      const { data: basicData, error: basicError } = await this.supabase
-        .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
-        .select('*')
-        .eq('user_id', userId);
+      // Step 1: Get all topics with their hierarchy information
+      const { data: allTopics, error: topicsError } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select(`
+          topic_id,
+          name,
+          parent_topic_id
+        `)
+        .order('parent_topic_id', { ascending: true, nullsFirst: true })
+        .order('name', { ascending: true });
 
-      this.logger.log(`📊 Basic user_topic_progress query result: ${JSON.stringify({ 
-        dataLength: basicData?.length || 0, 
-        error: basicError?.message || null,
-        firstItem: basicData?.[0] || null 
-      })}`);
+      if (topicsError) {
+        this.logger.error(`❌ Error fetching topics: ${topicsError.message}`, topicsError);
+        return this.handleError(topicsError, 'getAllTopicProgress - topics query');
+      }
 
-      // Get all topic progress from user_topic_progress table (both parent and child topics)
-      const { data, error } = await this.supabase
+      this.logger.log(`📊 Found ${allTopics?.length || 0} total topics in database`);
+
+      // Step 2: Get user progress data for all topics
+      const { data: progressData, error: progressError } = await this.supabase
         .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
         .select(`
           topic_id,
           proficiency_level,
           questions_attempted,
           questions_correct,
-          last_activity,
-          topics(name, parent_topic_id)
+          last_activity
         `)
-        .eq('user_id', userId)
-        .order('last_activity', { ascending: false });
+        .eq('user_id', userId);
 
-      this.logger.log(`📊 getAllTopicProgress query result: ${JSON.stringify({ 
-        dataLength: data?.length || 0, 
-        error: error?.message || null,
-        firstItem: data?.[0] || null 
-      })}`);
-
-      if (error) {
-        this.logger.error(`❌ Error fetching all topic progress: ${error.message}`, error);
-        return this.handleError(error, 'getAllTopicProgress');
+      if (progressError) {
+        this.logger.error(`❌ Error fetching user progress: ${progressError.message}`, progressError);
+        return this.handleError(progressError, 'getAllTopicProgress - progress query');
       }
 
-      // Get parent topic names for child topics
-      const parentTopicIds = new Set<string>();
-      (data || []).forEach(item => {
-        if (item.topics?.parent_topic_id) {
-          parentTopicIds.add(item.topics.parent_topic_id);
+      this.logger.log(`📊 Found progress data for ${progressData?.length || 0} topics for user: ${userId}`);
+
+      // Step 3: Create a map of progress data for quick lookup
+      const progressMap = new Map<string, any>();
+      (progressData || []).forEach(progress => {
+        progressMap.set(progress.topic_id, progress);
+      });
+
+      // Step 4: Create parent topic name lookup
+      const parentTopicNames: { [key: string]: string } = {};
+      (allTopics || []).forEach(topic => {
+        if (!topic.parent_topic_id) {
+          parentTopicNames[topic.topic_id] = topic.name;
         }
       });
 
-      let parentTopicNames: { [key: string]: string } = {};
-      if (parentTopicIds.size > 0) {
-        const { data: parentTopics, error: parentError } = await this.supabase
-          .from(TABLE_NAMES.TOPICS)
-          .select('topic_id, name')
-          .in('topic_id', Array.from(parentTopicIds));
-
-        if (!parentError && parentTopics) {
-          parentTopicNames = parentTopics.reduce((acc, topic) => {
-            acc[topic.topic_id] = topic.name;
-            return acc;
-          }, {} as { [key: string]: string });
-        }
-      }
-
-      // Convert to detailed topic progress format
-      const topicProgress = (data || []).map((item) => {
-        const accuracyPercentage = item.questions_attempted > 0 
-          ? Math.round((item.questions_correct / item.questions_attempted) * 100)
+      // Step 5: Combine topic data with progress data
+      const topicProgress = (allTopics || []).map((topic) => {
+        const progress = progressMap.get(topic.topic_id);
+        
+        const accuracyPercentage = progress && progress.questions_attempted > 0 
+          ? Math.round((progress.questions_correct / progress.questions_attempted) * 100)
           : 0;
 
         return {
-          topic_id: item.topic_id,
-          topic_name: item.topics?.name || 'Unknown Topic',
-          parent_topic_id: item.topics?.parent_topic_id || null,
-          parent_topic_name: item.topics?.parent_topic_id ? parentTopicNames[item.topics.parent_topic_id] : undefined,
-          proficiency_level: Math.round((item.proficiency_level || 0) * 100), // Convert decimal to percentage
-          questions_attempted: item.questions_attempted || 0,
-          questions_correct: item.questions_correct || 0,
+          topic_id: topic.topic_id,
+          topic_name: topic.name,
+          parent_topic_id: topic.parent_topic_id,
+          parent_topic_name: topic.parent_topic_id ? parentTopicNames[topic.parent_topic_id] : undefined,
+          proficiency_level: progress ? Math.round((progress.proficiency_level || 0) * 100) : 0,
+          questions_attempted: progress?.questions_attempted || 0,
+          questions_correct: progress?.questions_correct || 0,
           accuracy_percentage: accuracyPercentage,
-          last_activity: item.last_activity,
+          last_activity: progress?.last_activity ? this.adjustTimestamp(progress.last_activity) : null,
         };
       });
 
-      this.logger.log(`✅ Retrieved detailed progress for ${topicProgress.length} topics`);
-      return this.handleSuccess(topicProgress);
+      // Step 6: Filter to only include topics that either have progress OR are subtopics of topics with progress
+      const topicsWithProgressIds = new Set(progressData?.map(p => p.topic_id) || []);
+      const parentTopicsWithProgress = new Set<string>();
+      
+      // Find parent topics that have subtopics with progress
+      topicProgress.forEach(topic => {
+        if (topic.parent_topic_id && topicsWithProgressIds.has(topic.topic_id)) {
+          parentTopicsWithProgress.add(topic.parent_topic_id);
+        }
+      });
+
+      // Include parent topics that have progress themselves
+      topicProgress.forEach(topic => {
+        if (!topic.parent_topic_id && topicsWithProgressIds.has(topic.topic_id)) {
+          parentTopicsWithProgress.add(topic.topic_id);
+        }
+      });
+
+      const filteredTopicProgress = topicProgress.filter(topic => {
+        // Include if the topic has progress data
+        if (topicsWithProgressIds.has(topic.topic_id)) {
+          return true;
+        }
+        
+        // Include if it's a subtopic of a parent that has progress (or subtopics with progress)
+        if (topic.parent_topic_id && parentTopicsWithProgress.has(topic.parent_topic_id)) {
+          return true;
+        }
+        
+        // Include if it's a parent topic that has subtopics
+        if (!topic.parent_topic_id) {
+          const hasSubtopics = topicProgress.some(t => t.parent_topic_id === topic.topic_id);
+          if (hasSubtopics && parentTopicsWithProgress.has(topic.topic_id)) {
+            return true;
+          }
+        }
+        
+        return false;
+      });
+
+      this.logger.log(`✅ Retrieved detailed progress for ${filteredTopicProgress.length} topics (filtered from ${topicProgress.length} total topics)`);
+      return this.handleSuccess(filteredTopicProgress);
     } catch (error) {
       return this.handleError(error, 'getAllTopicProgress');
     }
@@ -1060,7 +1158,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🏆 Getting best/worst topics for user: ${userId}`);
 
-      // Get topic progress directly from user_topic_progress table - ONLY PARENT TOPICS
+      // Get topic progress directly from user_topic_progress table - ALL TOPICS
       const { data, error } = await this.supabase
         .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
         .select(`
@@ -1072,7 +1170,6 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
           topics(name, parent_topic_id)
         `)
         .eq('user_id', userId)
-        .is('topics.parent_topic_id', null) // Only parent topics (no parent)
         .order('proficiency_level', { ascending: false });
 
       if (error) {

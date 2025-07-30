@@ -11,6 +11,7 @@ export interface TopicStats {
     mastered: number;
     total: number;
   };
+  subtopics?: string[]; // Add subtopics for detailed view
 }
 
 export interface FlashcardStats {
@@ -44,8 +45,13 @@ export function calculateFlashcardStats(
     };
   }
 
-  // Group flashcards by topic and calculate overall progress in one pass
-  const topicGroups = new Map<string, FlashcardWithTopic[]>();
+  // Group flashcards by parent topic
+  const parentTopicGroups = new Map<string, {
+    parentTopic: any;
+    flashcards: FlashcardWithTopic[];
+    subtopics: Set<string>;
+  }>();
+  
   const overallProgress = {
     learning: 0,
     under_review: 0,
@@ -54,13 +60,48 @@ export function calculateFlashcardStats(
   };
 
   flashcards.forEach((flashcard) => {
-    const topicId = flashcard.topic_id || "general";
+    const topic = flashcard.topic;
+    if (!topic) return;
 
-    // Group by topic
-    if (!topicGroups.has(topicId)) {
-      topicGroups.set(topicId, []);
+    // Determine the parent topic ID
+    // If topic has a parent, use parent; otherwise use the topic itself
+    const parentTopicId = topic.parent_topic_id || topic.topic_id;
+    
+    // Initialize parent topic group if not exists
+    if (!parentTopicGroups.has(parentTopicId)) {
+      // Find the parent topic data
+      let parentTopicData = topic;
+      if (topic.parent_topic_id) {
+        // This is a subtopic, we need to find the parent topic data
+        // For now, we'll use the current topic's parent_topic_id and create a placeholder
+        parentTopicData = {
+          topic_id: parentTopicId,
+          name: `Parent Topic`, // Will be updated when we find the actual parent
+          parent_topic_id: null,
+        };
+        
+        // Look for the actual parent topic in other flashcards
+        const parentFlashcard = flashcards.find(f => f.topic?.topic_id === parentTopicId);
+        if (parentFlashcard?.topic) {
+          parentTopicData = parentFlashcard.topic;
+        }
+      }
+      
+      parentTopicGroups.set(parentTopicId, {
+        parentTopic: parentTopicData,
+        flashcards: [],
+        subtopics: new Set(),
+      });
     }
-    topicGroups.get(topicId)!.push(flashcard);
+
+    // Add flashcard to parent topic group
+    const group = parentTopicGroups.get(parentTopicId)!;
+    group.flashcards.push(flashcard);
+    
+    // If this is a subtopic, add it to the subtopics set
+    if (topic.parent_topic_id) {
+      group.subtopics.add(topic.name);
+    }
 
     // Calculate overall progress
     overallProgress.total++;
@@ -77,11 +118,11 @@ export function calculateFlashcardStats(
     }
   });
 
-  // Create topic stats with progress breakdown
-  const stats = Array.from(topicGroups.entries())
-    .map(([topicId, cards]) => {
-      // Calculate progress for this topic
-      const progress = cards.reduce(
+  // Create topic stats with progress breakdown for parent topics
+  const stats = Array.from(parentTopicGroups.entries())
+    .map(([parentTopicId, group]) => {
+      // Calculate progress for this parent topic (including all subtopics)
+      const progress = group.flashcards.reduce(
         (acc, card) => {
           acc.total++;
           switch (card.mastery_status) {
@@ -100,23 +141,36 @@ export function calculateFlashcardStats(
         { learning: 0, under_review: 0, mastered: 0, total: 0 }
       );
 
+      // Create display name (just use parent topic name)
+      const displayName = group.parentTopic.name;
+
       return {
-        topicId,
-        topicName: cards[0]?.topic?.name || "General",
-        count: cards.length,
-        flashcards: cards,
+        topicId: parentTopicId,
+        topicName: displayName,
+        count: group.flashcards.length,
+        flashcards: group.flashcards,
         progress,
+        subtopics: Array.from(group.subtopics), // Add subtopics array for detailed view
       };
     })
     .sort((a, b) => b.count - a.count); // Sort by count descending
 
-  // Get selected topic's flashcards
-  const selectedCards = selectedTopicId
-    ? topicGroups.get(selectedTopicId) || []
-    : [];
-  const selectedName = selectedTopicId
-    ? stats.find((s) => s.topicId === selectedTopicId)?.topicName || ""
-    : "";
+  // Get selected topic's flashcards (could be parent topic or subtopic)
+  let selectedCards: FlashcardWithTopic[] = [];
+  let selectedName = "";
+  
+  if (selectedTopicId) {
+    // Check if selectedTopicId is a parent topic
+    const parentGroup = parentTopicGroups.get(selectedTopicId);
+    if (parentGroup) {
+      selectedCards = parentGroup.flashcards;
+      selectedName = parentGroup.parentTopic.name;
+    } else {
+      // selectedTopicId might be a subtopic, find flashcards for that specific subtopic
+      selectedCards = flashcards.filter(f => f.topic?.topic_id === selectedTopicId);
+      selectedName = selectedCards[0]?.topic?.name || "";
+    }
+  }
 
   return {
     topicStats: stats,

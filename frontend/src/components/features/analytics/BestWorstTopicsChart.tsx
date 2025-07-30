@@ -93,16 +93,7 @@ export function BestWorstTopicsChart({ data }: BestWorstTopicsChartProps) {
                   stroke="#9ca3af" 
                   fontSize={10}
                   tickLine={false}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                  tickFormatter={(value) => {
-                    if (value.length > 10) {
-                      return value.substring(0, 10) + '...';
-                    }
-                    return value;
-                  }}
+                  tick={false}
                 />
                 <YAxis 
                   stroke="#9ca3af" 
@@ -186,16 +177,7 @@ export function BestWorstTopicsChart({ data }: BestWorstTopicsChartProps) {
                   stroke="#9ca3af" 
                   fontSize={10}
                   tickLine={false}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval={0}
-                  tickFormatter={(value) => {
-                    if (value.length > 10) {
-                      return value.substring(0, 10) + '...';
-                    }
-                    return value;
-                  }}
+                  tick={false}
                 />
                 <YAxis 
                   stroke="#9ca3af" 

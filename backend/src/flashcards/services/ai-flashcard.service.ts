@@ -56,15 +56,15 @@ export class AiFlashcardService {
             messages: [
               {
                 role: 'system',
-                content:
-                  'You are an expert educational content creator specialized in creating effective flashcards for studying. You must respond with ONLY valid JSON - no markdown, no explanations, no additional text. Start your response with { and end with }. Generate flashcards in the exact JSON format requested. Focus on creating clear, concise questions with accurate answers that promote active recall and spaced repetition learning.',
+                                 content:
+                   'You are an expert educational content creator and cognitive scientist specializing in designing effective flashcards for spaced repetition and active recall learning. Your expertise includes understanding how memory works, optimal question design for retention, and creating educational content that promotes deep learning.\n\nCRITICAL REQUIREMENTS:\n- Respond ONLY with valid JSON - no markdown, no explanations, no additional text\n- Start your response with { and end with }\n- Follow the exact JSON structure specified in the user prompt\n- Create flashcards that optimize long-term retention and understanding\n- Design questions that promote active recall rather than passive recognition\n- Ensure each flashcard tests a distinct, important concept\n- Use evidence-based principles from cognitive science for effective learning\n- Focus on clarity, accuracy, and educational value in every flashcard\n- Keep answers concise (max 50 words) to fit flashcard UI format',
               },
               {
                 role: 'user',
                 content: prompt,
               },
             ],
-            temperature: 0.7,
+            temperature: 0.3,
             max_tokens: 4000,
             // Performance optimizations
             stream: false,
@@ -126,60 +126,105 @@ export class AiFlashcardService {
         throw new Error('AI response does not contain valid flashcards array');
       }
 
-      // Validate and clean up flashcards
-      const validFlashcards = aiResponse.flashcards
-        .filter((card: any) => card.question && card.answer)
-        .map((card: any) => ({
-          question: String(card.question).trim(),
-          answer: String(card.answer).trim(),
-          difficulty: Number(card.difficulty) || dto.difficulty,
-          explanation: card.explanation
-            ? String(card.explanation).trim()
-            : undefined,
-        }))
-        .slice(0, dto.num_flashcards); // Ensure we don't exceed requested count
+             // Validate and clean up flashcards
+       const validFlashcards = aiResponse.flashcards
+         .filter((card: any) => card.question && card.answer)
+         .map((card: any) => ({
+           question: String(card.question).trim(),
+           answer: String(card.answer).trim(),
+           difficulty: Number(card.difficulty) || dto.difficulty,
+           explanation: card.explanation
+             ? String(card.explanation).trim()
+             : undefined,
+         }))
+         .slice(0, dto.num_flashcards); // Ensure we don't exceed requested count
 
-      this.logger.log(
-        `✅ Generated ${validFlashcards.length} valid flashcards`,
-      );
-      return validFlashcards;
-    } catch (error) {
-      this.logger.error('AI flashcard generation failed:', error);
-      throw error;
-    }
-  }
+             this.logger.log(
+         `✅ Generated ${validFlashcards.length} valid flashcards`,
+       );
+       return validFlashcards;
+     } catch (error) {
+       this.logger.error('AI flashcard generation failed:', error);
+       throw error;
+     }
+   }
+
+
 
   private buildAIPrompt(dto: GenerateAiFlashcardsDto): string {
-    const basePrompt = `Generate ${dto.num_flashcards} educational flashcards about "${dto.topic_name}".
+    const difficultyDescriptions = {
+      1: "Beginner level - Basic definitions, fundamental concepts, and simple recall. Questions should test basic knowledge and terminology.",
+      2: "Easy level - Simple concepts and straightforward understanding. Questions should test comprehension and basic connections.",
+      3: "Medium level - Moderate complexity requiring some analysis. Questions should test understanding and application of concepts.",
+      4: "Hard level - Complex scenarios requiring critical thinking. Questions should test synthesis and advanced application.",
+      5: "Expert level - Advanced concepts requiring deep understanding. Questions should test mastery and expert-level insights."
+    };
 
-Requirements:
-- Difficulty level: ${dto.difficulty}/5 (1=beginner, 5=expert)
-- Create questions that promote active recall and understanding
-- Provide clear, accurate answers
-- Each flashcard should test different aspects of the topic
+    const difficultyDescription = difficultyDescriptions[dto.difficulty as keyof typeof difficultyDescriptions] || difficultyDescriptions[3];
 
-${dto.content_source ? `Content source/context: ${dto.content_source}` : ''}
-${dto.additional_instructions ? `Additional instructions: ${dto.additional_instructions}` : ''}
+    let contentContext = "";
+    if (dto.content_source && dto.content_source.trim()) {
+      contentContext = `\n\nCONTENT CONTEXT: Use the following study material as the primary source for creating flashcards:\n${dto.content_source}\n\nIMPORTANT: Base your flashcards primarily on this provided content. Create questions and answers that help students learn and remember the key concepts from this material. If the content doesn't cover enough material for ${dto.num_flashcards} flashcards, supplement with essential knowledge about ${dto.topic_name}, but prioritize the provided content.`;
+    }
 
-Respond with ONLY this JSON structure (no markdown, no extra text):
+    let additionalInstructions = "";
+    if (dto.additional_instructions && dto.additional_instructions.trim()) {
+      additionalInstructions = `\n\nSPECIFIC INSTRUCTIONS: ${dto.additional_instructions}`;
+    }
+
+    return `You are an expert educational content creator specializing in creating effective flashcards for spaced repetition and active recall learning.
+
+TASK: Generate ${dto.num_flashcards} educational flashcards about "${dto.topic_name}"
+
+DIFFICULTY LEVEL: ${dto.difficulty}/5 - ${difficultyDescription}
+
+FLASHCARD QUALITY REQUIREMENTS:
+1. Questions should be clear, specific, and unambiguous
+2. Questions should promote active recall, not passive recognition
+3. Answers should be comprehensive but concise (1-3 sentences typically)
+4. Each flashcard should test a distinct concept, fact, or skill
+5. Avoid questions that can be answered with simple yes/no unless testing specific facts
+6. Use varied question formats to maintain engagement
+7. Ensure answers are accurate and educational
+
+QUESTION DESIGN PRINCIPLES:
+- Use "What is...?", "How does...?", "Why does...?", "When should...?" formats
+- Test understanding, not just memorization
+- Include application-based questions for higher difficulty levels
+- Create questions that require thinking and synthesis
+- Avoid overly complex or confusing wording
+- Focus on the most important concepts that students need to know
+
+ANSWER GUIDELINES:
+- Provide complete but concise answers (maximum 50 words)
+- Include key details that aid understanding within the word limit
+- Add context when helpful for learning, but keep it brief
+- Ensure answers directly address the question asked
+- Use clear, educational language appropriate for the difficulty level
+- Keep answers focused and to the point to fit flashcard format
+
+TOPIC FOCUS: ${dto.topic_name}${contentContext}${additionalInstructions}
+
+RESPONSE FORMAT: Respond ONLY with valid JSON in this exact structure:
 {
   "flashcards": [
     {
-      "question": "Clear, specific question that tests understanding",
-      "answer": "Comprehensive but concise answer",
+      "question": "Clear, specific question that tests understanding and promotes active recall?",
+      "answer": "Concise answer (max 50 words) that directly addresses the question and fits flashcard format.",
       "difficulty": ${dto.difficulty},
-      "explanation": "Optional: Brief explanation of why this is important to know"
+      "explanation": "Brief explanation of why this concept is important or how it connects to broader topics."
     }
   ]
 }
 
-Focus on:
-- Questions that require thinking, not just memorization
-- Answers that are accurate and complete
-- Progressive difficulty appropriate for level ${dto.difficulty}
-- Variety in question types (what, how, why, when, etc.)
-- Real-world applications when relevant`;
-
-    return basePrompt;
+IMPORTANT REQUIREMENTS:
+- Start your response with { and end with }
+- Include exactly ${dto.num_flashcards} flashcards
+- Ensure all questions are relevant to "${dto.topic_name}"
+- Keep answers under 50 words to fit flashcard UI format
+- Make explanations educational and connect to broader learning objectives
+- Vary question types and cognitive levels within the difficulty range
+- Focus on concepts that promote long-term retention and understanding
+- Create flashcards that would be valuable for exam preparation and knowledge mastery`;
   }
 }

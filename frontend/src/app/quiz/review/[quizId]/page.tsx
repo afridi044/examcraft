@@ -158,7 +158,18 @@ export default function QuizReviewPage() {
         {/* Header */}
         <DashboardHeader
           title={`Quiz Review: ${reviewData.quiz.title}`}
-          subtitle={reviewData.quiz.topic?.name || reviewData.quiz.description || "Review your quiz performance"}
+          subtitle={(() => {
+            const topic = reviewData.quiz.topic;
+            if (!topic) return reviewData.quiz.description || "Review your quiz performance";
+            
+            // If it's a subtopic (has parent), show "Subtopic, Parent Topic"
+            if (topic.parent_topic) {
+              return `${topic.name}, ${topic.parent_topic.name}`;
+            }
+            
+            // Otherwise just show the topic name
+            return topic.name;
+          })()}
           iconLeft={<span role="img" aria-label="Memo">📝</span>}
           iconAfterSubtitle={<Star className="h-5 w-5 text-yellow-300 ml-1" />}
         />

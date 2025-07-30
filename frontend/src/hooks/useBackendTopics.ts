@@ -44,4 +44,22 @@ export function useBackendTopicsWithSubtopicCount() {
   });
 }
 
+/**
+ * Hook to get only parent topics
+ */
+export function useBackendParentTopics() {
+  return useQuery({
+    queryKey: [...TOPIC_QUERY_KEYS.all, 'parent'],
+    queryFn: async () => {
+      const response = await topicService.getParentTopics();
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to fetch parent topics');
+      }
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
 

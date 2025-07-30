@@ -57,4 +57,18 @@ export const topicService = {
   async getTopicsWithSubtopicCount(): Promise<ApiResponse<Array<Topic & { subtopic_count: number }>>> {
     return apiClient.get<Array<Topic & { subtopic_count: number }>>('/topics/with-subtopic-count');
   },
+
+  /**
+   * Get only parent topics
+   */
+  async getParentTopics(): Promise<ApiResponse<Topic[]>> {
+    return apiClient.get<Topic[]>('/topics/parent');
+  },
+
+  /**
+   * Get subtopics for a parent topic
+   */
+  async getSubtopicsByParent(parentTopicId: string): Promise<ApiResponse<Topic[]>> {
+    return apiClient.get<Topic[]>(`/topics/parent/${parentTopicId}/subtopics`);
+  },
 }; 

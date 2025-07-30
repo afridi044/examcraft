@@ -149,9 +149,12 @@ export function useTopicStats() {
       }
       return response.data || [];
     },
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache time
-    refetchOnWindowFocus: false,
+    staleTime: 30 * 1000, // 30 seconds - shorter for more responsive updates  
+    gcTime: 5 * 60 * 1000, // 5 minutes cache time
+    refetchOnWindowFocus: true, // Refetch when user comes back to tab
+    refetchOnMount: true, // Always refetch on mount
+    retry: 1,
+    refetchInterval: false,
   });
 }
 

@@ -284,4 +284,34 @@ export class QuestionDatabaseService extends BaseDatabaseService {
       return this.handleError(error, 'getTopicsWithSubtopicCount');
     }
   }
+
+  async getParentTopics(): Promise<ApiResponse<TopicRow[]>> {
+    try {
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select('*')
+        .is('parent_topic_id', null) // Only parent topics
+        .order('name');
+
+      if (error) return this.handleError(error, 'getParentTopics');
+      return this.handleSuccess(data || []);
+    } catch (error) {
+      return this.handleError(error, 'getParentTopics');
+    }
+  }
+
+  async getSubtopicsByParent(parentTopicId: string): Promise<ApiResponse<TopicRow[]>> {
+    try {
+      const { data, error } = await this.supabase
+        .from(TABLE_NAMES.TOPICS)
+        .select('*')
+        .eq('parent_topic_id', parentTopicId)
+        .order('name');
+
+      if (error) return this.handleError(error, 'getSubtopicsByParent');
+      return this.handleSuccess(data || []);
+    } catch (error) {
+      return this.handleError(error, 'getSubtopicsByParent');
+    }
+  }
 }

@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
-import { useBackendTopics } from "@/hooks/useBackendTopics";
+import { useBackendParentTopics } from "@/hooks/useBackendTopics";
 import { useCreateFlashcard, useGenerateAIFlashcards } from "@/hooks/useBackendFlashcards";
 import { toast } from "react-hot-toast";
 
@@ -54,7 +54,7 @@ export function CreateFlashcardModal({
   preselectedTopicId = "",
 }: CreateFlashcardModalProps) {
   const { user: currentUser } = useBackendAuth();
-  const { data: topics } = useBackendTopics();
+  const { data: topics } = useBackendParentTopics();
   const createFlashcardMutation = useCreateFlashcard();
   const generateAIFlashcardsMutation = useGenerateAIFlashcards();
 

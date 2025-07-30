@@ -37,6 +37,11 @@ export interface QuizReviewData {
     topic?: {
       topic_id: string;
       name: string;
+      parent_topic_id?: string | null;
+      parent_topic?: {
+        topic_id: string;
+        name: string;
+      } | null;
     };
     is_timed?: boolean;
     time_limit_minutes?: number;
@@ -146,6 +151,24 @@ export interface StudyNote {
   };
 }
 
+export interface FlashcardWithTopic {
+  flashcard_id: string;
+  user_id: string;
+  question: string;
+  answer: string;
+  topic_id?: string;
+  source_question_id?: string;
+  mastery_status: 'learning' | 'under_review' | 'mastered';
+  next_review?: string;
+  created_at: string;
+  updated_at: string;
+  topic?: {
+    topic_id: string;
+    name: string;
+    description?: string;
+    parent_topic_id?: string;
+  };
+}
 
 
 export interface Book {

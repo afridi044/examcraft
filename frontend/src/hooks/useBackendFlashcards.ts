@@ -139,6 +139,7 @@ export function useGenerateAIFlashcards() {
       count: number;
       difficulty?: 'easy' | 'medium' | 'hard';
       topicId?: string;
+      subtopicName?: string;
     }) => {
       const response = await flashcardService.generateAIFlashcards(input);
       if (!response.success) {

@@ -17,12 +17,14 @@ export const flashcardService = {
     count: number;
     difficulty?: 'easy' | 'medium' | 'hard';
     topicId?: string;
+    subtopicName?: string;
   }): Promise<any> {
     // Convert frontend parameters to backend DTO format
     const difficultyMap = { 'easy': 1, 'medium': 3, 'hard': 5 };
     const backendPayload = {
       topic_id: input.topicId,
       topic_name: input.topic,
+      subtopic_name: input.subtopicName,
       num_flashcards: input.count,
       difficulty: difficultyMap[input.difficulty || 'medium'],
     };

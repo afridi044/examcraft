@@ -26,7 +26,17 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
         quiz_id: string;
         title: string;
         description: string | null;
-        topic: { topic_id: string; name: string } | { topic_id: string; name: string }[] | null;
+        topic: { 
+          topic_id: string; 
+          name: string; 
+          parent_topic_id: string | null;
+          parent_topic?: { topic_id: string; name: string } | null;
+        } | { 
+          topic_id: string; 
+          name: string; 
+          parent_topic_id: string | null;
+          parent_topic?: { topic_id: string; name: string } | null;
+        }[] | null;
         quiz_questions: {
           question_id: string;
           question_order: number;
@@ -46,7 +56,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
           quiz_id,
           title,
           description,
-          topic:topics(topic_id, name),
+          topic:topics(topic_id, name, parent_topic_id),
           quiz_questions(question_id, question_order, questions(*, question_options(*)))
         `,
         )
@@ -54,6 +64,25 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
         .single<QuizDataResult>();
 
       if (quizError) return this.handleError(quizError, 'getQuizReview');
+
+      // ------------------------------------------------
+      // 1.5. Get parent topic information if this is a subtopic
+      // ------------------------------------------------
+      let parentTopicInfo: { topic_id: string; name: string } | null = null;
+      if (quizData?.topic) {
+        const topic = Array.isArray(quizData.topic) ? quizData.topic[0] : quizData.topic;
+        if (topic?.parent_topic_id) {
+          const { data: parentTopic, error: parentError } = await this.supabase
+            .from(TABLE_NAMES.TOPICS)
+            .select('topic_id, name')
+            .eq('topic_id', topic.parent_topic_id)
+            .single();
+          
+          if (!parentError && parentTopic) {
+            parentTopicInfo = parentTopic;
+          }
+        }
+      }
 
       // ------------------------------------------------
       // 2. Get user answers for this quiz
@@ -195,12 +224,16 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
             // Supabase may return topic as an object or an array; normalise to single object
             if (!quizData?.topic) return undefined;
             const maybeArray = quizData.topic;
-            if (Array.isArray(maybeArray)) {
-              return maybeArray.length
-                ? { topic_id: maybeArray[0]?.topic_id || '', name: maybeArray[0]?.name || '' }
-                : undefined;
-            }
-            return { topic_id: maybeArray.topic_id || '', name: maybeArray.name };
+            const topic = Array.isArray(maybeArray) ? maybeArray[0] : maybeArray;
+            
+            if (!topic) return undefined;
+            
+            return { 
+              topic_id: topic.topic_id || '', 
+              name: topic.name || '',
+              parent_topic_id: topic.parent_topic_id || null,
+              parent_topic: parentTopicInfo
+            };
           })(),
         },
         questions,

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { 
   BarChart3, 
   Target, 
@@ -46,11 +45,13 @@ export default function AnalyticsPage() {
   } = useComprehensiveAnalytics();
 
   const { 
-    data: topicStatsData
+    data: topicStatsData,
+    refetch: refetchTopicStats
   } = useTopicStats();
 
   const handleRefresh = () => {
     refetch();
+    refetchTopicStats();
   };
 
   // Calculate summary stats
@@ -119,27 +120,17 @@ export default function AnalyticsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Professional Header */}
-        <motion.div 
-          className="mb-6"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
+        <div className="mb-6">
           <DashboardHeader
             title="Learning Analytics"
             subtitle="Track your progress, identify patterns, and optimize your learning journey"
           />
-        </motion.div>
+        </div>
 
         {/* Main Analytics Grid - Fixed Layout */}
         <div className="space-y-4 sm:space-y-6 lg:space-y-8">
           {/* Row 1: Key Metrics Summary - Moved to the very top */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
-          >
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <Card className="bg-slate-900/80 border-slate-800/80 p-3 sm:p-4 hover:bg-slate-900/40 transition-colors">
               <div className="flex items-center">
                 <div className="p-1.5 sm:p-2 bg-blue-500/20 rounded-lg mr-2 sm:mr-3">
@@ -194,34 +185,30 @@ export default function AnalyticsPage() {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </div>
 
           {/* Row 2: Progress Over Time Charts - 2 Column Grid (except mobile) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
             {/* Questions & Accuracy Chart */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
+            <div>
               <Card className="bg-slate-900/80 border-slate-800/80 p-4 sm:p-6 hover:bg-slate-900/40 transition-colors relative overflow-hidden">
                 <div className="flex items-center mb-4 sm:mb-6">
-                  <div className="p-2 bg-green-500/20 rounded-lg mr-3 sm:mr-4">
-                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-green-400" />
+                  <div className="p-2 bg-blue-500/20 rounded-lg mr-3 sm:mr-4">
+                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-100">Questions & Accuracy</h3>
-                    <p className="text-sm text-gray-400">Daily learning activity and performance trends</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-100">Question Creation Trends</h3>
+                    <p className="text-sm text-gray-400">Daily question creation activity</p>
                   </div>
                 </div>
                 <div className="h-64 sm:h-72 md:h-80 relative z-10 -ml-10">
                   <QuestionsAccuracyChart data={analyticsData.progressOverTime} />
                 </div>
               </Card>
-            </motion.div>
+            </div>
 
             {/* Accuracy Chart */}
-            <motion.div
+            <div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -240,12 +227,12 @@ export default function AnalyticsPage() {
                   <AverageTimeChart data={analyticsData.progressOverTime} />
                 </div>
               </Card>
-            </motion.div>
+            </div>
           </div>
 
           {/* Row 3: Activity Heatmap and Accuracy Breakdown - Side by Side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-stretch">
-            <motion.div
+            <div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -265,9 +252,9 @@ export default function AnalyticsPage() {
                   <ActivityHeatmap data={analyticsData.activityHeatmap} />
                 </div>
               </Card>
-            </motion.div>
+            </div>
 
-            <motion.div
+            <div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
@@ -287,12 +274,12 @@ export default function AnalyticsPage() {
                   <AccuracyBreakdownChart data={analyticsData.accuracyBreakdown} />
                 </div>
               </Card>
-            </motion.div>
+            </div>
           </div>
 
           {/* Row 4: Quiz Performance and Flashcard Analytics - Side by Side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-            <motion.div
+            <div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
@@ -309,9 +296,9 @@ export default function AnalyticsPage() {
                 </div>
                 <QuizPerformanceChart data={analyticsData.quizPerformanceTrend} />
               </Card>
-            </motion.div>
+            </div>
 
-            <motion.div
+            <div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.6 }}
@@ -328,11 +315,11 @@ export default function AnalyticsPage() {
                 </div>
                 <FlashcardAnalyticsChart data={analyticsData.flashcardAnalytics} />
               </Card>
-            </motion.div>
+            </div>
           </div>
 
           {/* Row 5: Topic Stats (Full Width) */}
-          <motion.div
+          <div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
@@ -340,10 +327,10 @@ export default function AnalyticsPage() {
             <Card className="bg-slate-900/80 border-slate-700/60 p-4 sm:p-6 hover:bg-slate-900/40 transition-colors">
               <TopicStats data={topicStatsData || []} />
             </Card>
-          </motion.div>
+          </div>
 
           {/* Row 6: Topic Performance (Full Width) */}
-          <motion.div
+          <div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.8 }}
@@ -362,7 +349,7 @@ export default function AnalyticsPage() {
               </div>
               <BestWorstTopicsChart data={analyticsData.bestWorstTopics} />
             </Card>
-          </motion.div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
