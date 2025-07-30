@@ -11,6 +11,16 @@ An AI-powered exam preparation platform that helps students create, manage, and 
 - **Smart Study Sessions** - Personalized learning recommendations
 - **Modern UI/UX** - Beautiful, responsive interface
 
+## 📺 Demo Videos
+
+**🎯 Project Features Demo**  
+[![ExamCraft Features](https://img.youtube.com/vi/dvH_PPXtCH8/0.jpg)](https://youtu.be/dvH_PPXtCH8)  
+*Watch our comprehensive feature walkthrough showcasing the AI-powered quiz generation, flashcard system, and analytics dashboard.*
+
+**🏗️ Infrastructure Overview**  
+[![ExamCraft Infrastructure](https://img.youtube.com/vi/62ThlQZJHiU/0.jpg)](https://youtu.be/62ThlQZJHiU)  
+*Learn about our system architecture, deployment pipeline, and technical implementation details.*
+
 ## 🛠️ Tech Stack
 
 **Frontend:**
