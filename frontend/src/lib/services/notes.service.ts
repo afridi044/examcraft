@@ -26,7 +26,9 @@ export const notesService = {
   async createNote(input: {
     title: string;
     content: string;
-    topic?: string;
+    topic_id?: string;
+    subtopic_name?: string;
+    topic_name?: string;
   }): Promise<ApiResponse<StudyNote>> {
     return apiClient.post<StudyNote>('/notes', input);
   },

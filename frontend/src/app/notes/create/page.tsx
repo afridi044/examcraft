@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useCreateBackendNote } from "@/hooks/useBackendNotes";
+import { useBackendParentTopics } from "@/hooks/useBackendTopics";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { PageLoading } from "@/components/ui/loading";
 import { SuccessScreen } from "@/components/ui/SuccessScreen";
@@ -15,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SubtopicAutocomplete } from "@/components/ui/subtopic-autocomplete";
 import {
   BookOpen,
   Sparkles,
@@ -34,13 +37,15 @@ import Confetti from "react-confetti";
 interface NoteForm {
   title: string;
   content: string;
-  topic: string;
+  topic_id: string;
+  subtopic_name: string;
 }
 
 const DEFAULT_FORM: NoteForm = {
   title: "",
   content: "",
-  topic: "",
+  topic_id: "",
+  subtopic_name: "",
 };
 
 
@@ -49,6 +54,7 @@ export default function CreateNotePage() {
   const router = useRouter();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
   const createNoteMutation = useCreateBackendNote();
+  const { data: topics = [], isLoading: topicsLoading } = useBackendParentTopics();
 
   // Scroll to top when navigating
   useScrollToTop();
@@ -92,7 +98,7 @@ export default function CreateNotePage() {
   }
 
   // Loading state
-  if (userLoading) {
+  if (userLoading || topicsLoading) {
     return (
       <DashboardLayout>
         <PageLoading
@@ -105,7 +111,20 @@ export default function CreateNotePage() {
   }
 
   const updateForm = (field: keyof NoteForm, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
+    setForm(prev => {
+      const newForm = { ...prev, [field]: value };
+
+      // Enforce mutual exclusivity between topic_id and subtopic_name
+      if (field === 'topic_id' && value) {
+        // If selecting an existing topic, clear subtopic
+        newForm.subtopic_name = '';
+      } else if (field === 'subtopic_name' && value) {
+        // If entering a subtopic, ensure we have a parent topic selected
+        // Don't clear topic_id as it's required for subtopics
+      }
+
+      return newForm;
+    });
   };
 
   const validateForm = () => {
@@ -121,6 +140,22 @@ export default function CreateNotePage() {
       toast.error("Please enter at least 5 words in your note");
       return false;
     }
+    
+    // Check topic selection logic
+    const hasTopicId = !!form.topic_id;
+    const hasSubtopic = !!form.subtopic_name.trim();
+    
+    // Must have topic_id, and optionally subtopic_name
+    if (!hasTopicId) {
+      toast.error("Please select a topic");
+      return false;
+    }
+    
+    if (hasSubtopic && !hasTopicId) {
+      toast.error("Please select a parent topic when entering a subtopic");
+      return false;
+    }
+    
     return true;
   };
 
@@ -130,10 +165,23 @@ export default function CreateNotePage() {
     setIsSubmitting(true);
     
     try {
+      let topicName = '';
+      
+      if (form.subtopic_name.trim()) {
+        // Using subtopic - topic will be parent topic name + subtopic
+        const parentTopic = topics?.find((t: any) => t.topic_id === form.topic_id);
+        topicName = parentTopic ? `${parentTopic.name} - ${form.subtopic_name.trim()}` : form.subtopic_name.trim();
+      } else if (form.topic_id) {
+        // Using existing topic
+        topicName = topics?.find((t: any) => t.topic_id === form.topic_id)?.name || '';
+      }
+
       const result = await createNoteMutation.mutateAsync({
         title: form.title.trim(),
         content: form.content.trim(),
-        topic: form.topic.trim() || undefined,
+        topic_id: form.topic_id,
+        subtopic_name: form.subtopic_name.trim() || undefined,
+        topic_name: topicName || undefined,
       });
       
       if (result) {
@@ -258,19 +306,46 @@ export default function CreateNotePage() {
                         />
                       </div>
 
-                      {/* Topic Input */}
-                      <div className="space-y-2">
-                        <Label htmlFor="topic" className="text-sm font-medium text-gray-300">
-                          Topic (Optional)
-                        </Label>
-                        <Input
-                          id="topic"
-                          value={form.topic}
-                          onChange={(e) => updateForm("topic", e.target.value)}
-                          placeholder="e.g., JavaScript, Calculus, React, Biology..."
-                          className="h-12 bg-slate-800/80 border-slate-600/50 text-white placeholder:text-gray-400 focus:border-green-500/50 focus:ring-green-500/20 rounded-xl transition-all duration-200"
-                        />
+                      {/* Topic Selection */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="topic" className="text-sm font-medium text-gray-300">
+                            Topic *
+                          </Label>
+                          <Select
+                            value={form.topic_id}
+                            onValueChange={(value) => updateForm("topic_id", value)}
+                          >
+                            <SelectTrigger className="h-12 bg-slate-800/80 border-slate-600/50 text-white focus:border-green-500/50 focus:ring-green-500/20 rounded-xl transition-all duration-200">
+                              <SelectValue placeholder="Choose a topic..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {topics?.map((topic: any) => (
+                                <SelectItem key={topic.topic_id} value={topic.topic_id}>
+                                  {topic.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <SubtopicAutocomplete
+                            value={form.subtopic_name}
+                            onChange={(value) => updateForm("subtopic_name", value)}
+                            parentTopicId={form.topic_id}
+                            placeholder="e.g., React Hooks"
+                          />
+                        </div>
                       </div>
+                      
+                      {(form.topic_id || form.subtopic_name) && (
+                        <div className="text-xs p-2 rounded border transition-colors text-gray-400 bg-slate-700/30 border-slate-600">
+                          <span className="font-medium">
+                            Note:
+                          </span>
+                          You can select a parent topic and optionally enter a subtopic to create more focused notes.
+                        </div>
+                      )}
 
                       {/* Content Input */}
                       <div className="space-y-2">

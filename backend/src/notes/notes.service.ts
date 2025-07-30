@@ -36,38 +36,44 @@ export class NotesService {
 
     let topicId: string | null = null;
 
-    // Handle topic mapping: convert topic name to topic_id
-    if (createNoteDto.topic) {
-      try {
-        console.log('createNoteDto.topic', createNoteDto.topic);
-        // First, try to find existing topic by name
-        const topicsResponse = await this.databaseService.getAllTopics();
-        if (topicsResponse.success && topicsResponse.data) {
-          const existingTopic = topicsResponse.data.find(
-            (topic: any) => topic.name.toLowerCase() === createNoteDto.topic!.toLowerCase()
-          );
-          
-          if (existingTopic) {
-            topicId = existingTopic.topic_id;
-            this.logger.log(`📝 Found existing topic: ${createNoteDto.topic} -> ${topicId}`);
-          } else {
-            // Create new topic if it doesn't exist
-            const newTopicResponse = await this.databaseService.createTopic({
-              name: createNoteDto.topic,
-              description: null,
-              parent_topic_id: null,
-            });
-            
-            if (newTopicResponse.success && newTopicResponse.data) {
-              topicId = newTopicResponse.data.topic_id;
-              this.logger.log(`✨ Created new topic: ${createNoteDto.topic} -> ${topicId}`);
-            }
-          }
+    // Handle topic and subtopic logic (same as quiz service)
+    if (createNoteDto.topic_id) {
+      // Handle subtopic logic
+      if (createNoteDto.subtopic_name && createNoteDto.topic_id) {
+        // Check if subtopic already exists under the parent topic
+        const existingSubtopicRes = await this.databaseService.findSubtopicByNameAndParent(
+          createNoteDto.subtopic_name,
+          createNoteDto.topic_id
+        );
+
+        if (!existingSubtopicRes.success) {
+          throw new Error(existingSubtopicRes.error || 'Failed to check for existing subtopic');
         }
-      } catch (error) {
-        this.logger.error(`❌ Error handling topic mapping: ${error}`);
-        // Continue without topic if there's an error
+
+        if (existingSubtopicRes.data) {
+          // Subtopic exists, use it
+          topicId = existingSubtopicRes.data.topic_id;
+          this.logger.log(`📝 Using existing subtopic: ${createNoteDto.subtopic_name}`);
+        } else {
+          // Create new subtopic under the parent topic
+          const subtopicRes = await this.databaseService.createSubtopic(
+            createNoteDto.subtopic_name,
+            createNoteDto.topic_id
+          );
+
+          if (!subtopicRes.success || !subtopicRes.data) {
+            throw new Error(subtopicRes.error || 'Failed to create subtopic');
+          }
+
+          topicId = subtopicRes.data.topic_id;
+          this.logger.log(`✨ Created new subtopic: ${createNoteDto.subtopic_name} under parent topic`);
+        }
+      } else {
+        // Using existing topic without subtopic
+        topicId = createNoteDto.topic_id;
       }
+    } else {
+      throw new Error('topic_id is required');
     }
 
     const noteInput: CreateStudyNoteInput = {

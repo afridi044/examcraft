@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useBackendAuth } from "@/hooks/useBackendAuth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
@@ -12,10 +12,10 @@ import { PageLoading } from "@/components/ui/loading";
 import { motion } from "framer-motion";
 import type { StudyNote } from "@/types";
 
-
 type LibraryTab = "notes" | "materials" | "books";
 
-export default function LibraryPage() {
+// Separate component that uses useSearchParams
+function LibraryPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: currentUser, loading: userLoading, setSignOutMessage } = useBackendAuth();
@@ -62,53 +62,68 @@ export default function LibraryPage() {
     );
   }
 
+  return (
+    <DashboardLayout>
+      <div className="space-y-4 sm:space-y-6">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <LibraryHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+          />
+        </motion.div>
 
+        {/* Tabs Navigation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
+          <LibraryTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        </motion.div>
 
-                return (
-                <DashboardLayout>
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Header Section */}
-                    <motion.div
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, ease: "easeOut" }}
-                    >
-                      <LibraryHeader
-                        searchQuery={searchQuery}
-                        onSearchChange={setSearchQuery}
-                        viewMode={viewMode}
-                        onViewModeChange={setViewMode}
-                      />
-                    </motion.div>
+        {/* Content Area */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <LibraryContent
+            activeTab={activeTab}
+            searchQuery={searchQuery}
+            viewMode={viewMode}
+          />
+        </motion.div>
 
-                    {/* Tabs Navigation */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2, duration: 0.5 }}
-                    >
-                      <LibraryTabs
-                        activeTab={activeTab}
-                        onTabChange={setActiveTab}
-                      />
-                    </motion.div>
+        {/* Floating Add Button */}
+        <AddNewButton />
+      </div>
+    </DashboardLayout>
+  );
+}
 
-                    {/* Content Area */}
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4, duration: 0.5 }}
-                    >
-                      <LibraryContent
-                        activeTab={activeTab}
-                        searchQuery={searchQuery}
-                        viewMode={viewMode}
-                      />
-                    </motion.div>
-
-                    {/* Floating Add Button */}
-                    <AddNewButton />
-                  </div>
-                </DashboardLayout>
-              );
+// Main page component with Suspense boundary
+export default function LibraryPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <PageLoading
+          title="Loading Library"
+          subtitle="Preparing your learning resources..."
+          variant="dashboard"
+        />
+      </DashboardLayout>
+    }>
+      <LibraryPageContent />
+    </Suspense>
+  );
 } 

@@ -53,6 +53,42 @@ export const NoteDetailView: React.FC<NoteDetailViewProps> = ({
     }
   };
 
+  const getActivityStatus = (dateString: string | null) => {
+    if (!dateString) return { text: 'No activity yet', color: 'text-gray-500' };
+    
+    // Handle both ISO strings with Z and without Z
+    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+    const now = new Date();
+    const diffInMilliseconds = now.getTime() - date.getTime();
+    const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInSeconds < 60) {
+      return { 
+        text: diffInSeconds <= 5 ? 'Just now' : `${diffInSeconds} second${diffInSeconds !== 1 ? 's' : ''} ago`, 
+        color: 'text-emerald-400' 
+      };
+    } else if (diffInMinutes < 60) {
+      return { 
+        text: `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`, 
+        color: 'text-emerald-400' 
+      };
+    } else if (diffInHours < 24) {
+      return { 
+        text: `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`, 
+        color: 'text-emerald-400' 
+      };
+    } else if (diffInHours < 48) {
+      return { text: 'Yesterday', color: 'text-emerald-400' };
+    } else if (diffInDays <= 7) {
+      return { text: `${diffInDays} days ago`, color: 'text-amber-400' };
+    } else {
+      return { text: `${diffInDays} days ago`, color: 'text-red-400' };
+    }
+  };
+
 
 
   const handleDelete = async () => {
@@ -154,127 +190,119 @@ export const NoteDetailView: React.FC<NoteDetailViewProps> = ({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="space-y-6 sm:space-y-8"
+      className="space-y-4"
     >
-      {/* Premium Note Content Card */}
-      <Card className="bg-slate-900/95 border-slate-600/50 backdrop-blur-xl shadow-2xl overflow-hidden">
-        {/* Subtle Background Glow */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-800/20 via-slate-700/20 to-slate-800/20 opacity-100 transition-opacity duration-500"></div>
-        
-        <CardContent className="p-6 sm:p-8 space-y-6 sm:space-y-8 relative">
+      {/* Compact Note Content Card */}
+      <Card className="bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60 transition-all duration-300">
+        <CardContent className="p-4 sm:p-6 space-y-4">
           {/* Header with Back Button */}
-          <div className="flex items-center pb-6 border-b border-slate-600/30">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-600/30">
             <Button
               onClick={onBack}
               variant="ghost"
-              className="flex items-center space-x-3 text-gray-200 hover:text-white hover:bg-slate-700/50 transition-all duration-200 rounded-xl px-4 py-2"
+              className="flex items-center space-x-2 text-gray-200 hover:text-white hover:bg-slate-700/50 transition-all duration-200 rounded-lg px-3 py-1.5"
             >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-medium">Back to Notes</span>
+              <ArrowLeft className="h-4 w-4" />
+              <span className="text-sm font-medium">Back to Notes</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200 rounded-lg disabled:opacity-50"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title={isDeleting ? "Deleting..." : "Delete Note"}
+            >
+              <Trash2 className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
             </Button>
           </div>
-          {/* Enhanced Note Header */}
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6">
-            <div className="relative flex-shrink-0">
-              <div className="h-20 w-20 sm:h-24 sm:w-24 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-2xl">
-                <BookOpen className="h-10 w-10 sm:h-12 sm:w-12 text-white" />
-              </div>
-              <div className="absolute -top-2 -right-2 h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-                <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
-              </div>
-            </div>
-            <div className="flex-1 min-w-0 relative">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">{note.title}</h1>
-                  <p className="text-gray-300 text-sm sm:text-base">Study Note</p>
-                </div>
-                <div className="flex items-center space-x-2 ml-4">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-10 w-10 p-0 hover:bg-red-500/30 hover:text-red-300 transition-all duration-200 rounded-xl disabled:opacity-50"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    title={isDeleting ? "Deleting..." : "Delete Note"}
-                  >
-                    <Trash2 className={`h-5 w-5 ${isDeleting ? 'animate-pulse' : ''}`} />
-                  </Button>
-                </div>
-              </div>
-            </div>
+
+                     {/* Compact Note Header */}
+           <div className="flex items-start gap-3 mb-6">
+             <div className="relative flex-shrink-0">
+               <div className="h-12 w-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                 <BookOpen className="h-6 w-6 text-white" />
+               </div>
+               <div className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md">
+                 <Sparkles className="h-2 w-2 text-white" />
+               </div>
+             </div>
+             <div className="flex-1 min-w-0">
+               <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 leading-tight">{note.title}</h1>
+               <p className="text-gray-300 text-sm">Study Note</p>
+             </div>
+           </div>
+
+           {/* Compact Metadata */}
+           <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm mb-6">
+             {note.topics?.name && (
+               <div className="flex items-center space-x-1">
+                 <Tag className="h-3 w-3 text-green-400 flex-shrink-0" />
+                 <span className="text-green-100 font-medium bg-green-600/30 px-2 py-1 rounded-md border border-green-500/50">
+                   {note.topics.name}
+                 </span>
+               </div>
+             )}
+             <div className="flex items-center space-x-1">
+               <FileText className="h-3 w-3 text-blue-400 flex-shrink-0" />
+               <span className="text-blue-100 font-medium bg-blue-600/30 px-2 py-1 rounded-md border border-blue-500/50">
+                 {note.word_count} words
+               </span>
+             </div>
+             <div className="flex items-center space-x-1">
+               <Calendar className="h-3 w-3 text-purple-400 flex-shrink-0" />
+               <span className="text-purple-100 font-medium bg-purple-600/30 px-2 py-1 rounded-md border border-purple-500/50">
+                 Updated {getActivityStatus(note.updated_at).text}
+               </span>
+             </div>
+                         {note.tags && note.tags.length > 0 && (
+               <div className="flex items-center space-x-1 w-full sm:w-auto">
+                 <span className="text-xs text-gray-300 font-medium">Tags:</span>
+                 <div className="flex flex-wrap gap-1">
+                   {note.tags.map((tag, index) => (
+                     <span
+                       key={index}
+                       className="text-xs text-amber-100 font-medium bg-amber-600/30 px-1.5 py-0.5 rounded-md border border-amber-500/50"
+                     >
+                       {tag}
+                     </span>
+                   ))}
+                 </div>
+               </div>
+             )}
           </div>
 
-          {/* Enhanced Metadata */}
-          <div className="flex flex-wrap items-center gap-3 text-sm sm:text-base">
-            {note.topics?.name && (
-              <div className="flex items-center space-x-2">
-                <Tag className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span className="text-green-200 font-semibold bg-green-500/20 px-3 py-1.5 rounded-full border border-green-500/30">
-                  {note.topics.name}
-                </span>
-              </div>
-            )}
-            <div className="flex items-center space-x-2">
-              <FileText className="h-4 w-4 text-blue-400 flex-shrink-0" />
-              <span className="text-blue-200 font-semibold bg-blue-500/20 px-3 py-1.5 rounded-full border border-blue-500/30">
-                {note.word_count} words
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-purple-400 flex-shrink-0" />
-              <span className="text-purple-200 font-semibold bg-purple-500/20 px-3 py-1.5 rounded-full border border-purple-500/30">
-                Updated {formatDate(note.updated_at)}
-              </span>
-            </div>
-            {note.tags && note.tags.length > 0 && (
-              <div className="flex items-center space-x-2 w-full sm:w-auto">
-                <span className="text-xs sm:text-sm text-gray-300 font-medium">Tags:</span>
-                <div className="flex flex-wrap gap-2">
-                  {note.tags.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="text-xs sm:text-sm text-amber-200 font-medium bg-amber-500/20 px-2 py-1 rounded-full border border-amber-500/30"
-                    >
-                      {tag}
-                  </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+                     {/* Compact Note Content */}
+           <div className="bg-slate-700/40 rounded-xl p-4 border border-slate-600/30 mb-6">
+             <div className="prose prose-invert max-w-none">
+               <div className="whitespace-pre-wrap text-gray-100 leading-relaxed text-sm sm:text-base">
+                 {note.content}
+               </div>
+             </div>
+           </div>
 
-          {/* Enhanced Note Content */}
-          <div className="bg-slate-800/60 rounded-2xl p-6 sm:p-8 border border-slate-600/40 shadow-inner">
-            <div className="prose prose-invert max-w-none">
-              <div className="whitespace-pre-wrap text-gray-100 leading-relaxed text-base sm:text-lg">
-                {note.content}
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Additional Info */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-slate-800/60 rounded-2xl p-6 border border-slate-600/30 shadow-lg">
-              <h4 className="font-bold text-white mb-4 text-lg">Note Details</h4>
-              <div className="space-y-3 text-sm sm:text-base">
-                <div className="flex justify-between items-center py-2 border-b border-slate-600/30">
-                  <span className="text-gray-200">Type:</span>
-                  <span className="text-blue-200 font-semibold">{note.note_type}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-slate-600/30">
-                  <span className="text-gray-200">Visibility:</span>
-                  <span className={`font-semibold ${note.is_public ? "text-green-200" : "text-orange-200"}`}>
-                    {note.is_public ? "Public" : "Private"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-200">Created:</span>
-                  <span className="text-purple-200 font-semibold">{formatDate(note.created_at)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+                     {/* Compact Additional Info */}
+           <div className="max-w-md bg-slate-700/40 rounded-xl p-4 border border-slate-600/30">
+             <h4 className="font-bold text-white mb-3 text-sm">Note Details</h4>
+             <div className="space-y-2 text-xs sm:text-sm">
+               <div className="flex justify-between items-center py-1 border-b border-slate-600/30">
+                 <span className="text-gray-200">Type:</span>
+                 <span className="text-blue-100 font-medium">{note.note_type}</span>
+               </div>
+               <div className="flex justify-between items-center py-1 border-b border-slate-600/30">
+                 <span className="text-gray-200">Visibility:</span>
+                 <span className="text-gray-100 font-medium">
+                   {note.is_public ? "Public" : "Private"}
+                 </span>
+               </div>
+               <div className="flex justify-between items-center py-1">
+                 <span className="text-gray-200">Created:</span>
+                 <span className="text-gray-100 font-medium">
+                   {getActivityStatus(note.created_at).text}
+                 </span>
+               </div>
+             </div>
+           </div>
         </CardContent>
       </Card>
     </motion.div>

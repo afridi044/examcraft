@@ -61,7 +61,9 @@ export function useCreateBackendNote() {
     mutationFn: async (data: {
       title: string;
       content: string;
-      topic?: string;
+      topic_id?: string;
+      subtopic_name?: string;
+      topic_name?: string;
     }) => {
       const response = await notesService.createNote(data);
       if (!response.success) {

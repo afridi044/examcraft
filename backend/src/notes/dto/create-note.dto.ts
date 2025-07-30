@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsUUID,
+  IsNotEmpty,
+  ValidateIf,
+  MaxLength,
+} from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateNoteDto {
   @ApiProperty({
@@ -20,13 +28,27 @@ export class CreateNoteDto {
   @IsNotEmpty()
   content: string;
 
-  @ApiProperty({
-    description: 'Topic or subject of the note',
-    example: 'JavaScript',
-    required: false,
-  })
-  @IsString()
+  @ApiPropertyOptional({ description: 'Existing topic ID (parent topic)' })
   @IsOptional()
-  @MaxLength(100)
-  topic?: string;
+  @IsUUID()
+  topic_id?: string;
+
+  @ApiPropertyOptional({ description: 'Subtopic name (child of selected topic)' })
+  @IsOptional()
+  @IsString()
+  subtopic_name?: string;
+
+  @ApiPropertyOptional({ description: 'Topic name for display' })
+  @IsOptional()
+  @IsString()
+  topic_name?: string;
+
+  // Custom validation to ensure proper topic selection
+  @ValidateIf((o) => !o.topic_id)
+  @IsNotEmpty({ message: 'topic_id is required' })
+  _topicValidation?: string;
+
+  @ValidateIf((o) => o.subtopic_name && !o.topic_id)
+  @IsNotEmpty({ message: 'Parent topic_id is required when providing subtopic_name' })
+  _subtopicValidation?: string;
 } 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { searchService, type SearchResults, type QuizSearchResult, type FlashcardSearchResult } from "@/lib/services/search.service";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,8 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { DashboardHeader } from "@/components/features/dashboard/DashboardHeader";
 import { PageLoading } from "@/components/ui/loading";
 
-export default function SearchPage() {
+// Separate component that uses useSearchParams
+function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const query = searchParams.get("q") || "";
@@ -631,5 +632,22 @@ export default function SearchPage() {
         )}
       </div>
     </DashboardLayout>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <PageLoading
+          title="Loading Search"
+          subtitle="Preparing search interface..."
+          variant="dashboard"
+        />
+      </DashboardLayout>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 } 
