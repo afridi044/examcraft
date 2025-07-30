@@ -43,14 +43,7 @@ const DEFAULT_FORM: NoteForm = {
   topic: "",
 };
 
-const WRITING_TIPS = [
-  "Use clear, concise language to capture key concepts",
-  "Include examples and real-world applications",
-  "Organize information with bullet points or numbered lists",
-  "Add personal insights and connections to existing knowledge",
-  "Include formulas, definitions, and important dates",
-  "Use color coding or symbols to highlight important points",
-];
+
 
 export default function CreateNotePage() {
   const router = useRouter();
@@ -220,15 +213,7 @@ export default function CreateNotePage() {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* Background Decorations */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-green-500/10 to-teal-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-pink-500/5 to-orange-500/5 rounded-full blur-3xl"></div>
-        </div>
-
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <motion.div
             ref={headerRef}
@@ -255,7 +240,7 @@ export default function CreateNotePage() {
                 animate={formInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <FormCard className="bg-gradient-to-br from-slate-800/90 via-slate-800/95 to-slate-800/90 border-slate-700/50 backdrop-blur-sm shadow-2xl">
+                <FormCard className="bg-slate-800/40 border-slate-700/60 hover:bg-slate-800/60 transition-all duration-300">
                   <FormSection title="Note Details" icon={<FileText className="h-5 w-5" />}>
                     <div className="space-y-6">
                       {/* Title Input */}
@@ -358,21 +343,14 @@ export default function CreateNotePage() {
                 transition={{ duration: 0.8, delay: 0.4 }}
                 className="space-y-6"
               >
-                <TipsCard
-                  icon={<Lightbulb className="h-5 w-5 text-white" />}
-                  title="Writing Tips"
-                  tips={WRITING_TIPS}
-                  gradientFrom="green"
-                  gradientTo="emerald"
-                  textColor="text-green-300"
-                />
+
 
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.6 }}
                 >
-                  <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl p-6 backdrop-blur-sm">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-8 w-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                         <Zap className="h-4 w-4 text-white" />
@@ -401,7 +379,7 @@ export default function CreateNotePage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.8 }}
                 >
-                  <div className="bg-gradient-to-br from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-6 backdrop-blur-sm">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-8 w-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center">
                         <Star className="h-4 w-4 text-white" />
@@ -428,7 +406,6 @@ export default function CreateNotePage() {
             </div>
           </div>
         </div>
-      </div>
     </DashboardLayout>
   );
 } 
