@@ -57,7 +57,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { name: "Analytics", href: "/analytics", icon: TrendingUp },
     { name: "Your Library", href: "/library", icon: FolderOpen },
     { name: "Profile", href: "/profile", icon: User },
-    { name: "Settings", href: "/settings", icon: Settings },
   ];
 
   // Close sidebar when clicking outside

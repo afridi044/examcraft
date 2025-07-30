@@ -155,17 +155,7 @@ export function TopNavbar({ setIsSidebarOpen, hideSearchBar = false }: TopNavbar
 
 
 
-            {/* Notifications */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/60 text-slate-300 hover:text-white transition-all duration-300 rounded-xl h-10 w-10 relative shadow-md hover:shadow-lg"
-            >
-              <Bell className="h-4 w-4 group-hover:scale-110 transition-transform" />
-              <div className="absolute -top-1 -right-1 h-3 w-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full flex items-center justify-center shadow-md animate-pulse">
-                <div className="h-1.5 w-1.5 bg-white rounded-full"></div>
-              </div>
-            </Button>
+
 
             {/* Premium User Menu */}
             <UserMenu user={user} signOut={async () => { await signOut(); }} router={router} />
