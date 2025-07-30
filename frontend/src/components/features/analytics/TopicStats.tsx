@@ -116,7 +116,7 @@ export function TopicStats({ data }: TopicStatsProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'No activity yet';
     // Handle both ISO strings with Z and without Z
-    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric',
@@ -127,7 +127,7 @@ export function TopicStats({ data }: TopicStatsProps) {
   const getDaysSinceLastActivity = (dateString: string | null) => {
     if (!dateString) return null;
     // Handle both ISO strings with Z and without Z
-    const lastActivity = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
+    const lastActivity = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - lastActivity.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));

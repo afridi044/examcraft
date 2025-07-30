@@ -88,11 +88,9 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     }
   }
 
-  // Helper function to adjust timestamp by adding 6 hours to convert from UTC to local time
+  // Helper function to return timestamp without timezone adjustment
   private adjustTimestamp(timestamp: string): string {
-    const date = new Date(timestamp);
-    date.setHours(date.getHours() + 6);
-    return date.toISOString();
+    return timestamp;
   }
 
   async getRecentActivity(

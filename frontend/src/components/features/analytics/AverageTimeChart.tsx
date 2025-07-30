@@ -40,7 +40,7 @@ export function AverageTimeChart({ data }: AverageTimeChartProps) {
 
   // Transform data for charts - show accuracy percentage
   const chartData = data.map(item => ({
-    date: new Date(item.date + 'Z').toLocaleDateString('en-US', { 
+    date: new Date(item.date).toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
     }),

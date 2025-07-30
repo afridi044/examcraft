@@ -72,7 +72,7 @@ export function FlashcardAnalyticsChart({ data }: FlashcardAnalyticsChartProps) 
 
   // Transform review data for chart
   const chartData = recentReviews?.map(item => ({
-    date: new Date(item.date + 'Z').toLocaleDateString('en-US', { 
+    date: new Date(item.date).toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
     }),

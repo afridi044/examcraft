@@ -84,7 +84,7 @@ export function getScoreColors(score: number) {
 // Date formatting
 export function formatDate(dateString: string | null | undefined) {
   if (!dateString) return "Not completed";
-  return new Date(dateString + 'Z').toLocaleDateString("en-US", {
+  return new Date(dateString).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -225,8 +225,8 @@ export function filterAndSortAttempts(
       switch (sortBy) {
         case "date":
           comparison =
-            new Date((a.completed_at || a.created_at) + 'Z').getTime() -
-            new Date((b.completed_at || b.created_at) + 'Z').getTime();
+                  new Date((a.completed_at || a.created_at)).getTime() -
+      new Date((b.completed_at || b.created_at)).getTime();
           break;
         case "score":
           comparison = a.score_percentage - b.score_percentage;

@@ -43,7 +43,7 @@ export function ProgressOverTimeChart({ data }: ProgressOverTimeChartProps) {
 
   // Transform data to show time properly - show seconds for short times, minutes:seconds for longer
   const chartData = data.map(item => ({
-    date: new Date(item.date + 'Z').toLocaleDateString('en-US', { 
+    date: new Date(item.date).toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric' 
     }),
