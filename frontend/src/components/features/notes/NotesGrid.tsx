@@ -6,9 +6,10 @@ import type { StudyNote } from "@/types";
 
 interface NotesGridProps {
   notes: StudyNote[];
+  onDelete?: (noteId: string) => Promise<void>;
 }
 
-export const NotesGrid: React.FC<NotesGridProps> = ({ notes }) => {
+export const NotesGrid: React.FC<NotesGridProps> = ({ notes, onDelete }) => {
   if (notes.length === 0) {
     return (
       <EmptyState
@@ -40,7 +41,18 @@ export const NotesGrid: React.FC<NotesGridProps> = ({ notes }) => {
           }}
           className="group"
         >
-          <NoteCard note={note} viewMode="grid" />
+          <NoteCard 
+            note={{
+              id: note.note_id,
+              title: note.title,
+              content: note.content,
+              topic: note.topic || "General",
+              wordCount: note.word_count || 0,
+              lastEdited: note.updated_at || "Unknown",
+            }} 
+            viewMode="grid" 
+            onDelete={onDelete}
+          />
         </motion.div>
       ))}
     </div>

@@ -6,9 +6,10 @@ import type { StudyNote } from "@/types";
 
 interface NotesListProps {
   notes: StudyNote[];
+  onDelete?: (noteId: string) => Promise<void>;
 }
 
-export const NotesList: React.FC<NotesListProps> = ({ notes }) => {
+export const NotesList: React.FC<NotesListProps> = ({ notes, onDelete }) => {
   if (notes.length === 0) {
     return (
       <EmptyState
@@ -40,7 +41,18 @@ export const NotesList: React.FC<NotesListProps> = ({ notes }) => {
           }}
           className="group"
         >
-          <NoteCard note={note} viewMode="list" />
+          <NoteCard 
+            note={{
+              id: note.note_id,
+              title: note.title,
+              content: note.content,
+              topic: note.topic || "General",
+              wordCount: note.word_count || 0,
+              lastEdited: note.updated_at || "Unknown",
+            }} 
+            viewMode="list" 
+            onDelete={onDelete}
+          />
         </motion.div>
       ))}
     </div>

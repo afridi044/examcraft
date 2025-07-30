@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useBackendNotes } from "@/hooks/useBackendNotes";
+import { useBackendNotes, useDeleteBackendNote, useInvalidateBackendNotes } from "@/hooks/useBackendNotes";
 import { NotesHeader } from "@/components/features/notes/NotesHeader";
 import { NotesGrid } from "@/components/features/notes/NotesGrid";
 import { NotesList } from "@/components/features/notes/NotesList";
 import { CreateNoteButton } from "@/components/features/notes/CreateNoteButton";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "react-hot-toast";
 import type { StudyNote } from "@/types";
 
 export default function NotesPage() {
@@ -15,6 +16,55 @@ export default function NotesPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   
   const notesQuery = useBackendNotes();
+  const deleteNoteMutation = useDeleteBackendNote();
+  const invalidateNotes = useInvalidateBackendNotes();
+
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      await deleteNoteMutation.mutateAsync(noteId);
+      
+      // Invalidate and refetch the notes data to update the UI
+      invalidateNotes();
+      
+      // Show success toast
+      toast.success("Note deleted successfully!", {
+        duration: 4000,
+        style: {
+          background: '#10B981',
+          color: '#ffffff',
+          border: '1px solid #059669',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500',
+        },
+        iconTheme: {
+          primary: '#ffffff',
+          secondary: '#10B981',
+        },
+      });
+    } catch (error) {
+      console.error('Error deleting note:', error);
+      
+      // Show error toast
+      toast.error("Failed to delete note. Please try again.", {
+        duration: 4000,
+        style: {
+          background: '#EF4444',
+          color: '#ffffff',
+          border: '1px solid #DC2626',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          fontWeight: '500',
+        },
+        iconTheme: {
+          primary: '#ffffff',
+          secondary: '#EF4444',
+        },
+      });
+    }
+  };
 
   const filteredNotes = useMemo(() => {
     let notes = notesQuery.data || [];
@@ -153,9 +203,9 @@ export default function NotesPage() {
                 transition={{ duration: 0.3 }}
               >
                 {viewMode === "grid" ? (
-                  <NotesGrid notes={filteredNotes} />
+                  <NotesGrid notes={filteredNotes} onDelete={handleDeleteNote} />
                 ) : (
-                  <NotesList notes={filteredNotes} />
+                  <NotesList notes={filteredNotes} onDelete={handleDeleteNote} />
                 )}
               </motion.div>
             )}
