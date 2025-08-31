@@ -15,7 +15,7 @@ export class NotesDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📝 Getting notes for user: ${userId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.STUDY_NOTES)
         .select(`
           *,
@@ -40,7 +40,7 @@ export class NotesDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🔍 Getting note: ${noteId} for user: ${userId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.STUDY_NOTES)
         .select(`
           *,
@@ -82,7 +82,7 @@ export class NotesDatabaseService extends BaseDatabaseService {
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.STUDY_NOTES)
         .insert(noteData)
         .select()
@@ -119,7 +119,7 @@ export class NotesDatabaseService extends BaseDatabaseService {
       if (input.tags !== undefined) updateData.tags = input.tags;
       if (input.is_public !== undefined) updateData.is_public = input.is_public;
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.STUDY_NOTES)
         .update(updateData)
         .eq('note_id', noteId)
@@ -147,7 +147,7 @@ export class NotesDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🗑️ Deleting note: ${noteId} for user: ${userId}`);
 
-      const { error } = await this.supabase
+      const { error } = await this.supabaseAdmin
         .from(TABLE_NAMES.STUDY_NOTES)
         .delete()
         .eq('note_id', noteId)

@@ -15,7 +15,14 @@ export const BookCard: React.FC<BookCardProps> = ({ book, viewMode }) => {
     if (!dateString) return "Unknown";
     
     try {
-      const date = new Date(dateString);
+      // Ensure the string is treated as UTC if it doesn't have timezone info
+      let date: Date;
+      if (dateString.includes('T') && !dateString.includes('+') && !dateString.includes('Z')) {
+        date = new Date(dateString + 'Z'); // Add Z to treat as UTC
+      } else {
+        date = new Date(dateString);
+      }
+      
       if (isNaN(date.getTime())) return "Unknown";
       
       return date.toLocaleDateString('en-US', { 

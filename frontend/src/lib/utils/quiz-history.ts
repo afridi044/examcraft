@@ -1,6 +1,7 @@
 import { QuizAttempt } from "@/types";
+import { formatDateTimeLocal } from "./timezone";
 
-// Helper function to format time from seconds (new format)
+// Helper function to format time from seconds
 export const formatQuizTimeFromSeconds = (timeSeconds: number): string => {
   if (timeSeconds <= 0) return "0s";
   
@@ -84,7 +85,8 @@ export function getScoreColors(score: number) {
 // Date formatting
 export function formatDate(dateString: string | null | undefined) {
   if (!dateString) return "Not completed";
-  return new Date(dateString).toLocaleDateString("en-US", {
+  
+  return formatDateTimeLocal(dateString, {
     year: "numeric",
     month: "short",
     day: "numeric",

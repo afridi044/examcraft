@@ -13,7 +13,7 @@ interface ApiResponse<T> {
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 
   (process.env.NODE_ENV === 'development' 
     ? 'http://localhost:5001/api/v1' 
-    : 'http://20.244.0.22:5001/api/v1');
+    : 'http://localhost:5001/api/v1');
 
 console.log('🌐 API Base URL:', API_BASE_URL);
 

@@ -100,13 +100,14 @@ export class BaseDatabaseService {
 
   async checkHealth(): Promise<{ status: string; timestamp: string }> {
     try {
-      // Test a simple query to Supabase
-      const { error } = await this.supabase
+      // Test a simple query to Supabase using admin client to bypass RLS
+      const { error } = await this.supabaseAdmin
         .from('users')
         .select('user_id')
         .limit(1);
 
       if (error) {
+        this.logger.error('❌ Health check failed:', error);
         return {
           status: 'unhealthy',
           timestamp: new Date().toISOString(),
@@ -118,6 +119,7 @@ export class BaseDatabaseService {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      this.logger.error('❌ Health check exception:', error);
       return {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),

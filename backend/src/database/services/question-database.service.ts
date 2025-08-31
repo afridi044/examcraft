@@ -91,7 +91,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`❓ Getting question by ID: ${questionId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUESTIONS)
         .select(
           `
@@ -119,7 +119,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🔍 Getting questions with filters:`, filters);
 
-      let query = this.supabase
+      let query = this.supabaseAdmin
         .from(TABLE_NAMES.QUESTIONS)
         .select(
           `
@@ -158,7 +158,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
 
   async getAllTopics(): Promise<ApiResponse<TopicRow[]>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select('*')
         .order('name');
@@ -172,7 +172,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
 
   async getTopicById(topicId: string): Promise<ApiResponse<TopicRow>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select('*')
         .eq('topic_id', topicId)
@@ -223,7 +223,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
     parentTopicId: string,
   ): Promise<ApiResponse<TopicRow | null>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select('*')
         .eq('name', subtopicName)
@@ -262,7 +262,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
 
   async getTopicsWithSubtopicCount(): Promise<ApiResponse<Array<TopicRow & { subtopic_count: number }>>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select(`
           *,
@@ -287,7 +287,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
 
   async getParentTopics(): Promise<ApiResponse<TopicRow[]>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select('*')
         .is('parent_topic_id', null) // Only parent topics
@@ -302,7 +302,7 @@ export class QuestionDatabaseService extends BaseDatabaseService {
 
   async getSubtopicsByParent(parentTopicId: string): Promise<ApiResponse<TopicRow[]>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select('*')
         .eq('parent_topic_id', parentTopicId)

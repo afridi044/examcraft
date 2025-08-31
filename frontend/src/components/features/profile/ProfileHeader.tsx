@@ -19,8 +19,26 @@ export function ProfileHeader({ user, isEditing, setIsEditing }: ProfileHeaderPr
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+  const formatDate = (dateString: string | undefined | null) => {
+    // Handle null/undefined dateString
+    if (!dateString) {
+      return 'Unknown';
+    }
+    
+    // Ensure the string is treated as UTC if it doesn't have timezone info
+    let date: Date;
+    if (dateString.includes('T') && !dateString.includes('+') && !dateString.includes('Z')) {
+      date = new Date(dateString + 'Z'); // Add Z to treat as UTC
+    } else {
+      date = new Date(dateString);
+    }
+    
+    // Validate the date
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+    
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'

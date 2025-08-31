@@ -1,31 +1,8 @@
 import { LucideIcon, BookOpen, Target, Brain, Clock, BarChart3, Plus, Star, Sparkles, Trophy, Flame, Activity, Rocket, TrendingUp, Calendar } from "lucide-react";
+import { getRelativeTime } from "./timezone";
 
 export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMilliseconds = now.getTime() - date.getTime();
-  const diffInSeconds = Math.floor(diffInMilliseconds / 1000);
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  const diffInHours = Math.floor(diffInMinutes / 60);
-
-  if (diffInSeconds < 60) {
-    // Show seconds for very recent activity
-    return diffInSeconds <= 5 ? 'Just now' : `${diffInSeconds} second${diffInSeconds !== 1 ? 's' : ''} ago`;
-  } else if (diffInMinutes < 60) {
-    // Show minutes for activity within the last hour
-    return `${diffInMinutes} minute${diffInMinutes !== 1 ? 's' : ''} ago`;
-  } else if (diffInHours < 24) {
-    // Show hours for activity within the last day
-    return `${diffInHours} hour${diffInHours !== 1 ? 's' : ''} ago`;
-  } else if (diffInHours < 48) {
-    return 'Yesterday';
-  } else {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
-    });
-  }
+  return getRelativeTime(dateString);
 };
 
 export const getActivityIcon = (type: string): LucideIcon => {

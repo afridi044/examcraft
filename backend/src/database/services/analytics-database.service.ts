@@ -21,25 +21,25 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       const [quizzesResult, examsResult, flashcardsResult, answersResult] =
         await Promise.all([
           // Get total quizzes
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.QUIZZES)
             .select('quiz_id')
             .eq('user_id', userId),
 
           // Get total exams
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.EXAMS)
             .select('exam_id')
             .eq('user_id', userId),
 
           // Get total flashcards
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.FLASHCARDS)
             .select('flashcard_id')
             .eq('user_id', userId),
 
           // Get user answers for statistics (include quiz_id for proper scoring)
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.USER_ANSWERS)
             .select('is_correct, created_at, quiz_id, question_id')
             .eq('user_id', userId),
@@ -104,7 +104,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       const [quizCreationResult, allUserAnswers, allQuizQuestions] = 
         await Promise.all([
           // 1. Quiz Creation Activities
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.QUIZZES)
             .select(`
               quiz_id,
@@ -117,7 +117,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
             .limit(limit),
 
           // 2. All user answers for this user (batch query)
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.USER_ANSWERS)
             .select(`
               quiz_id,
@@ -127,7 +127,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
             .eq('user_id', userId),
 
           // 3. All quiz questions (batch query)
-          this.supabase
+          this.supabaseAdmin
             .from(TABLE_NAMES.QUIZ_QUESTIONS)
             .select(`
               quiz_id,
@@ -174,7 +174,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         const questionCount = questionsByQuiz.get(quiz.quiz_id) || 0;
         
         // Check if quiz has a completion record
-        const { data: completionData, error: completionError } = await this.supabase
+        const { data: completionData, error: completionError } = await this.supabaseAdmin
           .from('quiz_completions')
           .select('completed_at, score_percentage')
           .eq('user_id', userId)
@@ -232,7 +232,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`📈 Getting topic progress for user: ${userId}`);
 
       // Step 1: Get all topics with their hierarchy information
-      const { data: allTopics, error: topicsError } = await this.supabase
+      const { data: allTopics, error: topicsError } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select(`
           topic_id,
@@ -247,7 +247,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       }
 
       // Step 2: Get user progress data for all topics
-      const { data: progressData, error: progressError } = await this.supabase
+      const { data: progressData, error: progressError } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
         .select(`
           topic_id,
@@ -433,7 +433,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
   async calculateStudyStreak(userId: string): Promise<ApiResponse<number>> {
     try {
       // Get user activity dates (simplified calculation)
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .select('created_at')
         .eq('user_id', userId)
@@ -531,7 +531,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📈 Getting progress over time for user: ${userId}`);
 
-      let query = this.supabase
+      let query = this.supabaseAdmin
         .from('user_analytics')
         .select('date, total_questions, correct_answers, average_time_seconds')
         .eq('user_id', userId)
@@ -610,7 +610,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
         examSessionsResult
       ] = await Promise.all([
         // 1. User answers (question responses)
-        this.supabase
+        this.supabaseAdmin
           .from(TABLE_NAMES.USER_ANSWERS)
           .select('created_at')
           .eq('user_id', userId)
@@ -618,7 +618,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
           .lte('created_at', dateFilter.lte ?? '2100-01-01'),
 
         // 2. Flashcard creation and updates
-        this.supabase
+        this.supabaseAdmin
           .from(TABLE_NAMES.FLASHCARDS)
           .select('created_at, updated_at')
           .eq('user_id', userId)
@@ -626,7 +626,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
           .lte('created_at', dateFilter.lte ?? '2100-01-01'),
 
         // 3. Quiz creation
-        this.supabase
+        this.supabaseAdmin
           .from(TABLE_NAMES.QUIZZES)
           .select('created_at')
           .eq('user_id', userId)
@@ -634,7 +634,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
           .lte('created_at', dateFilter.lte ?? '2100-01-01'),
 
         // 4. Exam creation
-        this.supabase
+        this.supabaseAdmin
           .from(TABLE_NAMES.EXAMS)
           .select('created_at')
           .eq('user_id', userId)
@@ -642,7 +642,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
           .lte('created_at', dateFilter.lte ?? '2100-01-01'),
 
         // 5. Exam sessions (when users take exams)
-        this.supabase
+        this.supabaseAdmin
           .from(TABLE_NAMES.EXAM_SESSIONS)
           .select('created_at')
           .eq('user_id', userId)
@@ -745,7 +745,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`📊 Getting accuracy breakdown for user: ${userId}`);
 
       // Get user answers with question details
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .select(`
           is_correct,
@@ -822,7 +822,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`📈 Getting quiz performance trend for user: ${userId}`);
 
       // Get quiz completions with quiz details
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from('quiz_completions')
         .select(`
           quiz_id,
@@ -887,7 +887,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`📚 Getting flashcard analytics for user: ${userId}`);
 
       // Get all flashcards for the user
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select('*')
         .eq('user_id', userId)
@@ -1016,7 +1016,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`📈 Getting all topic progress for user: ${userId}`);
 
       // Step 1: Get all topics with their hierarchy information
-      const { data: allTopics, error: topicsError } = await this.supabase
+      const { data: allTopics, error: topicsError } = await this.supabaseAdmin
         .from(TABLE_NAMES.TOPICS)
         .select(`
           topic_id,
@@ -1034,7 +1034,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`📊 Found ${allTopics?.length || 0} total topics in database`);
 
       // Step 2: Get user progress data for all topics
-      const { data: progressData, error: progressError } = await this.supabase
+      const { data: progressData, error: progressError } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
         .select(`
           topic_id,
@@ -1157,7 +1157,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`🏆 Getting best/worst topics for user: ${userId}`);
 
       // Get topic progress directly from user_topic_progress table - ALL TOPICS
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_TOPIC_PROGRESS)
         .select(`
           topic_id,
@@ -1204,7 +1204,7 @@ export class AnalyticsDatabaseService extends BaseDatabaseService {
       this.logger.log(`⏱️ Getting total study time for user: ${userId}`);
 
       // Sum up all time_taken_seconds from user_answers table
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .select('time_taken_seconds')
         .eq('user_id', userId)

@@ -18,7 +18,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
   
   async getUserQuizzes(userId: string): Promise<ApiResponse<QuizRow[]>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .select('*')
         .eq('user_id', userId)
@@ -36,7 +36,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
       this.logger.log(`📊 Getting quiz attempts for user: ${userId}`);
 
       // Get all quizzes for the user
-      const { data: quizzes, error: quizzesError } = await this.supabase
+      const { data: quizzes, error: quizzesError } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .select(`
           quiz_id,
@@ -54,7 +54,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
       }
 
       // Get quiz completions for this user
-      const { data: completions, error: completionsError } = await this.supabase
+      const { data: completions, error: completionsError } = await this.supabaseAdmin
         .from('quiz_completions')
         .select('*')
         .eq('user_id', userId);
@@ -127,7 +127,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
       const searchTerm = `%${query}%`;
 
       // Search quizzes by title only
-      const { data: quizzes, error } = await this.supabase
+      const { data: quizzes, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .select(`
           quiz_id,
@@ -145,7 +145,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
         const quizIds = quizzes.map(q => q.quiz_id);
         
         // Get quiz completions for these quizzes to determine completion status
-        const { data: quizCompletions, error: completionsError } = await this.supabase
+        const { data: quizCompletions, error: completionsError } = await this.supabaseAdmin
           .from('quiz_completions')
           .select('quiz_id, completed_at')
           .eq('user_id', userId)
@@ -184,7 +184,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
   ): Promise<ApiResponse<QuizWithQuestions>> {
     try {
       // Get quiz details with topic information
-      const { data: quiz, error: quizError } = await this.supabase
+      const { data: quiz, error: quizError } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .select(
           `
@@ -198,7 +198,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
       if (quizError) return this.handleError(quizError, 'getQuizWithQuestions');
 
       // Get questions for this quiz with their options
-      const { data: questions, error: questionsError } = await this.supabase
+      const { data: questions, error: questionsError } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUESTIONS)
         .select(
           `
@@ -229,7 +229,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
     input: TablesInsert<'quizzes'>,
   ): Promise<ApiResponse<QuizRow>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .insert(input)
         .select()
@@ -254,7 +254,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
       // `quiz_id` is mandatory for quiz answers but can be null for other
       // contexts (e.g. flashcard study).  Guard it so the `.eq()` filter only
       // runs when we have a string, which also resolves the TypeScript error.
-      const deleteQuery = this.supabase
+      const deleteQuery = this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .delete()
         .eq('user_id', input.user_id)
@@ -272,7 +272,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
       }
 
       // Insert the new answer
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .insert(input)
         .select()
@@ -302,7 +302,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🏁 Recording quiz completion for quiz: ${quizId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from('quiz_completions')
         .upsert({
           user_id: userId,
@@ -492,7 +492,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
 
   async updateQuiz(quizId: string, input: any): Promise<ApiResponse<QuizRow>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .update({ ...input, updated_at: new Date().toISOString() })
         .eq('quiz_id', quizId)
@@ -513,7 +513,7 @@ export class QuizDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📝 Getting user answers for user: ${userId}`);
 
-      let query = this.supabase
+      let query = this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .select('*')
         .eq('user_id', userId);

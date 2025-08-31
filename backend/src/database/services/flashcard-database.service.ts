@@ -34,7 +34,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     questionId: string,
   ): Promise<ApiResponse<FlashcardRow | null>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select('*')
         .eq('user_id', userId)
@@ -61,7 +61,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     try {
       if (!questionIds.length) return this.handleSuccess([]);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select('source_question_id')
         .eq('user_id', userId)
@@ -88,7 +88,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     userId: string,
   ): Promise<ApiResponse<FlashcardRow[]>> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select(
           `
@@ -113,7 +113,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
       const searchTerm = `%${query}%`;
 
       // Search flashcards by question only, including mastery status
-      const { data: flashcards, error } = await this.supabase
+      const { data: flashcards, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select(`
           flashcard_id,
@@ -147,7 +147,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📇 Getting flashcard by ID: ${flashcardId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select(
           `
@@ -172,7 +172,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📝 Updating flashcard: ${flashcardId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .update({
           ...updateData,
@@ -201,7 +201,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
         `📂 Getting flashcards by topic: ${topicId} for user: ${userId}`,
       );
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select(
           `
@@ -230,7 +230,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
         `🎯 Getting flashcards by topic: ${topicId} and mastery: ${masteryStatus} for user: ${userId}`,
       );
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select(
           `
@@ -256,7 +256,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
       this.logger.log(`🗑️ Deleting flashcard: ${flashcardId} for user: ${userId}`);
 
       // First check if the flashcard exists and get its details
-      const { data: flashcard, error: fetchError } = await this.supabase
+      const { data: flashcard, error: fetchError } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select('flashcard_id, user_id')
         .eq('flashcard_id', flashcardId)
@@ -275,7 +275,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
       }
 
       // Delete the flashcard
-      const { error } = await this.supabase
+      const { error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .delete()
         .eq('flashcard_id', flashcardId);
@@ -295,7 +295,7 @@ export class FlashcardDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📅 Getting flashcards due for review for user: ${userId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select(
           `

@@ -63,7 +63,7 @@ export class ExamDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🔍 Getting exam: ${examId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.EXAMS)
         .select(
           `
@@ -115,7 +115,7 @@ export class ExamDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`📚 Getting exams for user: ${userId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.EXAMS)
         .select(
           `
@@ -205,7 +205,7 @@ export class ExamDatabaseService extends BaseDatabaseService {
       this.logger.log(`🗑️ Deleting exam: ${examId}`);
 
       // Get exam questions first for cleanup
-      const { data: examQuestions } = await this.supabase
+      const { data: examQuestions } = await this.supabaseAdmin
         .from('exam_questions')
         .select('question_id')
         .eq('exam_id', examId);
@@ -238,7 +238,7 @@ export class ExamDatabaseService extends BaseDatabaseService {
         `📊 Getting exam sessions for user: ${userId}${examId ? `, exam: ${examId}` : ''}`,
       );
 
-      let query = this.supabase
+      let query = this.supabaseAdmin
         .from('exam_sessions')
         .select(
           `
@@ -309,7 +309,7 @@ export class ExamDatabaseService extends BaseDatabaseService {
     try {
       this.logger.log(`🔍 Getting exam session: ${sessionId}`);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from('exam_sessions')
         .select(
           `

@@ -49,7 +49,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
       // ------------------------------------------------
       // 1. Get quiz with topic and ordered questions
       // ------------------------------------------------
-      const { data: quizData, error: quizError } = await this.supabase
+      const { data: quizData, error: quizError } = await this.supabaseAdmin
         .from(TABLE_NAMES.QUIZZES)
         .select(
           `
@@ -72,7 +72,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
       if (quizData?.topic) {
         const topic = Array.isArray(quizData.topic) ? quizData.topic[0] : quizData.topic;
         if (topic?.parent_topic_id) {
-          const { data: parentTopic, error: parentError } = await this.supabase
+          const { data: parentTopic, error: parentError } = await this.supabaseAdmin
             .from(TABLE_NAMES.TOPICS)
             .select('topic_id, name')
             .eq('topic_id', topic.parent_topic_id)
@@ -87,7 +87,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
       // ------------------------------------------------
       // 2. Get user answers for this quiz
       // ------------------------------------------------
-      const { data: answersData, error: answersError } = (await this.supabase
+      const { data: answersData, error: answersError } = (await this.supabaseAdmin
         .from(TABLE_NAMES.USER_ANSWERS)
         .select('*')
         .eq('user_id', userId)
@@ -128,7 +128,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
       // ------------------------------------------------
       const explanationMap = new Map<string, ExplanationRow>();
       if (questionIds.length) {
-        const { data: explanations, error: explError } = (await this.supabase
+        const { data: explanations, error: explError } = (await this.supabaseAdmin
           .from(TABLE_NAMES.EXPLANATIONS)
           .select('*')
           .in('question_id', questionIds)) as {
@@ -195,7 +195,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
           ? Math.round((correctAnswers / totalQuestions) * 100)
           : 0;
       // Get total quiz time from quiz completion record
-      const { data: quizCompletion, error: completionError } = await this.supabase
+      const { data: quizCompletion, error: completionError } = await this.supabaseAdmin
         .from('quiz_completions')
         .select('time_spent_seconds')
         .eq('user_id', userId)
@@ -259,7 +259,7 @@ export class QuizReviewDatabaseService extends BaseDatabaseService {
     try {
       if (!questionIds.length) return this.handleSuccess([]);
 
-      const { data, error } = await this.supabase
+      const { data, error } = await this.supabaseAdmin
         .from(TABLE_NAMES.FLASHCARDS)
         .select('source_question_id')
         .eq('user_id', userId)
